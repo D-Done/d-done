@@ -228,6 +228,21 @@ class ProjectHeader(BaseModel):
     )
 
 
+class DeveloperEntityChange(BaseModel):
+    """Change in developer identity or ownership structure during the project."""
+
+    original_developer: str | None = Field(
+        default=None, description="Original developer entity name in Hebrew"
+    )
+    current_developer: str | None = Field(
+        default=None, description="Current developer entity name in Hebrew"
+    )
+    change_details: str | None = Field(
+        default=None,
+        description="Description of the change (share transfer, name change, new partner, etc.) in Hebrew",
+    )
+
+
 class ZeroReportMetrics(BaseModel):
     """Financials extracted from the Zero Report (דו״ח אפס) for the lender."""
 
@@ -255,6 +270,20 @@ class ZeroReportMetrics(BaseModel):
         description=(
             "Indexation summary (הצמדה למדד): index name, base date, mechanism. "
             "Set to 'אין התייחסות למדד בדו\"ח האפס' when not mentioned."
+        ),
+    )
+    zero_report_date_formatted: str | None = Field(
+        default=None,
+        description=(
+            'Formatted zero report issue date: "תאריך הוצאת דו"ח האפס הוא ביום DD/MM/YY". '
+            "Derived from zero_report_extraction.report_date."
+        ),
+    )
+    developer_entity_change: DeveloperEntityChange | None = Field(
+        default=None,
+        description=(
+            "Change in developer entity/ownership detected in the zero report "
+            "(original_developer, current_developer, change_details). Null if none."
         ),
     )
 
@@ -386,6 +415,13 @@ class ContractualMilestone(BaseModel):
     milestone: str = Field(description="Milestone name in Hebrew (e.g. הגשת בקשה להיתר)")
     deadline_or_condition: str = Field(
         description="Deadline, duration, or condition as stated in the agreement"
+    )
+    actual_status: str | None = Field(
+        default=None,
+        description=(
+            "Actual date from permit (YYYY-MM-DD) or status note "
+            "(e.g. 'לא הועלה היתר בנייה'). Populated during milestone cross-reference."
+        ),
     )
     source: SourceRef | None = Field(default=None, description="Evidentiary reference")
 
