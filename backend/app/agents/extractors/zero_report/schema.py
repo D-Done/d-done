@@ -5,12 +5,39 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from app.agents.extractors.schemas import ExtractorTimelineEvent
+from app.agents.schemas import EvidentiaryReference
 
 
 class BudgetLineItem(BaseModel):
     category: str = Field(description="Budget category in Hebrew")
     amount_ils: float = Field(description="Amount in ILS")
     notes: str | None = None
+
+
+class DeveloperApplicableCost(BaseModel):
+    """A single developer-applicable cost item (אגרות, פיתוח, מימון, etc.)."""
+
+    cost_name: str | None = Field(default=None, description="Cost name in Hebrew")
+    amount_ils: float | None = Field(default=None, description="Amount in ILS")
+    source: EvidentiaryReference | None = Field(
+        default=None,
+        description="Mandatory evidentiary reference for this cost item",
+    )
+
+
+class DeveloperEntityChange(BaseModel):
+    """Change in developer identity or ownership structure during the project."""
+
+    original_developer: str | None = Field(
+        default=None, description="Original developer entity name in Hebrew"
+    )
+    current_developer: str | None = Field(
+        default=None, description="Current developer entity name in Hebrew"
+    )
+    change_details: str | None = Field(
+        default=None,
+        description="Description of the change (share transfer, name change, new partner, etc.) in Hebrew",
+    )
 
 
 class IndexationDetails(BaseModel):
@@ -115,7 +142,28 @@ class ZeroReportExtraction(BaseModel):
         description="Concise Hebrew description of project timeline: start, completion, major milestones",
     )
     timeline_events: list[ExtractorTimelineEvent] = Field(default_factory=list)
+    developer_applicable_costs: list[DeveloperApplicableCost] = Field(
+        default_factory=list,
+        description=(
+            "Explicit costs/fees applicable to the developer (e.g. אגרות, פיתוח, מימון) "
+            "as stated in the report, each with a mandatory source citation."
+        ),
+    )
+    tenant_benefits: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Benefits granted to existing tenants as stated in the agreement or any "
+            "addenda/appendices, in Hebrew. Empty list if none mentioned."
+        ),
+    )
+    developer_entity_change: DeveloperEntityChange | None = Field(
+        default=None,
+        description=(
+            "Explicit change in developer identity, ownership structure, or holdings "
+            "during the project's life. Null if no such change is mentioned."
+        ),
+    )
     notes: list[str] = Field(default_factory=list)
 
 
-__all__ = ["ZeroReportExtraction"]
+__all__ = ["ZeroReportExtraction", "DeveloperApplicableCost", "DeveloperEntityChange"]
