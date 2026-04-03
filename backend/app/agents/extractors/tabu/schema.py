@@ -100,6 +100,27 @@ class SubParcelExtraction(BaseModel):
         default_factory=list,
         description="Mortgage registrations (משכנתאות)",
     )
+    is_mortgage_registered: bool = Field(
+        default=False,
+        description=(
+            "True if any mortgage registration (משכנתא or הערת אזהרה לרישום משכנתה) "
+            "exists for this sub-parcel."
+        ),
+    )
+    restrictive_note_registered: bool = Field(
+        default=False,
+        description=(
+            "True if any of the following are found for this sub-parcel: "
+            "עיקול, מנהל עיזבון, כונס, נאמן, or צו הריסה."
+        ),
+    )
+    notes: str | None = Field(
+        default=None,
+        description=(
+            "Hebrew description of restrictive findings (e.g. 'צו עיקול לטובת...'). "
+            "Populated when restrictive_note_registered is true; null otherwise."
+        ),
+    )
     notes_excluded_transfer_to_foreigners: bool = Field(
         default=False,
         description="True if a 'transfer to foreigners' note was found but excluded from caveats",
