@@ -1,0 +1,110 @@
+{
+  "eval_set_id": "zero_report_eval_set",
+  "name": "Zero Report Eval Set",
+  "description": "Golden dataset for the Zero Report (דו\"ח אפס) extractor.",
+  "eval_cases": [
+    {
+      "eval_id": "zero_report_case_project_de_haz",
+      "conversation": [
+        {
+          "invocation_id": "24172155-5922-42b2-b010-e7c6e1db8a6a",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Process documents.",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "{\n  \"appraiser_name\": \"אודלס&קינן שמאות מקרקעין\",\n  \"report_date\": \"2025-07-23\",\n  \"addressee\": \"מכלול התחדשות עירונית\",\n  \"construction_restrictions\": [],\n  \"budget_lines\": [],\n  \"key_assumptions\": [],\n  \"discrepancies\": [],\n  \"guarantees_mentioned\": [],\n  \"timeline_events\": [\n    {\n      \"date\": \"2025-07-15\",\n      \"event_description\": \"ביקור בנכס ובסביבתו\",\n      \"source\": {\n        \"source_document_name\": \"דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf\",\n        \"page_number\": 3,\n        \"verbatim_quote\": \"ביקור בנכס ובסביבתו נערך בתאריך 15/07/2025\"\n      }\n    }\n  ],\n  \"notes\": [\n    \"The report is an update to a previous report\",\n    \"The project involves the construction of 39 units in accordance with תמ\\\"א 38 regulations\",\n    \"The project is located at 14-16 יעקב דה האז street in תל אביב\"\n  ]\n}",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": null,
+          "creation_timestamp": 1773004676.688989,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": {
+        "app_name": "d-done",
+        "user_id": "dd-eval",
+        "state": {
+          "gcs_uris": [
+            "gs://d-done-eval/test-docs/project_de_haz/דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/ועדת אשראי.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/מורשי חתימה נריטה 30.12.2025.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה נריטה מיום 27.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/תעודת התאגדות_דן השקעות.pdf"
+          ],
+          "document_names": [
+            "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+            "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+            "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+            "ועדת אשראי.pdf",
+            "מורשי חתימה נריטה 30.12.2025.pdf",
+            "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+            "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+            "נסח חברה נריטה מיום 27.1.2026.pdf",
+            "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+            "נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+            "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+            "תעודת התאגדות_דן השקעות.pdf"
+          ],
+          "doc_classification": {
+            "classifications": {
+              "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf": "zero_report",
+              "הסכם פרויקט דה האז 14 חתום סופי-.pdf": "project_agreement",
+              "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf": "project_agreement",
+              "ועדת אשראי.pdf": "credit_committee",
+              "מורשי חתימה נריטה 30.12.2025.pdf": "signing_protocol",
+              "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf": "company_docs",
+              "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf": "company_docs",
+              "נסח חברה נריטה מיום 27.1.2026.pdf": "company_docs",
+              "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf": "tabu",
+              "נסח טאבו חלקה 590 מיום 25.1.2026.pdf": "tabu",
+              "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf": "company_docs",
+              "תעודת התאגדות_דן השקעות.pdf": "company_docs"
+            }
+          }
+        }
+      },
+      "creation_timestamp": 1773004676.6890223,
+      "rubrics": null,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 1773004676.689035
+}

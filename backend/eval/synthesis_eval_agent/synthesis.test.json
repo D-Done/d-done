@@ -1,0 +1,1396 @@
+{
+  "eval_set_id": "synthesis_eval_set",
+  "name": "Synthesis Eval Set",
+  "description": "Golden dataset for the Senior Underwriter synthesis agent.",
+  "eval_cases": [
+    {
+      "eval_id": "synthesis_case_project_de_haz",
+      "conversation": [
+        {
+          "invocation_id": "d2114f79-4eca-44a4-bb5c-6b50ed4763c1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Process documents.",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "{\n  \"project_header\": null,\n  \"executive_summary\": {\n    \"risk_level\": \"medium\",\n    \"summary\": \"פרויקט פינוי-בינוי ברחוב דה האז 14-16, תל אביב, בגוש 6212 חלקות 590 ו-591. במסגרת הפרויקט ייהרסו 2 בניינים קיימים הכוללים 23 יחידות דיור, ובמקומם ייבנו 2 בניינים חדשים הכוללים 39 יחידות דיור. היזם הינו חברת נ. גוראל יזמות דה האז בע\\\"מ. הגוף המממן, כפי שעולה מדו\\\"ח האפס, הינו מכלול התחדשות עירונית, התואם להגדרות המימון בהסכם. שיעור החתימות על ההסכם עומד על 100%. עם זאת, קיימת חשיפה בכך שהערות אזהרה לטובת היזם נרשמו על 91% מהדירות בלבד (21 מתוך 23), ונדרשת השלמת הרישום.\"\n  },\n  \"timeline\": [\n    {\n      \"date\": \"1994-01-25\",\n      \"event_description\": \"התאגדות חברת נריטה חברה למסחר והשקעות בע\\\"מ\",\n      \"source\": {\n        \"source_document_name\": \"נסח חברה נריטה מיום 27.1.2026.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"תאריך התאגדות: 25.01.1994\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2022-03-10\",\n      \"event_description\": \"התאגדות חברת דן גוראל השקעות בע\\\"מ\",\n      \"source\": {\n        \"source_document_name\": \"תעודת התאגדות_דן השקעות.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"ניתנה היום, י\\\"ז באדר א' התשפ\\\"ב, 10 במרץ 2022\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2022-03-24\",\n      \"event_description\": \"התאגדות חברת נ. גוראל יזמות בע\\\"מ\",\n      \"source\": {\n        \"source_document_name\": \"נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"תאריך התאגדות: 24.03.2022\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2025-07-15\",\n      \"event_description\": \"ביקור שמאי בנכס\",\n      \"source\": {\n        \"source_document_name\": \"דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf\",\n        \"page_number\": 3,\n        \"verbatim_quote\": \"ביקור בנכס ובסביבתו נערך בתאריך 15/07/2025\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2025-09-16\",\n      \"event_description\": \"התאגדות חברת נ. גוראל יזמות דה האז בע\\\"מ\",\n      \"source\": {\n        \"source_document_name\": \"תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"ניתנה היום, י\\\"ד באלול התשפ\\\"ה, 16 בספטמבר 2025\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2025-11-11\",\n      \"event_description\": \"חתימת הסכם הפרויקט\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"שנערך ונחתם בתל אביב ביום 11 לחודש נובמבר שנת 2025\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2025-12-31\",\n      \"event_description\": \"הוצאת נסח טאבו לחלקה 591\",\n      \"source\": {\n        \"source_document_name\": \"נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"תאריך 31/12/2025\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"date\": \"2026-01-25\",\n      \"event_description\": \"הוצאת נסח טאבו לחלקה 590\",\n      \"source\": {\n        \"source_document_name\": \"נסח טאבו חלקה 590 מיום 25.1.2026.pdf\",\n        \"page_number\": 1,\n        \"verbatim_quote\": \"תאריך 25/01/2026\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    }\n  ],\n  \"compound_details\": {\n    \"address\": \"רחוב דה האז 14 ו-16, תל אביב\",\n    \"gush\": \"6212\",\n    \"helka\": \"590, 591\",\n    \"incoming_state\": {\n      \"building_count\": 2,\n      \"apartment_count\": 23\n    },\n    \"outgoing_state\": {\n      \"building_count\": 2,\n      \"apartment_count\": 39\n    },\n    \"discrepancy_note\": \"אין פער\"\n  },\n  \"developer_signature\": {\n    \"developer_signed_date\": \"2025-11-11\",\n    \"authorized_signatory_name\": \"דן טרי גוראל, עינת אליהו לביא\",\n    \"authorized_signatory_id\": \"301335188, 036120053\",\n    \"signing_protocol_authorized\": null\n  },\n  \"power_of_attorney\": {\n    \"developer_attorney\": \"רון שילוני\",\n    \"owners_attorney\": \"גיא פרבמן\"\n  },\n  \"financing\": {\n    \"lender_definition_clause\": \"אחד מחמשת הבנקים הגדולים בישראל ו/או אחת מארבע חברות ביטוח הגדולות בישראל ו/או בשילוב קרן \\\"יסודות\\\" ו/או קרן \\\"מכלול\\\" ו/או קרן \\\"ארכימדס\\\" ו/או קרן \\\"ברקת\\\" ו/או קרן \\\"פנינסולה מבית מיטב\\\" ו/או כל קרן אחרת בעלת ניסיון בליווי פיננסי לפרויקטים מסוג זה, בכפוף לאישור הנציגות), עמו יתקשר היזם בהסכם לצורך קבלת מימון לביצוע הפרויקט במתכונת של ליווי סגור, ולצורך מתן ערבויות בנקאיות ו/או פוליסות ביטוח לבעלים על פי הסכם זה ולרוכשי דירות היזם.\",\n    \"actual_lender\": \"מכלול התחדשות עירונית\",\n    \"lender_compliance_note\": \"המממן תואם להגדרות ההסכם\",\n    \"mezzanine_loan_exists\": null,\n    \"mezzanine_loan_details\": null\n  },\n  \"contractual_milestones\": [\n    {\n      \"milestone\": \"תוקף ההסכם\",\n      \"deadline_or_condition\": \"מותנה בחתימת 100% מהבעלים על ההסכם עד ליום 10.12.2025.\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n        \"page_number\": 5,\n        \"verbatim_quote\": \"לא נחתם הסכם זה על ידי 100% מהבעלים כאמור עד למועד חתימת הבעלים, יהיה רשאי היזם להאריך את התקופה בתקופות נוספת בת 45 ימים ולא יותר מיום 10.12.2025. למען הסר ספק, לא נחתם הסכם זה על ידי 100% מהבעלים, עד למועד הנקוב בסייק זה לעיל, הסכם זה יהיה בטל ומבוטל.\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"milestone\": \"קבלת היתר בנייה\",\n      \"deadline_or_condition\": \"יש להשלים את כל התנאים ולקבל היתר בנייה עד ליום 10.12.2025.\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n        \"page_number\": 5,\n        \"verbatim_quote\": \"השולמו מלוא התנאים הקבועים בהחלטת הועדה ושולמו כל האגרות בגין היתר הבנייה וזאת עד ולא יאוחר מיום 10/12/2025 (להלן: \\\"המועד הנקוב\\\")\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"milestone\": \"הודעת פינוי\",\n      \"deadline_or_condition\": \"בתוך 90 ימים מהתקיימות כל התנאים המפורטים: השלמת תנאי החלטת הועדה, קבלת חשבון אגרות, קבלת טופס 2.\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n        \"page_number\": 7,\n        \"verbatim_quote\": \"על אף הקבוע בהסכם ההתחדשות לעניין פינוי דירות הבעלים ומתן הודעת הפינוי, מוסכם בין הצדדים כי היזם יתן לבעלים הודעת פינוי בתוך 90 ימים ממועד תקיימות כל התנאים המפורטים להלן במצטבר: (1) השלמת מלוא התנאים בהחלטת הועדה; (2) קבלת חשבון אגרות; (3) קבלת טופס 2 (צו התחלת עבודה).\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"milestone\": \"השלמת בנייה\",\n      \"deadline_or_condition\": \"30 חודשים ממועד תחילת ביצוע העבודות.\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n        \"page_number\": 36,\n        \"verbatim_quote\": \"היזם ישלים את בניית הפרויקט בתוך 30 (שלושים) חודשים ממועד תחילת ביצוע העבודות כהגדרתו לעיל\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    },\n    {\n      \"milestone\": \"תקופת חסד (גרייס) למסירה\",\n      \"deadline_or_condition\": \"60 יום\",\n      \"source\": {\n        \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n        \"page_number\": 37,\n        \"verbatim_quote\": \"על אף האמור לעיל, מוסכם במפורש כי עיכוב של עד 60 ימים במועד המסירה, מכל סיבה שהיא, לא יהווה הפרה של הסכם זה על ידי היזם ולא תזכה את הבעלים בסעד ו/או תרופה ו/או פיצוי כלשהם.\",\n        \"start_index\": null,\n        \"end_index\": null,\n        \"bounding_boxes\": []\n      }\n    }\n  ],\n  \"upgrade_downgrade\": {\n    \"upgrade_allowed\": true,\n    \"upgrade_details\": \"הבעלים רשאים לבקש שדרוג חניה לחניה קונבנציונלית תמורת 100,000 ש\\\"ח בתוספת מע\\\"מ. כמו כן, הדיירים רשאים לבקש שינויים ותוספות בדירתם, אשר יבוצעו בתשלום לפי מחירון, ובתנאי שאינם מהווים שינוי קונסטרוקטיבי או כזה הדורש שינוי היתר. שינויים מסוימים (כגון הזזת מחיצות פנים) יבוצעו ללא תשלום אם יתבקשו במועד.\",\n    \"downgrade_allowed\": false,\n    \"downgrade_details\": \"אין התייחסות בהסכם\"\n  },\n  \"zero_report_metrics\": {\n    \"addressee\": \"מכלול התחדשות עירונית\",\n    \"profit_on_turnover\": null,\n    \"profit_on_cost\": null,\n    \"construction_restrictions\": [],\n    \"indexation_details\": null\n  },\n  \"signing_percentage\": 1.0,\n  \"developer_ubo_chain\": [\n    \"נ. גוראל יזמות דה האז בע\\\"מ (ח.פ. 517221107)\",\n    \"נ. גוראל יזמות בע\\\"מ (50%) -> נריטה חברה למסחר והשקעות בע\\\"מ (50%) -> איל עדי (ת.ז. 56109796)\",\n    \"נ. גוראל יזמות בע\\\"מ (40.25%) -> דן גוראל השקעות בע\\\"מ (40.25%) -> גוראל דן טרי (ת.ז. 301335188)\",\n    \"נ. גוראל יזמות בע\\\"מ (9.75%) -> גוראל איתן\"\n  ],\n  \"developer_ubo_graph\": {\n    \"nodes\": [\n      {\n        \"id\": \"company_516586351\",\n        \"name\": \"נ. גוראל יזמות בע\\\"מ\",\n        \"type\": \"company\",\n        \"company_number\": \"516586351\",\n        \"id_number\": null\n      },\n      {\n        \"id\": \"company_narita\",\n        \"name\": \"נריטה חברה למסחר והשקעות בע\\\"מ\",\n        \"type\": \"company\",\n        \"company_number\": null,\n        \"id_number\": null\n      },\n      {\n        \"id\": \"person_goural_itan\",\n        \"name\": \"גוראל איתן\",\n        \"type\": \"person\",\n        \"company_number\": null,\n        \"id_number\": null\n      },\n      {\n        \"id\": \"company_dan_goural\",\n        \"name\": \"דן גוראל השקעות בע\\\"מ\",\n        \"type\": \"company\",\n        \"company_number\": null,\n        \"id_number\": null\n      }\n    ],\n    \"edges\": [\n      {\n        \"from_id\": \"company_narita\",\n        \"to_id\": \"company_516586351\",\n        \"share_pct\": \"50%\"\n      },\n      {\n        \"from_id\": \"person_goural_itan\",\n        \"to_id\": \"company_516586351\",\n        \"share_pct\": \"9.75%\"\n      },\n      {\n        \"from_id\": \"company_dan_goural\",\n        \"to_id\": \"company_516586351\",\n        \"share_pct\": \"40.25%\"\n      }\n    ]\n  },\n  \"high_risk_flags\": [\n    \"91% מהדיירים רשמו הערת אזהרה לטובת היזם — נדרש השלמה\"\n  ],\n  \"tenant_table\": [\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"1\",\n      \"owner_name\": \"גלעדי לירן\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-11-03\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": true,\n      \"notes\": \"קיימת משכנתא — נדרשת גרירה/הסבה לפי מנגנון הבנק המלווה.\"\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"2\",\n      \"owner_name\": \"רווה אריאלה\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-20\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"3\",\n      \"owner_name\": \"סמולניק אמיר\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": \"קיימת הערת אזהרה לטובת צד ג' (סמולניק חיה) — יש לקבל כתב נחיתות.\"\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"4\",\n      \"owner_name\": \"בן משה סמדר\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"5\",\n      \"owner_name\": \"גרינברג זיוה, אבני עדי, אבני רוני\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-24\",\n      \"is_warning_note_registered\": false,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": \"נדרש רישום הערת אזהרה לטובת היזם. קיים פער מול ההסכם בנוגע לבעלים אבני עדי ואבני רוני. פער לא שוקף במסמכים שנבדקו / נדרש אימות.\"\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"6\",\n      \"owner_name\": \"יוטבת מרים\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-19\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": true,\n      \"notes\": \"קיימת משכנתא — נדרשת גרירה/הסבה לפי מנגנון הבנק המלווה.\"\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"7\",\n      \"owner_name\": \"כרמי עזיהו\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-23\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"8\",\n      \"owner_name\": \"גליקסברג ורדה\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-15\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"9\",\n      \"owner_name\": \"סטלובסקי שפרוני נילי, שיפרוני נילי\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-15\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"10\",\n      \"owner_name\": \"מטרסו נעמה\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-20\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"11\",\n      \"owner_name\": \"בר מידן\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-09-30\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"12\",\n      \"owner_name\": \"נתנזון ברוריה\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-27\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"591\",\n      \"sub_parcel\": \"13\",\n      \"owner_name\": \"אבידני רונית\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-27\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"1\",\n      \"owner_name\": \"מנדל עידו, מנדל טל\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-26\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"2\",\n      \"owner_name\": \"דופוי פרדריק פאול\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"3\",\n      \"owner_name\": \"מיכלזון עדי\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"4\",\n      \"owner_name\": \"רבי גלית, רבי איתן\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"5\",\n      \"owner_name\": \"שגיא גל\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-11-20\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"6\",\n      \"owner_name\": \"פורד אילנה\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-11-02\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"7\",\n      \"owner_name\": \"פאר גולדין אילנה, גולדין יהונתן גולדין\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-22\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"8\",\n      \"owner_name\": \"ישורון עמי\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-28\",\n      \"is_warning_note_registered\": false,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": \"נדרש רישום הערת אזהרה לטובת היזם.\"\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"9\",\n      \"owner_name\": \"קוטנר יותם\",\n      \"is_signed\": true,\n      \"date_signed\": \"2025-10-26\",\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    },\n    {\n      \"helka\": \"590\",\n      \"sub_parcel\": \"10\",\n      \"owner_name\": \"טל עדו משה\",\n      \"is_signed\": true,\n      \"date_signed\": null,\n      \"is_warning_note_registered\": true,\n      \"restrictive_note_registered\": false,\n      \"is_mortgage_registered\": false,\n      \"notes\": null\n    }\n  ],\n  \"tenant_table_signing_sources\": [\n    {\n      \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n      \"page_number\": 8,\n      \"verbatim_quote\": \"מנדל עידו\",\n      \"start_index\": null,\n      \"end_index\": null,\n      \"bounding_boxes\": []\n    }\n  ],\n  \"tenant_table_warning_note_sources\": [\n    {\n      \"source_document_name\": \"נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf\",\n      \"page_number\": 2,\n      \"verbatim_quote\": \"הערת אזהרה תמ\\\"א 38 נ. גוראל יזמות דה האז בע\\\"מ חברה 517221107 61511/2025/1\",\n      \"start_index\": null,\n      \"end_index\": null,\n      \"bounding_boxes\": []\n    }\n  ],\n  \"findings\": [\n    {\n      \"id\": \"finding-001\",\n      \"category\": \"financial\",\n      \"severity\": \"info\",\n      \"title\": \"ערבות חוק המכר\",\n      \"description\": \"היזם ימציא ערבות חוק המכר בשווי דירת התמורה, צמודה למדד תשומות הבנייה. ערבויות לא מוזכרות בדו\\\"ח האפס.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n          \"page_number\": 45,\n          \"verbatim_quote\": \"היזם מתחייב להמציא לכל אחד מיחידי הבעלים ערבות בנקאית צמודה למדד תשומות הבנייה למגורים, בנוסח שלפי הוראות חוק המכר (דירות) (הבטחת השקעות של רוכשי דירות), התשל\\\"ה 1974 (להלן: \\\"חוק המכר הבטחת השקעות\\\"), בשווי ערכה המלא של דירתו החדשה של יחיד הבעלים בהתאמה, כולל רכיב המע\\\"מ, בסכום כפי שיקבע על ידי השמאי\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-002\",\n      \"category\": \"financial\",\n      \"severity\": \"info\",\n      \"title\": \"ערבות שכירות\",\n      \"description\": \"היזם יפקיד ערבות שכירות לתקופה של 30 חודשים, התואמת את תקופת הבנייה החוזית (30 חודשים). ערבויות לא מוזכרות בדו\\\"ח האפס.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n          \"page_number\": 45,\n          \"verbatim_quote\": \"ערבות בנקאית אוטונומית פוחתת, צמודה למדד המחירים לצרכן, בסך של דמי השכירות המוסכמים עבור אותו יחיד בעלים לתקופה של 30 חודשים(לעיל ולהלן: \\\"ערבות השכירות\\\").\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-003\",\n      \"category\": \"financial\",\n      \"severity\": \"info\",\n      \"title\": \"ערבות מס שבח\",\n      \"description\": \"היזם יפקיד ערבות בנקאית אוטונומית בגובה מס השבח הצפוי לחול על הבעלים, כפי שיוערך בחוות דעת. ערבויות לא מוזכרות בדו\\\"ח האפס.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n          \"page_number\": 46,\n          \"verbatim_quote\": \"היזם יפקיד בידי ב\\\"כ הבעלים עד למועד הפינוי בפועל ערבות בנקאית אוטונומית צמודה למדד המחירים לצרכן בגובה מס השבח הצפוי לחול על הבעלים עפ\\\"י חוות הדעת, לפקודת רשויות מיסוי מקרקעין\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-004\",\n      \"category\": \"financial\",\n      \"severity\": \"info\",\n      \"title\": \"ערבות בדק\",\n      \"description\": \"היזם ימסור ערבות בדק בשיעור 3% משווי עלות ביצוע העבודות, בתוקף ל-18 חודשים ממועד המסירה. ערבויות לא מוזכרות בדו\\\"ח האפס.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n          \"page_number\": 46,\n          \"verbatim_quote\": \"ערבות בנקאית אוטונומית בשיעור של 3% (שלושה אחוז) משווי עלות ביצוע העבודות לבעלים, כפי שייקבע על ידי השמאי כהגדרתו בסעיף 2 לעיל, אשר תהיה בנוסח המצ\\\"ב כנספח טו' להסכם זה, שתימסר לב\\\"כ הבעלים במועד מסירת כל אחת מדירות הבעלים ותהיה בתוקף ביחס לכל דירה, ממועד מסירתה בפועל בהתאם להוראות ההסכם ועד לתום 18 חודשים ממועד זה\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-005\",\n      \"category\": \"financial\",\n      \"severity\": \"info\",\n      \"title\": \"ערבות רישום\",\n      \"description\": \"בתום תקופת הבדק, תופחת ערבות הבדק ל-60,000 ש\\\"ח כערבות רישום, בתוקף ל-24 חודשים נוספים, להבטחת רישום הבית המשותף. ערבויות לא מוזכרות בדו\\\"ח האפס.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf\",\n          \"page_number\": 46,\n          \"verbatim_quote\": \"בתום תקופת הבדק, היה ולא נרשם הבית המשותף, תופחת ערבות הבדק ותעמוד על סך של 60,000 ₪ (שישים אלף שקלים חדשים) ותהיה בתוקף ממועד זה ועד לתום 24 חודשים ממועד זה, וזאת לצורך הבטחת רישום הבית המשותף וייחוד דירות הבעלים על שמם.\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-006\",\n      \"category\": \"legal\",\n      \"severity\": \"warning\",\n      \"title\": \"עיכוב אפשרי בקבלת היתר בנייה\",\n      \"description\": \"ההסכם קובע יעד לקבלת היתר בנייה עד 10.12.2025. נכון למועד הפקת הדו\\\"ח (ינואר 2026), טרם הוצגה אסמכתא לקבלת ההיתר, וקיים סיכון לעיכוב בלוחות הזמנים של הפרויקט.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n          \"page_number\": 5,\n          \"verbatim_quote\": \"השולמו מלוא התנאים הקבועים בהחלטת הועדה ושולמו כל האגרות בגין היתר הבנייה וזאת עד ולא יאוחר מיום 10/12/2025 (להלן: \\\"המועד הנקוב\\\")\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-007\",\n      \"category\": \"corporate\",\n      \"severity\": \"warning\",\n      \"title\": \"לא הוצג פרוטוקול מורשי חתימה\",\n      \"description\": \"לא ניתן היה לאמת את סמכות החותמים על ההסכם מטעם היזם (דן טרי גוראל, עינת אליהו לביא) מאחר שלא הוצג פרוטוקול מורשי חתימה עדכני של חברת הפרויקט 'נ. גוראל יזמות דה האז בע\\\"מ'.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"הסכם פרויקט דה האז 14 חתום סופי-.pdf\",\n          \"page_number\": 9,\n          \"verbatim_quote\": \"ולראיה באו הצדדים על החתום: נ. גוראל יזמות דה האז בע\\\"מ\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    },\n    {\n      \"id\": \"finding-008\",\n      \"category\": \"corporate\",\n      \"severity\": \"info\",\n      \"title\": \"שעבוד צף רשום על חברת אם\",\n      \"description\": \"על חברת האם 'נריטה חברה למסחר והשקעות בע\\\"מ', המחזיקה בשרשור ביזם, רשום שעבוד צף. לידיעה בלבד — השעבוד רשום על נכס אחר (פרויקט בראשון לציון) ואינו מהווה חסם לפרויקט הנוכחי.\",\n      \"sources\": [\n        {\n          \"source_document_name\": \"נסח חברה נריטה מיום 27.1.2026.pdf\",\n          \"page_number\": 2,\n          \"verbatim_quote\": \"שיעבוד צף/ספציפי — ללא הגבלה — איסור שעבוד או העברת נכסים ללא הסכמת בעל השעבוד. — כל הזכויות בפרויקט ב.ס.ר ראשונים בגוש 3946 חלקה 144 בראשל\\\"צ\",\n          \"start_index\": null,\n          \"end_index\": null,\n          \"bounding_boxes\": []\n        }\n      ],\n      \"cross_references\": []\n    }\n  ]\n}",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": null,
+          "creation_timestamp": 1773004829.0726275,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": {
+        "app_name": "d-done",
+        "user_id": "dd-eval",
+        "state": {
+          "document_names": [
+            "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+            "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+            "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+            "ועדת אשראי.pdf",
+            "מורשי חתימה נריטה 30.12.2025.pdf",
+            "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+            "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+            "נסח חברה נריטה מיום 27.1.2026.pdf",
+            "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+            "נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+            "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+            "תעודת התאגדות_דן השקעות.pdf"
+          ],
+          "docai_output_uris": {},
+          "tabu_extraction": {
+            "parcels": [
+              {
+                "address": "תל אביב - יפו",
+                "block": "6212",
+                "parcel": "591",
+                "source_document_name": "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+                "sub_parcels": [
+                  {
+                    "sub_parcel_number": "1",
+                    "rights_holders": [
+                      {
+                        "name": "גלעדי לירן",
+                        "id_number": "034726174",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "22469/2010/1",
+                        "verbatim_quote": "גלעדי לירן ת.ז 034726174 בשלמות מכר 22469/2010/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61511/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61511/2025/1"
+                      }
+                    ],
+                    "mortgages": [
+                      {
+                        "registration_type": "משכנתה",
+                        "bank_or_lender": "הבנק הבינלאומי הראשון לישראל בע\"מ",
+                        "deed_or_reference_number": "22469/2010/2",
+                        "rank_or_degree": "ראשונה",
+                        "verbatim_quote": "משכנתה הבנק הבינלאומי הראשון לישראל בע\"מ חברה 520029083 בשלמות 22469/2010/2 דרגה: ראשונה"
+                      },
+                      {
+                        "registration_type": "משכנתה",
+                        "bank_or_lender": "בנק הבינלאומי הראשון לישראל בע\"מ",
+                        "deed_or_reference_number": "52132/2019/1",
+                        "rank_or_degree": "ראשונה",
+                        "verbatim_quote": "משכנתה בנק הבינלאומי הראשון לישראל בע\"מ חברה 520029083 בשלמות 52132/2019/1 דרגה: ראשונה"
+                      }
+                    ],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "2",
+                    "rights_holders": [
+                      {
+                        "name": "רווה אריאלה",
+                        "id_number": "2794226-7",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "צוואה",
+                        "deed_or_reference_number": "8502/1997",
+                        "verbatim_quote": "רווה אריאלה ת.ז 2794226-7 בשלמות צוואה 8502/1997"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61475/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61475/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "3",
+                    "rights_holders": [
+                      {
+                        "name": "סמולניק אמיר",
+                        "id_number": "031986029",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "40396/1995/1",
+                        "verbatim_quote": "סמולניק אמיר ת.ז 031986029 בשלמות מכר 40396/1995/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "אחר",
+                        "beneficiary": "סמולניק חיה",
+                        "deed_or_reference_number": "42652/2008/1",
+                        "verbatim_quote": "תיקונים שונים בהערה סמולניק חיה 42652/2008/1"
+                      },
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61474/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61474/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "4",
+                    "rights_holders": [
+                      {
+                        "name": "בן משה סמדר",
+                        "id_number": "029632049",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר ללא תמורה",
+                        "deed_or_reference_number": "4196/2003/1",
+                        "verbatim_quote": "בן משה סמדר ת.ז 029632049 בשלמות מכר ללא תמורה 4196/2003/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61467/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61467/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "5",
+                    "rights_holders": [
+                      {
+                        "name": "גרינברג זיוה",
+                        "id_number": "775518",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "6770/1986",
+                        "verbatim_quote": "גרינברג זיוה ת.ז 775518 1/2 מכר 6770/1986"
+                      },
+                      {
+                        "name": "אבני עדי",
+                        "id_number": "55965867",
+                        "ownership_share": "1/4",
+                        "acquisition_type": "ירושה",
+                        "deed_or_reference_number": "71633/2025/1",
+                        "verbatim_quote": "אבני עדי ת.ז 55965867 1/4 ירושה 71633/2025/1"
+                      },
+                      {
+                        "name": "אבני רוני",
+                        "id_number": "58713819",
+                        "ownership_share": "1/4",
+                        "acquisition_type": "ירושה",
+                        "deed_or_reference_number": "71633/2025/1",
+                        "verbatim_quote": "אבני רוני ת.ז 58713819 1/4 ירושה 71633/2025/1"
+                      }
+                    ],
+                    "caveats": [],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "6",
+                    "rights_holders": [
+                      {
+                        "name": "יוטבת מרים",
+                        "id_number": "056560436",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "54866/2024/1",
+                        "verbatim_quote": "יוטבת מרים ת.ז 056560436 בשלמות מכר 54866/2024/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61450/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61450/2025/1"
+                      }
+                    ],
+                    "mortgages": [
+                      {
+                        "registration_type": "משכנתה",
+                        "bank_or_lender": "בנק הבינלאומי הראשון לישראל בע\"מ",
+                        "deed_or_reference_number": "8692/2025/1",
+                        "rank_or_degree": "ראשונה",
+                        "verbatim_quote": "משכנתה בנק הבינלאומי הראשון לישראל בע\"מ חברה 520029083 בשלמות 8692/2025/1 דרגה: ראשונה"
+                      }
+                    ],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "7",
+                    "rights_holders": [
+                      {
+                        "name": "כרמי עזיהו",
+                        "id_number": "007646193",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "ירושה",
+                        "deed_or_reference_number": "2373/2013/2",
+                        "verbatim_quote": "כרמי עזיהו ת.ז 007646193 בשלמות ירושה 2373/2013/2"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61469/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61469/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "8",
+                    "rights_holders": [
+                      {
+                        "name": "גליקסברג ורדה",
+                        "id_number": "054658646",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "צוואה",
+                        "deed_or_reference_number": "20323/2025/1",
+                        "verbatim_quote": "גליקסברג ורדה ת.ז 054658646 בשלמות צוואה 20323/2025/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61468/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61468/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "9",
+                    "rights_holders": [
+                      {
+                        "name": "סטלובסקי שפרוני נילי",
+                        "id_number": "054030515",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר ללא תמורה",
+                        "deed_or_reference_number": "15726/2003/1",
+                        "verbatim_quote": "סטלובסקי שפרוני נילי ת.ז 054030515 1/2 מכר ללא תמורה 15726/2003/1"
+                      },
+                      {
+                        "name": "שיפרוני נילי",
+                        "id_number": "054030515",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר ללא תמורה",
+                        "deed_or_reference_number": "49441/2009/1",
+                        "verbatim_quote": "שיפרוני נילי ת.ז 054030515 1/2 מכר ללא תמורה 49441/2009/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61471/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61471/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "10",
+                    "rights_holders": [
+                      {
+                        "name": "מטרסו נעמה",
+                        "id_number": "301734869",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "10034/2015/1",
+                        "verbatim_quote": "מטרסו נעמה ת.ז 301734869 בשלמות מכר 10034/2015/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61451/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61451/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "11",
+                    "rights_holders": [
+                      {
+                        "name": "בר מידן",
+                        "id_number": "025345794",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "42205/2006/1",
+                        "verbatim_quote": "בר מידן ת.ז 025345794 בשלמות מכר 42205/2006/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61454/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61454/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "12",
+                    "rights_holders": [
+                      {
+                        "name": "נתנזון ברוריה",
+                        "id_number": "003097177",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "עדכון פרטי זיהוי",
+                        "deed_or_reference_number": "26550/2021/1",
+                        "verbatim_quote": "נתנזון ברוריה ת.ז 003097177 בשלמות עדכון פרטי זיהוי 26550/2021/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61453/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61453/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "13",
+                    "rights_holders": [
+                      {
+                        "name": "אבידני רונית",
+                        "id_number": "028649895",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "12602/2010/1",
+                        "verbatim_quote": "אבידני רונית ת.ז 028649895 בשלמות מכר 12602/2010/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61455/2025/1",
+                        "verbatim_quote": "הערת אזהרה נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61455/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  }
+                ],
+                "timeline_events": [
+                  {
+                    "date": "2025-12-31",
+                    "event_description": "הוצאת נסח טאבו",
+                    "source": {
+                      "source_document_name": "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+                      "page_number": 1,
+                      "verbatim_quote": "תאריך 31/12/2025"
+                    }
+                  }
+                ],
+                "notes": []
+              },
+              {
+                "address": "תל אביב - יפו",
+                "block": "6212",
+                "parcel": "590",
+                "source_document_name": "נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+                "sub_parcels": [
+                  {
+                    "sub_parcel_number": "1",
+                    "rights_holders": [
+                      {
+                        "name": "מנדל עידו",
+                        "id_number": "023598121",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "7736/2006/1",
+                        "verbatim_quote": "מנדל עידו ת.ז 023598121 1/2 מכר 7736/2006/1"
+                      },
+                      {
+                        "name": "מנדל טל",
+                        "id_number": "023902935",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "7736/2006/1",
+                        "verbatim_quote": "מנדל טל ת.ז 023902935 1/2 מכר 7736/2006/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61443/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61443/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "2",
+                    "rights_holders": [
+                      {
+                        "name": "דופוי פרדריק פאול",
+                        "id_number": "314387903",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "7076/2005/1",
+                        "verbatim_quote": "דופוי פרדריק פאול ת.ז 314387903 בשלמות מכר 7076/2005/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61439/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61439/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "3",
+                    "rights_holders": [
+                      {
+                        "name": "מיכלזון עדי",
+                        "id_number": "028712297",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "48321/2013/1",
+                        "verbatim_quote": "מיכלזון עדי ת.ז 028712297 בשלמות מכר 48321/2013/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61496/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61496/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "4",
+                    "rights_holders": [
+                      {
+                        "name": "רבי גלית",
+                        "id_number": "28407799",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "14597/2013/1",
+                        "verbatim_quote": "רבי גלית ת.ז 28407799 1/2 מכר 14597/2013/1"
+                      },
+                      {
+                        "name": "רבי איתן",
+                        "id_number": "022364038",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "14597/2013/1",
+                        "verbatim_quote": "רבי איתן ת.ז 022364038 1/2 מכר 14597/2013/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61499/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61499/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "5",
+                    "rights_holders": [
+                      {
+                        "name": "שגיא גל",
+                        "id_number": "043399336",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "19905/2007/2",
+                        "verbatim_quote": "שגיא גל ת.ז 043399336 בשלמות מכר 19905/2007/2"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61500/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61500/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "6",
+                    "rights_holders": [
+                      {
+                        "name": "פורד אילנה",
+                        "id_number": "5164515",
+                        "ownership_share": "1/4",
+                        "acquisition_type": "תיקון טעות סופר",
+                        "deed_or_reference_number": "22973/1991",
+                        "verbatim_quote": "פורד אילנה ת.ז 5164515 1/4 תיקון טעות סופר 22973/1991"
+                      },
+                      {
+                        "name": "פורד אילנה",
+                        "id_number": "051645158",
+                        "ownership_share": "3/4",
+                        "acquisition_type": "ירושה",
+                        "deed_or_reference_number": "48770/1994/2",
+                        "verbatim_quote": "פורד אילנה ת.ז 051645158 3/4 ירושה 48770/1994/2"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61504/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61504/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "7",
+                    "rights_holders": [
+                      {
+                        "name": "פאר גולדין אילנה",
+                        "id_number": "067275842",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "24401/2002/1",
+                        "verbatim_quote": "פאר גולדין אילנה ת.ז 067275842 1/2 מכר 24401/2002/1"
+                      },
+                      {
+                        "name": "גולדין יהונתן גולדין",
+                        "id_number": "015122906",
+                        "ownership_share": "1/2",
+                        "acquisition_type": "עדכון פרטי זיהוי",
+                        "deed_or_reference_number": "32504/2018/1",
+                        "verbatim_quote": "גולדין יהונתן גולדין ת.ז 015122906 1/2 עדכון פרטי זיהוי 32504/2018/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61509/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61509/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "8",
+                    "rights_holders": [
+                      {
+                        "name": "ישורון עמי",
+                        "id_number": "K00054419",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "עדכון פרטי זיהוי",
+                        "deed_or_reference_number": "4996/2019/1",
+                        "verbatim_quote": "ישורון עמי דרכון קפריסין K00054419 בשלמות עדכון פרטי זיהוי 4996/2019/1"
+                      }
+                    ],
+                    "caveats": [],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "9",
+                    "rights_holders": [
+                      {
+                        "name": "קוטנר יותם",
+                        "id_number": "204893713",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "מכר",
+                        "deed_or_reference_number": "13166/2014/1",
+                        "verbatim_quote": "קוטנר יותם ת.ז 204893713 בשלמות מכר 13166/2014/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61513/2025/1",
+                        "verbatim_quote": "הערת אזהרה נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61513/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  },
+                  {
+                    "sub_parcel_number": "10",
+                    "rights_holders": [
+                      {
+                        "name": "טל עדו משה",
+                        "id_number": "058103466",
+                        "ownership_share": "בשלמות",
+                        "acquisition_type": "צוואה",
+                        "deed_or_reference_number": "55235/2024/1",
+                        "verbatim_quote": "טל עדו משה ת.ז 058103466 בשלמות צוואה 55235/2024/1"
+                      }
+                    ],
+                    "caveats": [
+                      {
+                        "registration_type": "הערת אזהרה",
+                        "beneficiary": "נ. גוראל יזמות דה האז בע\"מ",
+                        "deed_or_reference_number": "61512/2025/1",
+                        "verbatim_quote": "הערת אזהרה תמ\"א 38 נ. גוראל יזמות דה האז בע\"מ חברה 517221107 61512/2025/1"
+                      }
+                    ],
+                    "mortgages": [],
+                    "notes_excluded_transfer_to_foreigners": false
+                  }
+                ],
+                "timeline_events": [
+                  {
+                    "date": "2026-01-25",
+                    "event_description": "הוצאת נסח טאבו",
+                    "source": {
+                      "source_document_name": "נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+                      "page_number": 1,
+                      "verbatim_quote": "תאריך 25/01/2026"
+                    }
+                  }
+                ],
+                "notes": [
+                  "בצו רישום הבית המשותף קיימת הפניה לתקנון מצוי או תקנון מוסכם . יש לעיין בתיק הפעולה."
+                ]
+              }
+            ]
+          },
+          "agreement_extraction": {
+            "agreement_type": "פינוי בינוי",
+            "address": "רחוב דה האז 14 ו-16, תל אביב",
+            "block": "6212",
+            "parcel": "590, 591",
+            "sub_parcels_listed": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13"
+            ],
+            "professional_representatives": [
+              {
+                "name": "גיא פרבמן",
+                "role": "בא כוח הדיירים",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 9,
+                  "verbatim_quote": "גיא פרבמן, עו\"ד"
+                }
+              },
+              {
+                "name": "רון שילוני",
+                "role": "בא כוח היזם/החברה",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 9,
+                  "verbatim_quote": "רון שילוני עו\"ד"
+                }
+              }
+            ],
+            "lender_type": "bank / insurance / fund",
+            "lender_definition_clause": "אחד מחמשת הבנקים הגדולים בישראל ו/או אחת מארבע חברות ביטוח הגדולות בישראל ו/או בשילוב קרן \"יסודות\" ו/או קרן \"מכלול\" ו/או קרן \"ארכימדס\" ו/או קרן \"ברקת\" ו/או קרן \"פנינסולה מבית מיטב\" ו/או כל קרן אחרת בעלת ניסיון בליווי פיננסי לפרויקטים מסוג זה, בכפוף לאישור הנציגות), עמו יתקשר היזם בהסכם לצורך קבלת מימון לביצוע הפרויקט במתכונת של ליווי סגור, ולצורך מתן ערבויות בנקאיות ו/או פוליסות ביטוח לבעלים על פי הסכם זה ולרוכשי דירות היזם.",
+            "lender_allows_funds": true,
+            "guarantees": [
+              {
+                "guarantee_type": "ערבות חוק המכר",
+                "amount": "שווי ערכה המלא של דירתו החדשה של יחיד הבעלים בהתאמה, כולל רכיב המע\"מ, בסכום כפי שיקבע על ידי השמאי",
+                "trigger_condition": "כנגד רישום שעבוד מלוא הזכויות במקרקעין ורישום משכנתא ראשונה בדרגה ללא הגבלה בסכום בפועל על כל זכויות הבעלים במקרקעין לטובת הבנק המלווה",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 45,
+                  "verbatim_quote": "כנגד רישום שעבוד מלוא הזכויות במקרקעין ורישום משכנתא ראשונה בדרגה ללא הגבלה בסכום בפועל על כל זכויות הבעלים במקרקעין לטובת הבנק המלווה בהתאם להוראות הסכם זה ובכפוף לפינוי כל הדירות הנוכחיות בהתאם להוראות ההסכם, היזם מתחייב להמציא לכל אחד מיחידי הבעלים ערבות בנקאית צמודה למדד תשומות הבנייה למגורים, בנוסח שלפי הוראות חוק המכר (דירות) (הבטחת השקעות של רוכשי דירות), התשל\"ה 1974 (להלן: \"חוק המכר הבטחת השקעות\"), בשווי ערכה המלא של דירתו החדשה של יחיד הבעלים בהתאמה, כולל רכיב המע\"מ, בסכום כפי שיקבע על ידי השמאי כהגדרתו בסעיף 2 לעיל"
+                }
+              },
+              {
+                "guarantee_type": "ערבות שכירות",
+                "amount": "בסך של דמי השכירות המוסכמים עבור אותו יחיד בעלים לתקופה של 30 חודשים",
+                "trigger_condition": "לפני מועד הפינוי כהגדרתו וכתנאי לפינוי הדירות הנוכחיות",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 45,
+                  "verbatim_quote": "להבטחת תשלום דמי השכירות המוסכמים בהתאם להוראות סעיף 8.1 לעיל, יפקיד היזם בידי ב\"כ הבעלים בנאמנות לפני מועד הפינוי כהגדרתו וכתנאי לפינוי הדירות הנוכחיות עבור כל יחיד בעלים שפינה את דירתו בפועל בהתאם להוראות סעיף 9.2 לעיל בנפרד או עבור כלל הבעלים (שפינו את דירותיהם) יחד, עפ\"י החלטת החברה, ערבות בנקאית אוטונומית פוחתת, צמודה למדד המחירים לצרכן, בסך של דמי השכירות המוסכמים עבור אותו יחיד בעלים לתקופה של 30 חודשים(לעיל ולהלן: \"ערבות השכירות\")."
+                }
+              },
+              {
+                "guarantee_type": "ערבות מס שבח",
+                "amount": "בגובה מס השבח הצפוי לחול על הבעלים עפ\"י חוות הדעת",
+                "trigger_condition": "עד למועד הפינוי בפועל",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 46,
+                  "verbatim_quote": "בכפוף להוראות סעיף 9.2 לעיל, עד למועד הפינוי בפועל כהגדרתו בסעיף 9.1 לעיל, יציג היזם חוות דעת של יועץ מיסוי מטעמו לב\"כ הבעלים בו יצוין גובה מס השבח הצפוי לחול על הבעלים, בהתאם להוראות (להלן: \"חוות הדעת\") או אישור בדבר פטור מתשלום מס השבח כאמור, היזם יפקיד בידי ב\"כ הבעלים עד למועד הפינוי בפועל ערבות בנקאית אוטונומית צמודה למדד המחירים לצרכן בגובה מס השבח הצפוי לחול על הבעלים עפ\"י חוות הדעת, לפקודת רשויות מיסוי מקרקעין"
+                }
+              },
+              {
+                "guarantee_type": "ערבות בדק",
+                "amount": "בשיעור של 3% (שלושה אחוז) משווי עלות ביצוע העבודות לבעלים, כפי שייקבע על ידי השמאי",
+                "trigger_condition": "במועד מסירת כל אחת מדירות הבעלים",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 46,
+                  "verbatim_quote": "ערבות בנקאית אוטונומית בשיעור של 3% (שלושה אחוז) משווי עלות ביצוע העבודות לבעלים, כפי שייקבע על ידי השמאי כהגדרתו בסעיף 2 לעיל, אשר תהיה בנוסח המצ\"ב כנספח טו' להסכם זה, שתימסר לב\"כ הבעלים במועד מסירת כל אחת מדירות הבעלים ותהיה בתוקף ביחס לכל דירה, ממועד מסירתה בפועל בהתאם להוראות ההסכם ועד לתום 18 חודשים ממועד זה"
+                }
+              },
+              {
+                "guarantee_type": "ערבות רישום",
+                "amount": "60,000 ₪",
+                "trigger_condition": "בתום תקופת הבדק, היה ולא נרשם הבית המשותף",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 46,
+                  "verbatim_quote": "בתום תקופת הבדק, היה ולא נרשם הבית המשותף, תופחת ערבות הבדק ותעמוד על סך של 60,000 ₪ (שישים אלף שקלים חדשים) ותהיה בתוקף ממועד זה ועד לתום 24 חודשים ממועד זה, וזאת לצורך הבטחת רישום הבית המשותף וייחוד דירות הבעלים על שמם."
+                }
+              }
+            ],
+            "alternative_financing": "ההסכם מתיר במפורש שימוש בקרנות מימון, בכפוף לאישור הנציגות.",
+            "alternative_financing_conditions": "הגדרת \"הבנק המלווה\" כוללת במפורש את קרן \"יסודות\", קרן \"מכלול\", קרן \"ארכימדס\", קרן \"ברקת\", וקרן \"פנינסולה מבית מיטב\". כמו כן, ההגדרה כוללת \"כל קרן אחרת בעלת ניסיון בליווי פיננסי לפרויקטים מסוג זה, בכפוף לאישור הנציגות\".",
+            "project_scope": {
+              "owner_replacement_units": 23,
+              "developer_units": 16,
+              "total_planned_units": 39
+            },
+            "upgrade_downgrade_terms": {
+              "upgrade_allowed": true,
+              "upgrade_details": "הבעלים רשאים לבקש שדרוג חניה לחניה קונבנציונלית תמורת 100,000 ש\"ח בתוספת מע\"מ. כמו כן, הדיירים רשאים לבקש שינויים ותוספות בדירתם, אשר יבוצעו בתשלום לפי מחירון, ובתנאי שאינם מהווים שינוי קונסטרוקטיבי או כזה הדורש שינוי היתר. שינויים מסוימים (כגון הזזת מחיצות פנים) יבוצעו ללא תשלום אם יתבקשו במועד.",
+              "downgrade_allowed": false,
+              "downgrade_details": "אין התייחסות בהסכם"
+            },
+            "project_timelines": [
+              {
+                "milestone": "תוקף ההסכם",
+                "deadline_or_condition": "מותנה בחתימת 100% מהבעלים על ההסכם עד ליום 10.12.2025.",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 5,
+                  "verbatim_quote": "לא נחתם הסכם זה על ידי 100% מהבעלים כאמור עד למועד חתימת הבעלים, יהיה רשאי היזם להאריך את התקופה בתקופות נוספת בת 45 ימים ולא יותר מיום 10.12.2025. למען הסר ספק, לא נחתם הסכם זה על ידי 100% מהבעלים, עד למועד הנקוב בסייק זה לעיל, הסכם זה יהיה בטל ומבוטל."
+                }
+              },
+              {
+                "milestone": "קבלת היתר בנייה",
+                "deadline_or_condition": "יש להשלים את כל התנאים ולקבל היתר בנייה עד ליום 10.12.2025.",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 5,
+                  "verbatim_quote": "השולמו מלוא התנאים הקבועים בהחלטת הועדה ושולמו כל האגרות בגין היתר הבנייה וזאת עד ולא יאוחר מיום 10/12/2025 (להלן: \"המועד הנקוב\")"
+                }
+              },
+              {
+                "milestone": "הודעת פינוי",
+                "deadline_or_condition": "בתוך 90 ימים מהתקיימות כל התנאים המפורטים: השלמת תנאי החלטת הועדה, קבלת חשבון אגרות, קבלת טופס 2.",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "על אף הקבוע בהסכם ההתחדשות לעניין פינוי דירות הבעלים ומתן הודעת הפינוי, מוסכם בין הצדדים כי היזם יתן לבעלים הודעת פינוי בתוך 90 ימים ממועד תקיימות כל התנאים המפורטים להלן במצטבר: (1) השלמת מלוא התנאים בהחלטת הועדה; (2) קבלת חשבון אגרות; (3) קבלת טופס 2 (צו התחלת עבודה)."
+                }
+              },
+              {
+                "milestone": "השלמת בנייה",
+                "deadline_or_condition": "30 חודשים ממועד תחילת ביצוע העבודות.",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 36,
+                  "verbatim_quote": "היזם ישלים את בניית הפרויקט בתוך 30 (שלושים) חודשים ממועד תחילת ביצוע העבודות כהגדרתו לעיל"
+                }
+              },
+              {
+                "milestone": "תקופת חסד (גרייס) למסירה",
+                "deadline_or_condition": "60 יום",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 37,
+                  "verbatim_quote": "על אף האמור לעיל, מוסכם במפורש כי עיכוב של עד 60 ימים במועד המסירה, מכל סיבה שהיא, לא יהווה הפרה של הסכם זה על ידי היזם ולא תזכה את הבעלים בסעד ו/או תרופה ו/או פיצוי כלשהם."
+                }
+              }
+            ],
+            "tenant_records": [
+              {
+                "sub_parcel": "1",
+                "owner_name": "מנדל עידו",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "מנדל עידו"
+                }
+              },
+              {
+                "sub_parcel": "2",
+                "owner_name": "מנדל טל",
+                "is_signed": true,
+                "date_signed": "2025-10-26",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "מנדל טל"
+                }
+              },
+              {
+                "sub_parcel": "3",
+                "owner_name": "דופוי פרדריק פאול",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "דופוי פרדריק פאול"
+                }
+              },
+              {
+                "sub_parcel": "4",
+                "owner_name": "מיכלזון עדי, רבי גלית, רבי איתן",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "מיכלזון עדי"
+                }
+              },
+              {
+                "sub_parcel": "5",
+                "owner_name": "שגיא גל",
+                "is_signed": true,
+                "date_signed": "2025-11-20",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "שגיא גל"
+                }
+              },
+              {
+                "sub_parcel": "6",
+                "owner_name": "פורד אילנה",
+                "is_signed": true,
+                "date_signed": "2025-11-02",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "פורד אילנה"
+                }
+              },
+              {
+                "sub_parcel": "7",
+                "owner_name": "פאר גולדין אילנה, גולדין יהונתן גולדין",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 8,
+                  "verbatim_quote": "פאר גולדין אילנה"
+                }
+              },
+              {
+                "sub_parcel": "8",
+                "owner_name": "ישורון עמי",
+                "is_signed": true,
+                "date_signed": "2025-10-28",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 9,
+                  "verbatim_quote": "ישורון עמי"
+                }
+              },
+              {
+                "sub_parcel": "9",
+                "owner_name": "קוטנר יותם",
+                "is_signed": true,
+                "date_signed": "2025-10-26",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 9,
+                  "verbatim_quote": "קוטנר יותם"
+                }
+              },
+              {
+                "sub_parcel": "10",
+                "owner_name": "טל עדו משה",
+                "is_signed": true,
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 9,
+                  "verbatim_quote": "טל עדו משה"
+                }
+              },
+              {
+                "sub_parcel": "1",
+                "owner_name": "גלעדי לירן",
+                "is_signed": true,
+                "date_signed": "2025-11-03",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "גלעדי לירן"
+                }
+              },
+              {
+                "sub_parcel": "2",
+                "owner_name": "רווה אריאלה",
+                "is_signed": true,
+                "date_signed": "2025-10-20",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "רווה אריאלה"
+                }
+              },
+              {
+                "sub_parcel": "3",
+                "owner_name": "סמולניק אמיר",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "סמולניק אמיר"
+                }
+              },
+              {
+                "sub_parcel": "4",
+                "owner_name": "בן משה סמדר",
+                "is_signed": true,
+                "date_signed": "2025-10-22",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "בן משה סמדר"
+                }
+              },
+              {
+                "sub_parcel": "5",
+                "owner_name": "גרינברג זיוה",
+                "is_signed": true,
+                "date_signed": "2025-10-24",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "גרינברג זיוה"
+                }
+              },
+              {
+                "sub_parcel": "6",
+                "owner_name": "אבני שרה, יוטבת מרים",
+                "is_signed": true,
+                "date_signed": "2025-10-19",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "אבני שרה"
+                }
+              },
+              {
+                "sub_parcel": "7",
+                "owner_name": "כרמי עזיהו",
+                "is_signed": true,
+                "date_signed": "2025-10-23",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "כרמי עזיהו"
+                }
+              },
+              {
+                "sub_parcel": "8",
+                "owner_name": "גליקסברג ורדה",
+                "is_signed": true,
+                "date_signed": "2025-10-15",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "גליקסברג ורדה"
+                }
+              },
+              {
+                "sub_parcel": "9",
+                "owner_name": "סטלובסקי שפרוני נילי",
+                "is_signed": true,
+                "date_signed": "2025-10-15",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "סטלובסקי שפרוני נילי"
+                }
+              },
+              {
+                "sub_parcel": "10",
+                "owner_name": "מטרסו נעמה",
+                "is_signed": true,
+                "date_signed": "2025-10-20",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "מטרסו נעמה"
+                }
+              },
+              {
+                "sub_parcel": "11",
+                "owner_name": "בר מידן",
+                "is_signed": true,
+                "date_signed": "2025-09-30",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "בר מידן"
+                }
+              },
+              {
+                "sub_parcel": "12",
+                "owner_name": "נתנזון ברוריה",
+                "is_signed": true,
+                "date_signed": "2025-10-27",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "נתנזון ברוריה"
+                }
+              },
+              {
+                "sub_parcel": "13",
+                "owner_name": "אבידני רונית",
+                "is_signed": true,
+                "date_signed": "2025-10-27",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+                  "page_number": 7,
+                  "verbatim_quote": "אבידני רונית"
+                }
+              }
+            ],
+            "developer_signed_date": "2025-11-11",
+            "developer_signatory_name": "דן טרי גוראל, עינת אליהו לביא",
+            "developer_signatory_id": "301335188, 036120053",
+            "timeline_events": [
+              {
+                "date": "2025-11-11",
+                "event_description": "חתימת הסכם",
+                "source": {
+                  "source_document_name": "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+                  "page_number": 1,
+                  "verbatim_quote": "שנערך ונחתם בתל אביב ביום 11 לחודש נובמבר שנת 2025"
+                }
+              }
+            ],
+            "notes": []
+          },
+          "company_docs_extraction": {
+            "companies": [
+              {
+                "source_document_name": "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+                "company_name": "דן גוראל השקעות בע\"מ",
+                "company_number": "516578705",
+                "incorporation_date": "2022-03-10",
+                "company_type": "חברה פרטית",
+                "registered_address": "ביל\"ו 14 תל אביב - יפו מיקוד: 6522223",
+                "officers": [
+                  {
+                    "name": "גוראל דן טרי",
+                    "role": "דירקטור",
+                    "id_number": "301335188"
+                  }
+                ],
+                "shareholders": [
+                  "גוראל דן טרי — 100 מניות מסוג רגילות, בנות 1 שקל חדש, בהחזקה רגילה"
+                ],
+                "ubo_chain": [
+                  "דן גוראל השקעות בע\"מ",
+                  "גוראל דן טרי (ת.ז. 301335188)"
+                ],
+                "ubo_graph": {
+                  "nodes": [
+                    {
+                      "id": "root",
+                      "name": "דן גוראל השקעות בע\"מ",
+                      "type": "company",
+                      "company_number": "516578705"
+                    },
+                    {
+                      "id": "person_301335188",
+                      "name": "גוראל דן טרי",
+                      "type": "person",
+                      "id_number": "301335188"
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "from_id": "person_301335188",
+                      "to_id": "root",
+                      "share_pct": "100%"
+                    }
+                  ]
+                },
+                "active_status": true,
+                "liens_or_charges": [],
+                "timeline_events": [],
+                "notes": [
+                  "*אין ברשם החברות נתונים של שעבודים לחברה זו*"
+                ]
+              },
+              {
+                "source_document_name": "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+                "company_name": "נ. גוראל יזמות בע\"מ",
+                "company_number": "516586351",
+                "incorporation_date": "2022-03-24",
+                "company_type": "חברה פרטית",
+                "registered_address": "ביל\"ו 14 תל אביב - יפו מיקוד: 6522223",
+                "officers": [
+                  {
+                    "name": "איל עדי",
+                    "role": "דירקטור",
+                    "id_number": "56109796"
+                  },
+                  {
+                    "name": "גוראל דן טרי",
+                    "role": "דירקטור",
+                    "id_number": "301335188"
+                  }
+                ],
+                "shareholders": [
+                  "נריטה חברה למסחר והשקעות בע\"מ — 200 מניות",
+                  "גוראל איתן — 39 מניות",
+                  "דן גוראל השקעות בע\"מ — 161 מניות"
+                ],
+                "ubo_chain": [
+                  "נריטה חברה למסחר והשקעות בע\"מ (שרשרת לא מתועדת — נסח לא הועלה)",
+                  "גוראל איתן (בעל שליטה ישיר)",
+                  "דן גוראל השקעות בע\"מ (שרשרת לא מתועדת — נסח לא הועלה)"
+                ],
+                "ubo_graph": {
+                  "nodes": [
+                    {
+                      "id": "company_516586351",
+                      "name": "נ. גוראל יזמות בע\"מ",
+                      "type": "company",
+                      "company_number": "516586351"
+                    },
+                    {
+                      "id": "company_narita",
+                      "name": "נריטה חברה למסחר והשקעות בע\"מ",
+                      "type": "company"
+                    },
+                    {
+                      "id": "person_goural_itan",
+                      "name": "גוראל איתן",
+                      "type": "person"
+                    },
+                    {
+                      "id": "company_dan_goural",
+                      "name": "דן גוראל השקעות בע\"מ",
+                      "type": "company"
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "from_id": "company_narita",
+                      "to_id": "company_516586351",
+                      "share_pct": "50%"
+                    },
+                    {
+                      "from_id": "person_goural_itan",
+                      "to_id": "company_516586351",
+                      "share_pct": "9.75%"
+                    },
+                    {
+                      "from_id": "company_dan_goural",
+                      "to_id": "company_516586351",
+                      "share_pct": "40.25%"
+                    }
+                  ]
+                },
+                "active_status": true,
+                "liens_or_charges": [],
+                "timeline_events": [],
+                "notes": [
+                  "*אין ברשם החברות נתונים של שעבודים לחברה זו*",
+                  "שרשרת הבעלות של נריטה ודן גוראל השקעות אינה מתועדת — נסחי חברה לא הועלו"
+                ]
+              },
+              {
+                "source_document_name": "נסח חברה נריטה מיום 27.1.2026.pdf",
+                "company_name": "נריטה חברה למסחר והשקעות בע\"מ",
+                "company_number": "511927485",
+                "incorporation_date": "1994-01-25",
+                "company_type": "חברה פרטית",
+                "registered_address": "שד סמאטס 17 תל אביב - יפו מיקוד: 6200929",
+                "officers": [
+                  {
+                    "name": "ארדה, פדידה, יערי ושות'- רואי חשבון",
+                    "role": "רואה חשבון",
+                    "id_number": "540233954"
+                  },
+                  {
+                    "name": "איל עדי",
+                    "role": "מנכ\"ל",
+                    "id_number": "56109796"
+                  }
+                ],
+                "shareholders": [
+                  "איל עדי — 1,000 מניות מסוג רגילות, בנות 1 שקל חדש, בהחזקה רגילה"
+                ],
+                "ubo_chain": [
+                  "נריטה חברה למסחר והשקעות בע\"מ",
+                  "איל עדי (ת.ז. 56109796)"
+                ],
+                "ubo_graph": {
+                  "nodes": [
+                    {
+                      "id": "root",
+                      "name": "נריטה חברה למסחר והשקעות בע\"מ",
+                      "type": "company",
+                      "company_number": "511927485"
+                    },
+                    {
+                      "id": "person_56109796",
+                      "name": "איל עדי",
+                      "type": "person",
+                      "id_number": "56109796"
+                    }
+                  ],
+                  "edges": [
+                    {
+                      "from_id": "person_56109796",
+                      "to_id": "root",
+                      "share_pct": "100%"
+                    }
+                  ]
+                },
+                "active_status": true,
+                "liens_or_charges": [
+                  "שיעבוד צף/ספציפי — ללא הגבלה — איסור שעבוד או העברת נכסים ללא הסכמת בעל השעבוד. — כל הזכויות בפרויקט ב.ס.ר ראשונים בגוש 3946 חלקה 144 בראשל\"צ לרבות הסכם/י מכר והעברה הסכם שיתוף הסכם עם מארגן/עו\"ד/רו\"ח הסכם עם קבלן וערבות מהקבלן זכויות כלפי קבלנים וספקים זכויות ביטוח וחשבון פרוייקט 600/472764 חשבון מע\"מ 60/472780 חשבון אשראי השותף 82373 בסניף 634 זכויות פיצוי או שיפוי בשל אובדן או נזק זכויות לפטור הקלה או ריזוז הפסדים ממימוש השעבוד והכל כמפורט באגרת החוב ושוטר המשכון"
+                ],
+                "timeline_events": [],
+                "notes": []
+              },
+              {
+                "source_document_name": "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+                "company_name": "נ. גוראל יזמות דה האז בע\"מ",
+                "company_number": "517221107",
+                "incorporation_date": "2025-09-16",
+                "company_type": "חברה בערבון מוגבל",
+                "officers": [],
+                "shareholders": [],
+                "ubo_chain": [],
+                "active_status": true,
+                "liens_or_charges": [],
+                "timeline_events": [],
+                "notes": []
+              },
+              {
+                "source_document_name": "תעודת התאגדות_דן השקעות.pdf",
+                "company_name": "דן גוראל השקעות בע\"מ",
+                "company_number": "516578705",
+                "incorporation_date": "2022-03-10",
+                "company_type": "כחברה בערבון מוגבל",
+                "officers": [],
+                "shareholders": [],
+                "ubo_chain": [],
+                "active_status": true,
+                "liens_or_charges": [],
+                "timeline_events": [],
+                "notes": []
+              }
+            ]
+          },
+          "zero_report_extraction": {
+            "appraiser_name": "אודלס&קינן שמאות מקרקעין",
+            "report_date": "2025-07-23",
+            "addressee": "מכלול התחדשות עירונית",
+            "construction_restrictions": [],
+            "budget_lines": [],
+            "key_assumptions": [],
+            "discrepancies": [],
+            "guarantees_mentioned": [],
+            "timeline_events": [
+              {
+                "date": "2025-07-15",
+                "event_description": "ביקור בנכס ובסביבתו",
+                "source": {
+                  "source_document_name": "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+                  "page_number": 3,
+                  "verbatim_quote": "ביקור בנכס ובסביבתו נערך בתאריך 15/07/2025"
+                }
+              }
+            ],
+            "notes": [
+              "The report is an update to a previous report",
+              "The project involves the construction of 39 units in accordance with תמ\"א 38 regulations",
+              "The project is located at 14-16 יעקב דה האז street in תל אביב"
+            ]
+          }
+        }
+      },
+      "creation_timestamp": 1773004829.072652,
+      "rubrics": null,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 1773004829.0726755
+}

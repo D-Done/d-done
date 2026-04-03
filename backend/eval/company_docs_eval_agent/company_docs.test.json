@@ -1,0 +1,110 @@
+{
+  "eval_set_id": "company_docs_eval_set",
+  "name": "Company Docs Eval Set",
+  "description": "Golden dataset for the Company Documents (מסמכי חברה) extractor.",
+  "eval_cases": [
+    {
+      "eval_id": "company_docs_case_project_de_haz",
+      "conversation": [
+        {
+          "invocation_id": "121d71b3-4754-4ef2-862c-23abe923982c",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Process documents.",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "{\n  \"companies\": [\n    {\n      \"source_document_name\": \"נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf\",\n      \"company_name\": \"דן גוראל השקעות בע\\\"מ\",\n      \"company_number\": \"516578705\",\n      \"incorporation_date\": \"2022-03-10\",\n      \"company_type\": \"חברה פרטית\",\n      \"registered_address\": \"ביל\\\"ו 14 תל אביב - יפו מיקוד: 6522223\",\n      \"officers\": [\n        {\n          \"name\": \"גוראל דן טרי\",\n          \"role\": \"דירקטור\",\n          \"id_number\": \"301335188\"\n        }\n      ],\n      \"shareholders\": [\n        \"גוראל דן טרי — 100 מניות מסוג רגילות, בנות 1 שקל חדש, בהחזקה רגילה\"\n      ],\n      \"ubo_chain\": [\n        \"דן גוראל השקעות בע\\\"מ\",\n        \"גוראל דן טרי (ת.ז. 301335188)\"\n      ],\n      \"ubo_graph\": {\n        \"nodes\": [\n          {\n            \"id\": \"root\",\n            \"name\": \"דן גוראל השקעות בע\\\"מ\",\n            \"type\": \"company\",\n            \"company_number\": \"516578705\"\n          },\n          {\n            \"id\": \"person_301335188\",\n            \"name\": \"גוראל דן טרי\",\n            \"type\": \"person\",\n            \"id_number\": \"301335188\"\n          }\n        ],\n        \"edges\": [\n          {\n            \"from_id\": \"person_301335188\",\n            \"to_id\": \"root\",\n            \"share_pct\": \"100%\"\n          }\n        ]\n      },\n      \"active_status\": true,\n      \"liens_or_charges\": [],\n      \"timeline_events\": [],\n      \"notes\": [\n        \"*אין ברשם החברות נתונים של שעבודים לחברה זו*\"\n      ]\n    },\n    {\n      \"source_document_name\": \"נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf\",\n      \"company_name\": \"נ. גוראל יזמות בע\\\"מ\",\n      \"company_number\": \"516586351\",\n      \"incorporation_date\": \"2022-03-24\",\n      \"company_type\": \"חברה פרטית\",\n      \"registered_address\": \"ביל\\\"ו 14 תל אביב - יפו מיקוד: 6522223\",\n      \"officers\": [\n        {\n          \"name\": \"איל עדי\",\n          \"role\": \"דירקטור\",\n          \"id_number\": \"56109796\"\n        },\n        {\n          \"name\": \"גוראל דן טרי\",\n          \"role\": \"דירקטור\",\n          \"id_number\": \"301335188\"\n        }\n      ],\n      \"shareholders\": [\n        \"נריטה חברה למסחר והשקעות בע\\\"מ — 200 מניות\",\n        \"גוראל איתן — 39 מניות\",\n        \"דן גוראל השקעות בע\\\"מ — 161 מניות\"\n      ],\n      \"ubo_chain\": [\n        \"נריטה חברה למסחר והשקעות בע\\\"מ (שרשרת לא מתועדת — נסח לא הועלה)\",\n        \"גוראל איתן (בעל שליטה ישיר)\",\n        \"דן גוראל השקעות בע\\\"מ (שרשרת לא מתועדת — נסח לא הועלה)\"\n      ],\n      \"ubo_graph\": {\n        \"nodes\": [\n          {\n            \"id\": \"company_516586351\",\n            \"name\": \"נ. גוראל יזמות בע\\\"מ\",\n            \"type\": \"company\",\n            \"company_number\": \"516586351\"\n          },\n          {\n            \"id\": \"company_narita\",\n            \"name\": \"נריטה חברה למסחר והשקעות בע\\\"מ\",\n            \"type\": \"company\"\n          },\n          {\n            \"id\": \"person_goural_itan\",\n            \"name\": \"גוראל איתן\",\n            \"type\": \"person\"\n          },\n          {\n            \"id\": \"company_dan_goural\",\n            \"name\": \"דן גוראל השקעות בע\\\"מ\",\n            \"type\": \"company\"\n          }\n        ],\n        \"edges\": [\n          {\n            \"from_id\": \"company_narita\",\n            \"to_id\": \"company_516586351\",\n            \"share_pct\": \"50%\"\n          },\n          {\n            \"from_id\": \"person_goural_itan\",\n            \"to_id\": \"company_516586351\",\n            \"share_pct\": \"9.75%\"\n          },\n          {\n            \"from_id\": \"company_dan_goural\",\n            \"to_id\": \"company_516586351\",\n            \"share_pct\": \"40.25%\"\n          }\n        ]\n      },\n      \"active_status\": true,\n      \"liens_or_charges\": [],\n      \"timeline_events\": [],\n      \"notes\": [\n        \"*אין ברשם החברות נתונים של שעבודים לחברה זו*\",\n        \"שרשרת הבעלות של נריטה ודן גוראל השקעות אינה מתועדת — נסחי חברה לא הועלו\"\n      ]\n    },\n    {\n      \"source_document_name\": \"נסח חברה נריטה מיום 27.1.2026.pdf\",\n      \"company_name\": \"נריטה חברה למסחר והשקעות בע\\\"מ\",\n      \"company_number\": \"511927485\",\n      \"incorporation_date\": \"1994-01-25\",\n      \"company_type\": \"חברה פרטית\",\n      \"registered_address\": \"שד סמאטס 17 תל אביב - יפו מיקוד: 6200929\",\n      \"officers\": [\n        {\n          \"name\": \"ארדה, פדידה, יערי ושות'- רואי חשבון\",\n          \"role\": \"רואה חשבון\",\n          \"id_number\": \"540233954\"\n        },\n        {\n          \"name\": \"איל עדי\",\n          \"role\": \"מנכ\\\"ל\",\n          \"id_number\": \"56109796\"\n        }\n      ],\n      \"shareholders\": [\n        \"איל עדי — 1,000 מניות מסוג רגילות, בנות 1 שקל חדש, בהחזקה רגילה\"\n      ],\n      \"ubo_chain\": [\n        \"נריטה חברה למסחר והשקעות בע\\\"מ\",\n        \"איל עדי (ת.ז. 56109796)\"\n      ],\n      \"ubo_graph\": {\n        \"nodes\": [\n          {\n            \"id\": \"root\",\n            \"name\": \"נריטה חברה למסחר והשקעות בע\\\"מ\",\n            \"type\": \"company\",\n            \"company_number\": \"511927485\"\n          },\n          {\n            \"id\": \"person_56109796\",\n            \"name\": \"איל עדי\",\n            \"type\": \"person\",\n            \"id_number\": \"56109796\"\n          }\n        ],\n        \"edges\": [\n          {\n            \"from_id\": \"person_56109796\",\n            \"to_id\": \"root\",\n            \"share_pct\": \"100%\"\n          }\n        ]\n      },\n      \"active_status\": true,\n      \"liens_or_charges\": [\n        \"שיעבוד צף/ספציפי — ללא הגבלה — איסור שעבוד או העברת נכסים ללא הסכמת בעל השעבוד. — כל הזכויות בפרויקט ב.ס.ר ראשונים בגוש 3946 חלקה 144 בראשל\\\"צ לרבות הסכם/י מכר והעברה הסכם שיתוף הסכם עם מארגן/עו\\\"ד/רו\\\"ח הסכם עם קבלן וערבות מהקבלן זכויות כלפי קבלנים וספקים זכויות ביטוח וחשבון פרוייקט 600/472764 חשבון מע\\\"מ 60/472780 חשבון אשראי השותף 82373 בסניף 634 זכויות פיצוי או שיפוי בשל אובדן או נזק זכויות לפטור הקלה או ריזוז הפסדים ממימוש השעבוד והכל כמפורט באגרת החוב ושוטר המשכון\"\n      ],\n      \"timeline_events\": [],\n      \"notes\": []\n    },\n    {\n      \"source_document_name\": \"תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf\",\n      \"company_name\": \"נ. גוראל יזמות דה האז בע\\\"מ\",\n      \"company_number\": \"517221107\",\n      \"incorporation_date\": \"2025-09-16\",\n      \"company_type\": \"חברה בערבון מוגבל\",\n      \"officers\": [],\n      \"shareholders\": [],\n      \"ubo_chain\": [],\n      \"active_status\": true,\n      \"liens_or_charges\": [],\n      \"timeline_events\": [],\n      \"notes\": []\n    },\n    {\n      \"source_document_name\": \"תעודת התאגדות_דן השקעות.pdf\",\n      \"company_name\": \"דן גוראל השקעות בע\\\"מ\",\n      \"company_number\": \"516578705\",\n      \"incorporation_date\": \"2022-03-10\",\n      \"company_type\": \"כחברה בערבון מוגבל\",\n      \"officers\": [],\n      \"shareholders\": [],\n      \"ubo_chain\": [],\n      \"active_status\": true,\n      \"liens_or_charges\": [],\n      \"timeline_events\": [],\n      \"notes\": []\n    }\n  ]\n}",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": null,
+          "creation_timestamp": 1773004664.457233,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": {
+        "app_name": "d-done",
+        "user_id": "dd-eval",
+        "state": {
+          "gcs_uris": [
+            "gs://d-done-eval/test-docs/project_de_haz/דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/ועדת אשראי.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/מורשי חתימה נריטה 30.12.2025.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח חברה נריטה מיום 27.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+            "gs://d-done-eval/test-docs/project_de_haz/תעודת התאגדות_דן השקעות.pdf"
+          ],
+          "document_names": [
+            "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf",
+            "הסכם פרויקט דה האז 14 חתום סופי-.pdf",
+            "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf",
+            "ועדת אשראי.pdf",
+            "מורשי חתימה נריטה 30.12.2025.pdf",
+            "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf",
+            "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf",
+            "נסח חברה נריטה מיום 27.1.2026.pdf",
+            "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf",
+            "נסח טאבו חלקה 590 מיום 25.1.2026.pdf",
+            "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf",
+            "תעודת התאגדות_דן השקעות.pdf"
+          ],
+          "doc_classification": {
+            "classifications": {
+              "דוח 0 סופי - דה האז 14-16 - מכלול 20486 מעודכן.pdf": "zero_report",
+              "הסכם פרויקט דה האז 14 חתום סופי-.pdf": "project_agreement",
+              "הסכם פרויקט דה האז 16 חתום סופי-1-68.pdf": "project_agreement",
+              "ועדת אשראי.pdf": "credit_committee",
+              "מורשי חתימה נריטה 30.12.2025.pdf": "signing_protocol",
+              "נסח חברה דן גוראל השקעות בע_מ מיום 27.1.2026.pdf": "company_docs",
+              "נסח חברה נ. גוראל יזמות מיום 26.1.2026.pdf": "company_docs",
+              "נסח חברה נריטה מיום 27.1.2026.pdf": "company_docs",
+              "נסח טאבו גוש 6212 חלקה 591 עדכני ליום 31.12.25 2.pdf": "tabu",
+              "נסח טאבו חלקה 590 מיום 25.1.2026.pdf": "tabu",
+              "תעודת התאגדות חברה_גוראל יזמות דה-האז.pdf": "company_docs",
+              "תעודת התאגדות_דן השקעות.pdf": "company_docs"
+            }
+          }
+        }
+      },
+      "creation_timestamp": 1773004664.4572525,
+      "rubrics": null,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 1773004664.4572685
+}

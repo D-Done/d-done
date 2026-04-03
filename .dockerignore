@@ -1,0 +1,35 @@
+.git
+.github
+.cursor
+.vscode
+.idea
+
+# devcontainer files aren't needed in runtime images
+.devcontainer
+
+# Node/Next (not needed for backend image)
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/out
+
+# Python caches / virtualenvs
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv
+**/.venv
+
+# Local env/secrets
+.env
+.env.*
+
+# Build artifacts
+dist
+build
+
+# OS junk
+.DS_Store
+Thumbs.db
+

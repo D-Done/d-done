@@ -1,0 +1,11 @@
+{
+  "criteria": {
+    "final_response_match_v2": {
+      "threshold": 0.7,
+      "judge_model_options": {
+        "judge_model": "gemini-2.0-flash-001",
+        "num_samples": 2
+      }
+    }
+  }
+}

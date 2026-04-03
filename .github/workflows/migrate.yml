@@ -1,0 +1,46 @@
+name: Run DB Migrations
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/alembic/**"
+      - "backend/app/db/models.py"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: Production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/973037358388/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "github-actions@coral-antonym-286617.iam.gserviceaccount.com"
+
+      - name: Start Cloud SQL Proxy
+        run: |
+          curl -sSL https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.3/cloud-sql-proxy.linux.amd64 -o cloud-sql-proxy
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy coral-antonym-286617:me-west1:d-done-prod --port 5432 &
+          sleep 3
+
+      - name: Run Alembic migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: "postgresql://postgres:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/postgres"
+        run: alembic upgrade head

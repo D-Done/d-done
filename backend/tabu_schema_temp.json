@@ -1,0 +1,408 @@
+{
+  "$defs": {
+    "CavetNoticeRecord": {
+      "description": "A single caveat / warning-note (הערת אזהרה) or restrictive-note registration.",
+      "properties": {
+        "registration_type": {
+          "description": "The specific type of registration allowed.",
+          "enum": [
+            "הערת אזהרה",
+            "הערה מגבילה",
+            "אחר"
+          ],
+          "title": "Registration Type",
+          "type": "string"
+        },
+        "beneficiary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Beneficiary name as it appears in the Tabu. Leave null if unclear.",
+          "title": "Beneficiary"
+        },
+        "deed_or_reference_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deed / reference number if stated",
+          "title": "Deed Or Reference Number"
+        },
+        "registration_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Registration date as in the Tabu",
+          "title": "Registration Date"
+        },
+        "amount_or_rank": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Amount or rank if stated",
+          "title": "Amount Or Rank"
+        },
+        "linkage_basis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "\"explicit_in_text\" / \"header_section\" / \"unclear\"",
+          "title": "Linkage Basis"
+        },
+        "verbatim_quote": {
+          "description": "Mandatory verbatim snippet proving this caveat registration",
+          "title": "Verbatim Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "registration_type",
+        "verbatim_quote"
+      ],
+      "title": "CavetNoticeRecord",
+      "type": "object"
+    },
+    "EvidentiaryReference": {
+      "description": "אסמכתא ראייתית — mandatory structured evidence: source document, page, verbatim quote.\n\nEvery Finding and every TimelineEvent is backed by at least one such reference.\nUsed in extractors and in the report; report-level SourceRef adds locator fields.",
+      "properties": {
+        "source_document_name": {
+          "description": "שם מסמך מקור — name of the source document",
+          "title": "Source Document Name",
+          "type": "string"
+        },
+        "page_number": {
+          "description": "מספר עמוד — page number (1-indexed)",
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "verbatim_quote": {
+          "description": "ציטוט מדויק — exact verbatim quote from the document",
+          "title": "Verbatim Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_document_name",
+        "page_number",
+        "verbatim_quote"
+      ],
+      "title": "EvidentiaryReference",
+      "type": "object"
+    },
+    "ExtractorTimelineEvent": {
+      "description": "Dated event with Evidentiary Reference. Synthesis maps to TimelineEvent (SourceRef).",
+      "properties": {
+        "date": {
+          "description": "Date of the event in YYYY-MM-DD format",
+          "title": "Date",
+          "type": "string"
+        },
+        "event_description_he": {
+          "description": "Description of the event in Hebrew",
+          "title": "Event Description He",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidentiaryReference",
+          "description": "אסמכתא ראייתית — source_document_name, page_number, verbatim_quote"
+        }
+      },
+      "required": [
+        "date",
+        "event_description_he",
+        "source"
+      ],
+      "title": "ExtractorTimelineEvent",
+      "type": "object"
+    },
+    "MortgageRecord": {
+      "description": "A single mortgage registration from the Tabu.",
+      "properties": {
+        "registration_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Label as it appears, e.g. \"משכנתא\", \"הערת אזהרה לרישום משכנתה\"",
+          "title": "Registration Type"
+        },
+        "bank_or_lender": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bank / lending institution name as it appears in the Tabu",
+          "title": "Bank Or Lender"
+        },
+        "deed_or_reference_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deed / reference number if stated",
+          "title": "Deed Or Reference Number"
+        },
+        "registration_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Registration date as in the Tabu",
+          "title": "Registration Date"
+        },
+        "rank_or_degree": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mortgage rank / degree (דרגה) if stated",
+          "title": "Rank Or Degree"
+        },
+        "amount": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mortgage amount if stated",
+          "title": "Amount"
+        },
+        "verbatim_quote": {
+          "description": "Mandatory verbatim snippet proving this mortgage registration",
+          "title": "Verbatim Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "verbatim_quote"
+      ],
+      "title": "MortgageRecord",
+      "type": "object"
+    },
+    "RightsHolder": {
+      "description": "A single registered owner / rights holder from the Tabu ownership section.",
+      "properties": {
+        "name": {
+          "description": "Owner name exactly as registered in the Tabu",
+          "title": "Name",
+          "type": "string"
+        },
+        "id_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ID number if stated",
+          "title": "Id Number"
+        },
+        "ownership_share": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Ownership share as it appears in the Tabu",
+          "title": "Ownership Share"
+        },
+        "acquisition_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Acquisition type as it appears in the Tabu. Example: מכר, צוואה, ירושה",
+          "title": "Acquisition Type"
+        },
+        "deed_or_reference_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deed / reference number if stated",
+          "title": "Deed Or Reference Number"
+        },
+        "verbatim_quote": {
+          "description": "Mandatory verbatim snippet from the Tabu proving this entry",
+          "title": "Verbatim Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "verbatim_quote"
+      ],
+      "title": "RightsHolder",
+      "type": "object"
+    },
+    "SubParcelExtraction": {
+      "description": "All extracted data for a single sub-parcel from the Tabu body.",
+      "properties": {
+        "sub_parcel_number": {
+          "description": "Sub-parcel identifier from the body",
+          "title": "Sub Parcel Number",
+          "type": "string"
+        },
+        "rights_holders": {
+          "description": "Registered owners from the ownership section (בעלויות)",
+          "items": {
+            "$ref": "#/$defs/RightsHolder"
+          },
+          "title": "Rights Holders",
+          "type": "array"
+        },
+        "caveats": {
+          "description": "Non-mortgage encumbrances: caveats & restrictive notes",
+          "items": {
+            "$ref": "#/$defs/CavetNoticeRecord"
+          },
+          "title": "Caveats",
+          "type": "array"
+        },
+        "mortgages": {
+          "description": "Mortgage registrations (משכנתאות)",
+          "items": {
+            "$ref": "#/$defs/MortgageRecord"
+          },
+          "title": "Mortgages",
+          "type": "array"
+        },
+        "notes_excluded_transfer_to_foreigners": {
+          "default": false,
+          "description": "True if a 'transfer to foreigners' note was found but excluded from caveats",
+          "title": "Notes Excluded Transfer To Foreigners",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sub_parcel_number"
+      ],
+      "title": "SubParcelExtraction",
+      "type": "object"
+    }
+  },
+  "description": "Structured output of the Tabu-extract agent.\n\nCombines three extraction domains into a single per-sub-parcel structure:\n1. Non-mortgage encumbrances (caveats, restrictive notes)\n2. Mortgage registrations\n3. Registered owners / rights holders\n\nThe body of the Tabu extract is authoritative for sub-parcel identification.\nHeader/title counts are ignored.",
+  "properties": {
+    "address": {
+      "description": "Full property address as it appears in the Tabu",
+      "title": "Address",
+      "type": "string"
+    },
+    "block": {
+      "description": "Parcel block (גוש)",
+      "title": "Block",
+      "type": "string"
+    },
+    "parcel": {
+      "description": "Parcel number (חלקה)",
+      "title": "Parcel",
+      "type": "string"
+    },
+    "sub_parcels": {
+      "description": "One entry per sub-parcel found in the Tabu body",
+      "items": {
+        "$ref": "#/$defs/SubParcelExtraction"
+      },
+      "title": "Sub Parcels",
+      "type": "array"
+    },
+    "timeline_events": {
+      "items": {
+        "$ref": "#/$defs/ExtractorTimelineEvent"
+      },
+      "title": "Timeline Events",
+      "type": "array"
+    },
+    "notes_he": {
+      "description": "Additional observations in Hebrew",
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes He",
+      "type": "array"
+    }
+  },
+  "required": [
+    "address",
+    "block",
+    "parcel",
+    "sub_parcels"
+  ],
+  "title": "TabuExtraction",
+  "type": "object"
+}

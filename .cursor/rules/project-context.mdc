@@ -1,0 +1,37 @@
+---
+description: Project context for D-Done - Israeli Real Estate AI Due Diligence
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# 🏗️ D-Done: Project Context | הקשר פרויקט
+
+## 📋 Overview | סקירה כללית
+
+**D-Done** is an AI-powered platform for Israeli Real Estate lawyers (lender-side). It automates the analysis of complex urban renewal documents (TAMA 38, Pinui Binui) to produce professional Due Diligence (DD) reports.
+**D-Done** היא פלטפורמה מבוססת בינה מלאכותית לעורכי דין בתחום הנדל"ן בישראל (צד המממן). המערכת מאוטמת ניתוח מסמכי התחדשות עירונית מורכבים (תמ"א 38, פינוי בינוי) להפקת דוחות בדיקת נאותות (DD).
+
+## 🌍 Tech Stack & Region | טכנולוגיות ואזור
+
+- **Backend:** FastAPI (Python) @ `me-west1` (Tel Aviv).
+- **Frontend:** Next.js (TypeScript) + Tailwind CSS + Shadcn UI.
+- **Database:** PostgreSQL (Cloud SQL) @ `me-west1`.
+- **Storage:** Google Cloud Storage (GCS) @ `me-west1`.
+- **AI Model:** Gemini 3 Flash.
+
+## ⚖️ Legal Domain Glossary | מילון מונחים משפטי
+
+- **Tabu Extract (נסח טאבו):** Official land registry extract showing ownership and liens.
+- **TAMA Agreement (הסכם תמ"א):** Contract for building reinforcement/demolition.
+- **Zero Report (דו"ח אפס):** Economic feasibility report by an appraiser.
+- **Lien/Pledge (שעבוד):** Legal claim on property as security for debt.
+- **Warning Note (הערת אזהרה):** A caveat registered in the Tabu to protect rights.
+
+## 🛠️ Key Conventions | מוסכמות עבודה
+
+1. **RTL Support:** All UI must be Hebrew-first with Right-to-Left (RTL) layout.
+2. **AI Prompts:** Keep all agent prompts (in `prompt.py` / `prompt_override.md`) in **English**. Do not translate prompts to Hebrew — the model instructions stay in English; only the extracted output and UI labels are Hebrew.
+3. **GCS Upload:** Use resumable signed URLs.
+4. **Database:** Always use `DATABASE_URL` for connections.
+5. **Auth:** Google OAuth for frontend; Backend uses Service Account ADC.
+6. **Modal / Overlay Margins:** All full-screen overlays, bottom sheets, and modals must have visible margins (min `1rem` / `16px` on all sides). Never use `inset-0` or `left-0 right-0 bottom-0` without adding padding or offset (`left-4 right-4 bottom-4`, scaling up with `sm:left-6 sm:right-6 lg:left-10 lg:right-10`). This keeps the background context visible and prevents the modal from feeling like a full page takeover.

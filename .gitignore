@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment — never commit files with secrets
+.env
+.env.local
+.env.*.local
+# Backend and frontend secrets (JWT, OAuth, API keys, etc.)
+backend/.env.local
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Build
+dist/
+build/
+
+# SQLite test databases
+*.db
+file::memory:
+
+# Local AI tool settings (Claude, Cursor, etc.)
+.claude/settings.local.json
