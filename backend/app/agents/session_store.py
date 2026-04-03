@@ -7,6 +7,7 @@ for FastAPI lifespan teardown.
 
 from __future__ import annotations
 
+import base64
 import logging
 import threading
 from typing import Any
@@ -78,6 +79,30 @@ async def close_session_service() -> None:
         logger.exception("Error closing ADK DatabaseSessionService")
 
 
+def _make_json_safe(obj: Any) -> Any:
+    """Recursively convert non-JSON-serialisable values to safe equivalents.
+
+    ADK event model_dump() can emit bytes (e.g. from protobuf-backed fields).
+    bytes → decode as UTF-8 if possible, otherwise base64-encode to ASCII.
+    Unrecognised complex objects are coerced to their string representation.
+    """
+    if isinstance(obj, bytes):
+        try:
+            return obj.decode("utf-8")
+        except UnicodeDecodeError:
+            return base64.b64encode(obj).decode("ascii")
+    if isinstance(obj, dict):
+        return {k: _make_json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_make_json_safe(v) for v in obj]
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    # Enums, custom objects, etc.
+    if hasattr(obj, "value"):
+        return _make_json_safe(obj.value)
+    return str(obj)
+
+
 def _serialise_event(ev: Any) -> dict[str, Any]:
     """Convert a single ADK Event to a JSON-serialisable dict."""
     text_parts: list[str] = []
@@ -100,7 +125,7 @@ def _serialise_event(ev: Any) -> dict[str, Any]:
         "timestamp": getattr(ev, "timestamp", None),
         "invocation_id": getattr(ev, "invocation_id", None),
         "text": "\n".join(text_parts).strip() or None,
-        "raw": raw,
+        "raw": _make_json_safe(raw),
     }
 
 
