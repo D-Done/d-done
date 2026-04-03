@@ -31,6 +31,10 @@ You will receive plain text extracted from documents (not raw PDFs).
 
 # What to extract
 
+## 0. Report date & Developer costs (תאריך ועלויות ליזם)
+- `report_date`: extract the Zero Report issue date (YYYY-MM-DD) or null.
+- `developer_applicable_costs`: list explicit costs/fees (e.g. אגרות, פיתוח, מימון) with `cost_name`, `amount_ils`, and mandatory `source`. No guessing.
+
 ## 1. Report metadata (מטא-דוח)
 - `appraiser_name`, `report_date`, `addressee` (נמען — who the report is addressed to, in Hebrew). If addressed to a financier record its name; otherwise the actual addressee verbatim. Do NOT leave addressee null if any addressee appears in the document.
 
@@ -53,6 +57,12 @@ You will receive plain text extracted from documents (not raw PDFs).
 - `key_assumptions` (appraiser's main assumptions, list in Hebrew), `discrepancies` (internal inconsistencies, list in Hebrew).
 - **Schedule**: `estimated_permit_date` (YYYY-MM-DD or e.g. "2025-Q2"), `construction_duration_months`, `schedule_summary_he` (concise Hebrew timeline: start, completion, major milestones).
 
+## 7. Tenant Benefits (הטבות לדיירים)
+- `tenant_benefits`: **Extract the tenant benefits granted in the agreement or any addenda/appendices to the agreement, including any attached schedules/supplements**. Return the extracted benefits with all relevant details as they appear in the documents. If no tenant benefits are stated, return `tenant_benefits: []`.
+
+## 8. Developer/Ownership Changes (שינויים בזהות היזם/אחזקות)
+- `developer_entity_change`: Extract any explicit mention of changes in the developer's identity, ownership structure, or holdings during the project's life (e.g., share transfers, name changes, new partners). Populate `original_developer`, `current_developer`, and `change_details` in Hebrew. If no change is mentioned, set the entire object to `null`.
+
 ---
 
 # Output format
@@ -72,6 +82,17 @@ Your response MUST be a valid JSON matching this structure:
       "notes": null
     }
   ],
+"developer_applicable_costs": [
+  {
+    "cost_name": null,
+    "amount_ils": null,
+    "source": {
+      "source_document_name": null,
+      "page_number": null,
+      "verbatim_quote": null
+    }
+  }
+],
   "profit_on_turnover": null,
   "profit_on_cost": null,
   "equity_amount_ils": null,
@@ -102,6 +123,12 @@ Your response MUST be a valid JSON matching this structure:
       }
     }
   ],
+  "tenant_benefits": [],
+  "developer_entity_change": {
+    "original_developer": null,
+    "current_developer": null,
+    "change_details": null
+  },
   "notes": []
 }
 
@@ -117,6 +144,17 @@ Your response MUST be a valid JSON matching this structure:
       "category": "עלויות בנייה",
       "amount_ils": 30000000,
       "notes": "כולל פיתוח"
+    }
+  ],
+  "developer_applicable_costs": [
+    {
+      "cost_name": "אגרות בנייה",
+      "amount_ils": 500000,
+      "source": {
+        "source_document_name": "zero_report.pdf",
+        "page_number": 3,
+        "verbatim_quote": "אגרות בנייה בסך 500,000 ש\\"ח"
+      }
     }
   ],
   "profit_on_turnover": 0.274,
@@ -149,6 +187,12 @@ Your response MUST be a valid JSON matching this structure:
       }
     }
   ],
+  "tenant_benefits": ["קבלת דירה חלופית למשך תקופת הבנייה", "תוספת שטח של 12 מ\\"ר לדירה המשודרגת"],
+  "developer_entity_change": {
+    "original_developer": "חברת א' בע\\"מ",
+    "current_developer": "חברת ב' בע\\"מ",
+    "change_details": "העברת שליטה ושינוי שם יזם כפי שדווח ביום 01.01.2024"
+  },
   "notes": []
 }
 """
