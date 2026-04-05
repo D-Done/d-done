@@ -1,13 +1,19 @@
 {
   "name": "d-done",
   "private": true,
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
+    "prepare": "husky",
     "build": "npm run build --workspace=frontend",
     "dev": "npm run dev --workspace=frontend",
     "install:frontend": "npm install --workspace=frontend"
   },
   "dependencies": {
     "next": "16.1.6"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

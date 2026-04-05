@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -e
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+case "$branch" in
+  main|master|develop) exit 0 ;;
+esac
+case "$branch" in
+  d-[0-9]*) exit 0 ;;
+esac
+echo "husky(pre-push): branch '$branch' must start with d-<issue-number> (e.g. d-155-feature-name)."
+echo "Allowed exceptions: main, master, develop."
+exit 1
