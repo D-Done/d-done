@@ -23,6 +23,7 @@ EXTRACTOR_DOC_TYPES: dict[str, list[str]] = {
     "agreement_additions_extractor": ["agreement_additions"],
     "zero_report_extractor": ["zero_report"],
     "credit_committee_extractor": ["credit_committee"],
+    "appendix_a_extractor": ["credit_committee"],
     "company_docs_extractor": ["company_docs"],
     "signing_protocol_extractor": ["signing_protocol"],
     "planning_permit_extractor": ["planning_permit"],

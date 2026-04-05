@@ -35,6 +35,10 @@ _AGENT_PROMPT_MODULES: dict[str, tuple[str, str]] = {
         "app.agents.extractors.credit_committee.prompt",
         "extractors/credit_committee",
     ),
+    "appendix_a": (
+        "app.agents.extractors.appendix_a.prompt",
+        "extractors/appendix_a",
+    ),
     "company_docs": (
         "app.agents.extractors.company_docs.prompt",
         "extractors/company_docs",
@@ -61,6 +65,7 @@ AGENT_PROMPT_FILES: dict[str, dict[str, str]] = {
         "agreement": "הסכם פרויקט",
         "zero_report": "דו״ח אפס",
         "credit_committee": "ועדת אשראי",
+        "appendix_a": "נספח א'",
         "company_docs": "מסמכי חברה",
         "signing_protocol": "פרוטוקול מורשה חתימה",
         "planning_permit": "היתר בניה / החלטת ועדה",
@@ -212,6 +217,7 @@ def _invalidate_prompt_cache(file_key: str) -> None:
         "agreement": "app.agents.extractors.project_agreement.agent",
         "zero_report": "app.agents.extractors.zero_report.agent",
         "credit_committee": "app.agents.extractors.credit_committee.agent",
+        "appendix_a": "app.agents.extractors.appendix_a.agent",
         "company_docs": "app.agents.extractors.company_docs.agent",
         "signing_protocol": "app.agents.extractors.signing_protocol.agent",
         "planning_permit": "app.agents.extractors.planning_permit.agent",
@@ -257,6 +263,10 @@ def read_agent_schema(file_key: str, _: CurrentUser = Depends(get_approved_user)
         "credit_committee": (
             "app.agents.extractors.credit_committee.schema",
             "CreditCommitteeExtraction",
+        ),
+        "appendix_a": (
+            "app.agents.extractors.appendix_a.schema",
+            "AppendixAExtraction",
         ),
         "company_docs": (
             "app.agents.extractors.company_docs.schema",
@@ -329,6 +339,7 @@ def update_agent_schema(
         "agreement",
         "zero_report",
         "credit_committee",
+        "appendix_a",
         "company_docs",
         "signing_protocol",
         "planning_permit",
@@ -370,6 +381,10 @@ def read_agent_pydantic(file_key: str, _: CurrentUser = Depends(get_approved_use
         "credit_committee": (
             "app.agents.extractors.credit_committee.schema",
             "CreditCommitteeExtraction",
+        ),
+        "appendix_a": (
+            "app.agents.extractors.appendix_a.schema",
+            "AppendixAExtraction",
         ),
         "company_docs": (
             "app.agents.extractors.company_docs.schema",

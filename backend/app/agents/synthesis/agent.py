@@ -63,6 +63,7 @@ EXTRACTOR_OUTPUTS: list[tuple[str, str]] = [
     ("Agreement Extraction (הסכם פרויקט)", "agreement_extraction"),
     ("Agreement Additions Extraction (תוספות להסכם)", "agreement_additions_extraction"),
     ("Credit Committee Extraction (ועדת אשראי)", "credit_committee_extraction"),
+    ("Appendix A Extraction (נספח א')", "appendix_a_extraction"),
     ("Company Documents Extraction (מסמכי חברה)", "company_docs_extraction"),
     (
         "Signing Protocol Extraction (פרוטוקול מורשה חתימה)",
