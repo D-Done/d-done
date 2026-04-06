@@ -1,20 +1,24 @@
-# Backend build: Docker image -> GCR -> Cloud Run (me-west1).
-# If the trigger uses a custom service account (e.g. github-actions@PROJECT.iam.gserviceaccount.com),
-# that SA must have: Logs Writer + permission to push to GCR. See docs/cloud-build-iam.md.
+# Backend build: Docker image -> Artifact Registry -> Cloud Run (me-west1).
+# Cloud Run Git triggers set _AR_HOSTNAME / _AR_REPOSITORY; defaults match that layout.
+# Build SA needs artifactregistry.writer on repo cloud-run-source-deploy (often pre-created by Cloud Run).
 steps:
   - name: gcr.io/cloud-builders/docker
     args:
       [
         "build",
         "-t",
-        "gcr.io/$PROJECT_ID/d-done-backend:$SHORT_SHA",
+        "${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/d-done-backend:$SHORT_SHA",
         "-f",
         "backend/Dockerfile",
         ".",
       ]
 
   - name: gcr.io/cloud-builders/docker
-    args: ["push", "gcr.io/$PROJECT_ID/d-done-backend:$SHORT_SHA"]
+    args:
+      [
+        "push",
+        "${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/d-done-backend:$SHORT_SHA",
+      ]
 
   - name: gcr.io/cloud-builders/gcloud
     args:
@@ -23,7 +27,7 @@ steps:
         "deploy",
         "${_SERVICE}",
         "--image",
-        "gcr.io/$PROJECT_ID/d-done-backend:$SHORT_SHA",
+        "${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/d-done-backend:$SHORT_SHA",
         "--region",
         "${_REGION}",
         "--platform",
@@ -34,6 +38,8 @@ steps:
 substitutions:
   _SERVICE: "d-done-api"
   _REGION: "me-west1"
+  _AR_HOSTNAME: "me-west1-docker.pkg.dev"
+  _AR_REPOSITORY: "cloud-run-source-deploy"
 
 # Required when a custom build service account is used on the trigger.
 # Avoids needing an explicit logs bucket.
