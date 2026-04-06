@@ -1,6 +1,6 @@
 """Application settings loaded from environment variables."""
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, computed_field
 from pydantic_settings import BaseSettings
 
 
@@ -95,20 +95,18 @@ class Settings(BaseSettings):
     gemini_pro_model: str = "gemini-3.1-pro-preview"
 
     # ---- CORS ----
-    # Comma-separated list of allowed origins. Read from env: CORS_ORIGINS.
-    # Local: leave unset to use defaults (localhost is included so the frontend dev server works).
-    # Production (Cloud Run): set CORS_ORIGINS to your frontend origin(s), e.g. "https://d-done.com".
-    cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "https://d-done.com"],
-        description="Allowed CORS origins",
+    # Comma-separated origins in env (CORS_ORIGINS). pydantic-settings parses list[str] from env as
+    # JSON only, so a value like "https://a.com,https://b.com" would crash startup — we store CSV.
+    cors_origins_csv: str = Field(
+        default="http://localhost:3000,https://d-done.com",
+        validation_alias=AliasChoices("CORS_ORIGINS", "cors_origins_csv"),
+        description="Comma-separated allowed browser origins for CORS",
     )
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        if isinstance(v, str):
-            return [x.strip() for x in v.split(",") if x.strip()]
-        return v
+    @computed_field
+    @property
+    def cors_origins(self) -> list[str]:
+        return [x.strip() for x in self.cors_origins_csv.split(",") if x.strip()]
 
     model_config = {
         "env_file": ".env.local",
