@@ -251,19 +251,19 @@ def create_session(
             )
         db.refresh(db_user)
     else:
-        if not inv:
-            raise HTTPException(status_code=403, detail=ERROR_INVITATION_REQUIRED)
-
-        ensure_default_organization(db)
-        org_id = inv.org_id or DEFAULT_ORGANIZATION_ID
-        is_org_admin = (inv.role or ROLE_MEMBER).lower() == ROLE_ADMIN
-
         admin_emails = [
             e.strip().lower()
             for e in settings.auth_admin_emails.split(",")
             if e.strip()
         ]
         is_bootstrap_admin = email in admin_emails
+
+        if not inv and not is_bootstrap_admin:
+            raise HTTPException(status_code=403, detail=ERROR_INVITATION_REQUIRED)
+
+        ensure_default_organization(db)
+        org_id = inv.org_id if inv else DEFAULT_ORGANIZATION_ID
+        is_org_admin = (inv.role or ROLE_MEMBER).lower() == ROLE_ADMIN if inv else False
 
         db_user = User(
             id=uuid4(),
@@ -278,8 +278,9 @@ def create_session(
             is_active=True,
         )
         db.add(db_user)
-        inv.accepted_at = now
-        inv.status = INVITATION_ACCEPTED
+        if inv:
+            inv.accepted_at = now
+            inv.status = INVITATION_ACCEPTED
         try:
             db.commit()
         except IntegrityError:
