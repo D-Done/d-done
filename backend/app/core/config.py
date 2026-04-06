@@ -1,6 +1,6 @@
 """Application settings loaded from environment variables."""
 
-from pydantic import AliasChoices, Field, computed_field
+from pydantic import AliasChoices, Field, computed_field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -49,6 +49,16 @@ class Settings(BaseSettings):
     # In production this is typically handled by migrations and can block startup
     # if the DB is temporarily unreachable.
     db_init_on_startup: bool = False
+
+    @field_validator("database_url")
+    @classmethod
+    def database_url_not_placeholder(cls, v: str) -> str:
+        if v.strip().lower() in ("tbd", "todo", "changeme"):
+            raise ValueError(
+                "DATABASE_URL is a placeholder; set a real PostgreSQL URL on Cloud Run "
+                "(e.g. Cloud SQL unix socket ?host=/cloudsql/PROJECT:REGION:INSTANCE)."
+            )
+        return v
 
     # ---- Auth ----
     # Descope project ID — required for session token validation.
