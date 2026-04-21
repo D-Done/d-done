@@ -24,6 +24,7 @@ import {
   FileUploadZone,
   useFileUpload,
   type FileEntry,
+  type FolderEntry,
 } from "@/components/file-upload-zone";
 import { AnalysisStatus } from "@/components/analysis-status";
 import { Button } from "@/components/ui/button";
@@ -160,8 +161,9 @@ export default function NewTransactionPage() {
 
   // Processing flow — always use Gemini 3.1 Pro (visual grounding)
 
-  // Step 3: File list
+  // Step 3: File list + folder organisation
   const [files, setFiles] = useState<FileEntry[]>([]);
+  const [folders, setFolders] = useState<FolderEntry[]>([]);
   const updateFileAt = useCallback(
     (index: number, patch: Partial<FileEntry>) => {
       setFiles((prev) =>
@@ -425,6 +427,7 @@ export default function NewTransactionPage() {
                       setTransactionType(t.id);
                       setProjectId(null);
                       setFiles([]);
+                      setFolders([]);
                       setStep("details");
                     }}
                     className={[
@@ -633,6 +636,10 @@ export default function NewTransactionPage() {
                   onFilesChange={setFiles}
                   isUploading={isUploading}
                   showDocTypeSelector={false}
+                  acceptLabel="PDF, Word, Excel, תמונות ועוד"
+                  showFolders={true}
+                  folders={folders}
+                  onFoldersChange={setFolders}
                 />
 
                 <div className="flex flex-wrap items-center justify-between gap-3">

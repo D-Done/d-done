@@ -883,6 +883,57 @@ async def get_check_sessions(
 # ---- Internal helpers ----
 
 
+# MIME types that Vertex AI Gemini can process natively via Part.from_uri().
+# According to the official docs, Gemini 3.x / 2.5 models support:
+#   - application/pdf        (page-based, with box_2d visual grounding)
+#   - text/plain             (raw text; also covers .csv/.txt sent as text/plain)
+#   - image/*                (jpeg, png, gif, webp, heic, heif)
+# Word (.docx) and Excel (.xlsx) are NOT natively supported — those files are
+# downloaded from GCS and text-extracted, then injected as Part.from_text().
+_GEMINI_SUPPORTED_MIME: frozenset[str] = frozenset({
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+})
+
+_EXT_TO_GEMINI_MIME: dict[str, str] = {
+    # PDF
+    "pdf": "application/pdf",
+    # Images
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "gif": "image/gif",
+    "webp": "image/webp",
+    "heic": "image/heic",
+    "heif": "image/heif",
+    # Plain text — Gemini reads these natively via GCS URI
+    "txt": "text/plain",
+    "csv": "text/csv",
+}
+
+
+def _gemini_mime(file) -> str | None:
+    """Return the Gemini-compatible MIME type for a file, or None if unsupported.
+
+    Returns a MIME type string when the file can be sent as a native GCS URI
+    part.  Returns None for formats that require text extraction (Word, Excel,
+    email, HTML, …) before being usable by the model.
+    """
+    ct = (file.content_type or "").lower().split(";")[0].strip()
+    if ct in _GEMINI_SUPPORTED_MIME:
+        return ct
+    ext = file.original_name.rsplit(".", 1)[-1].lower() if "." in file.original_name else ""
+    return _EXT_TO_GEMINI_MIME.get(ext)
+
+
 def _ensure_genai_env() -> None:
     """Configure environment variables for the GenAI client."""
     import os
@@ -957,10 +1008,12 @@ async def _run_analysis(
 
     from app.agents.constants import (
         APP_NAME,
+        STATE_CONTENT_TYPES,
         STATE_DOCUMENT_NAMES,
         STATE_ENRICHED_REPORT,
         STATE_GCS_URIS,
         STATE_PROJECT_ID,
+        STATE_TEXT_PARTS,
         SYSTEM_USER_ID,
     )
     from app.agents.visual_grounding_pipeline_agent import (
@@ -970,18 +1023,40 @@ async def _run_analysis(
         STATE_HITL_TENANT_DATA,
     )
     from app.agents.session_store import get_session_service
+    from app.services.text_extractor import extract_text_parts
     _ensure_genai_env()
 
     if on_stage_change:
         await on_stage_change(PIPELINE_STAGE_EXTRACTION)
 
-    gcs_uris = [f.gcs_uri for f in uploaded_files]
-    doc_names = [f.original_name for f in uploaded_files]
+    # Gemini natively processes PDFs and images via GCS URI.
+    # Excel, Word, CSV, HTML and email files are text-extracted and injected
+    # as Part.from_text() so the model still sees their content.
+    gemini_files = [(f, _gemini_mime(f)) for f in uploaded_files]
+    gemini_files = [(f, m) for f, m in gemini_files if m is not None]
+
+    non_gemini = [f for f in uploaded_files if _gemini_mime(f) is None]
+    if non_gemini:
+        logger.info(
+            "Extracting text from %d non-PDF/image file(s): %s",
+            len(non_gemini),
+            [f.original_name for f in non_gemini],
+        )
+    text_parts_list = await extract_text_parts(non_gemini)
+    text_parts: dict[str, str] = {tp.filename: tp.text for tp in text_parts_list}
+    if text_parts:
+        logger.info("Text extracted from %d file(s): %s", len(text_parts), list(text_parts.keys()))
+
+    gcs_uris = [f.gcs_uri for f, _ in gemini_files]
+    doc_names = [f.original_name for f, _ in gemini_files]
+    content_types = [m for _, m in gemini_files]
 
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
         STATE_DOCUMENT_NAMES: doc_names,
+        STATE_CONTENT_TYPES: content_types,
+        STATE_TEXT_PARTS: text_parts,
     }
 
     session_service = get_session_service()
@@ -1277,29 +1352,53 @@ async def _run_ma_analysis(
 
     from app.agents.constants import (
         APP_NAME,
+        STATE_CONTENT_TYPES,
         STATE_DOCUMENT_NAMES,
         STATE_ENRICHED_REPORT,
         STATE_GCS_URIS,
         STATE_PROJECT_ID,
+        STATE_TEXT_PARTS,
         SYSTEM_USER_ID,
     )
     from app.agents.ma.constants import STATE_MA_METADATA
     from app.agents.ma.pipeline import create_ma_pipeline
     from app.agents.session_store import get_session_service
     from app.agents.visual_grounding_pipeline_agent import create_vg_app
+    from app.services.text_extractor import extract_text_parts
 
     _ensure_genai_env()
 
     if on_stage_change:
         await on_stage_change(PIPELINE_STAGE_EXTRACTION)
 
-    gcs_uris = [f.gcs_uri for f in uploaded_files]
-    doc_names = [f.original_name for f in uploaded_files]
+    # Gemini natively processes PDFs and images via GCS URI.
+    # Excel, Word, CSV, HTML and email files are text-extracted and injected
+    # as Part.from_text() alongside the PDF parts so the model sees their content.
+    gemini_files = [(f, _gemini_mime(f)) for f in uploaded_files]
+    gemini_files = [(f, m) for f, m in gemini_files if m is not None]
+
+    non_gemini = [f for f in uploaded_files if _gemini_mime(f) is None]
+    if non_gemini:
+        logger.info(
+            "MA: Extracting text from %d non-PDF/image file(s): %s",
+            len(non_gemini),
+            [f.original_name for f in non_gemini],
+        )
+    text_parts_list = await extract_text_parts(non_gemini)
+    text_parts: dict[str, str] = {tp.filename: tp.text for tp in text_parts_list}
+    if text_parts:
+        logger.info("MA: Text extracted from %d file(s): %s", len(text_parts), list(text_parts.keys()))
+
+    gcs_uris = [f.gcs_uri for f, _ in gemini_files]
+    doc_names = [f.original_name for f, _ in gemini_files]
+    content_types = [m for _, m in gemini_files]
 
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
         STATE_DOCUMENT_NAMES: doc_names,
+        STATE_CONTENT_TYPES: content_types,
+        STATE_TEXT_PARTS: text_parts,
         STATE_MA_METADATA: transaction_metadata or {},
     }
 

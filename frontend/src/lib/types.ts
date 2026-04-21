@@ -382,6 +382,8 @@ export interface ProjectFile {
   original_name: string;
   gcs_uri: string;
   doc_type: string;
+  /** Logical folder name the file was placed in (optional). */
+  folder?: string | null;
   file_size_bytes: number | null;
   upload_status: UploadStatus;
   created_at: string;
@@ -486,14 +488,19 @@ export interface UploadInitiateRequest {
   content_type: string;
   doc_type: DocumentType;
   file_size?: number;
+  /** Optional folder name for GCS sub-path organisation. */
+  folder?: string;
 }
 
 export interface UploadInitiateResponse {
-  upload_url: string;
+  /** Null when already_exists=true — no GCS upload needed. */
+  upload_url: string | null;
   file_id: string;
   gcs_uri: string;
   max_size_bytes: number;
   bucket_location: string;
+  /** True when an identical file (same name + size) is already in the project. */
+  already_exists?: boolean;
 }
 
 export interface UploadCompleteRequest {

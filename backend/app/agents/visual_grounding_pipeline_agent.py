@@ -26,9 +26,11 @@ from google.genai import types
 
 from app.agents.constants import (
     EXTRACTOR_DOC_TYPES,
+    STATE_CONTENT_TYPES,
     STATE_DOC_CLASSIFICATION,
     STATE_DOCUMENT_NAMES,
     STATE_GCS_URIS,
+    STATE_TEXT_PARTS,
 )
 from app.agents.utils import make_generate_config
 
@@ -116,22 +118,46 @@ def _repair_truncated_json(
 def _inject_pdfs_for_classifier(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> None:
-    """Inject all project PDFs into the classifier request."""
+    """Inject all project documents into the classifier request.
+
+    PDF/image files → ``Part.from_uri``; text-extracted files → short inline
+    snippet so the classifier can assign the correct doc type.
+    """
     gcs_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
     doc_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
-    if not gcs_uris:
+    content_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
+    text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
+
+    all_names = list(doc_names) + list(text_parts.keys())
+    if not all_names:
         return None
+
     parts: list[types.Part] = [
-        types.Part.from_uri(file_uri=uri, mime_type="application/pdf")
-        for uri in gcs_uris
+        types.Part.from_uri(
+            file_uri=uri,
+            mime_type=content_types[i] if i < len(content_types) else "application/pdf",
+        )
+        for i, uri in enumerate(gcs_uris)
     ]
-    parts.append(types.Part.from_text(text=_build_manifest(doc_names)))
+    for filename, text in text_parts.items():
+        snippet = text[:1_500].rstrip()
+        parts.append(
+            types.Part.from_text(
+                text=f"[Document: {filename}]\n{snippet}\n... [truncated for classification] ..."
+            )
+        )
+    parts.append(types.Part.from_text(text=_build_manifest(all_names)))
     llm_request.contents.insert(0, types.Content(role="user", parts=parts))
     return None
 
 
 def _make_inject_pdfs_filtered(accepted_types: list[str], empty_json: str):
-    """Return a before_model_callback that injects matching PDFs + visual grounding instruction."""
+    """Return a before_model_callback that injects matching documents + visual grounding instruction.
+
+    PDF/image files matched by classification are attached as ``Part.from_uri``.
+    Text-extracted files (Excel, Word, etc.) matched by classification are
+    appended as ``Part.from_text`` with their full extracted content.
+    """
 
     def _callback(
         callback_context: CallbackContext, llm_request: LlmRequest
@@ -144,14 +170,21 @@ def _make_inject_pdfs_filtered(accepted_types: list[str], empty_json: str):
         )
         all_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
         all_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
+        all_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
+        text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
 
-        matched_pairs = [
-            (uri, name)
-            for uri, name in zip(all_uris, all_names)
+        matched_triples = [
+            (uri, name, all_types[i] if i < len(all_types) else "application/pdf")
+            for i, (uri, name) in enumerate(zip(all_uris, all_names))
             if classifications.get(name) in accepted_types
         ]
+        matched_text = {
+            fname: text
+            for fname, text in text_parts.items()
+            if classifications.get(fname) in accepted_types
+        }
 
-        if not matched_pairs:
+        if not matched_triples and not matched_text:
             return LlmResponse(
                 content=types.Content(
                     role="model",
@@ -160,9 +193,13 @@ def _make_inject_pdfs_filtered(accepted_types: list[str], empty_json: str):
             )
 
         parts: list[types.Part] = [
-            types.Part.from_uri(file_uri=uri, mime_type="application/pdf")
-            for uri, _ in matched_pairs
+            types.Part.from_uri(file_uri=uri, mime_type=mime)
+            for uri, _, mime in matched_triples
         ]
+        for fname, text in matched_text.items():
+            parts.append(
+                types.Part.from_text(text=f"[Document: {fname}]\n{text}")
+            )
         parts.append(types.Part.from_text(text=_build_manifest(all_names)))
         parts.append(types.Part.from_text(text=VG_INSTRUCTION))
         llm_request.contents.insert(0, types.Content(role="user", parts=parts))

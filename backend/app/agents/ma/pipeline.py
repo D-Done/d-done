@@ -31,11 +31,12 @@ from google.genai import types
 from app.agents.constants import (
     STATE_DOCUMENT_NAMES,
     STATE_ENRICHED_REPORT,
-    STATE_GCS_URIS,
+    STATE_TEXT_PARTS,
 )
 from app.agents.ma.chapter_agents import create_ma_chapter_agents
 from app.agents.ma.classifier import create_ma_classifier_agent
 from app.agents.ma.completeness import create_ma_completeness_agent
+from app.agents.visual_grounding_pipeline_agent import _repair_truncated_json
 from app.agents.ma.constants import (
     CHAPTER_TITLES_HE,
     MA_MANDATORY_CHAPTERS,
@@ -63,23 +64,45 @@ logger = logging.getLogger(__name__)
 def _inject_pdfs_for_ma_classifier(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> None:
-    """Attach every uploaded PDF to the classifier request."""
-    gcs_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
+    """Attach document metadata to the classifier request.
+
+    The classifier only needs filenames (and brief text snippets for
+    text-extracted files) to tag documents to chapters.  Sending all PDFs
+    as file-data parts causes the 1 M-token Flash context window to overflow
+    when a project has hundreds of documents, so we deliberately omit them
+    here.  Chapter agents receive the actual PDF content after classification.
+    """
     doc_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
-    if not gcs_uris:
-        return None
-    numbered = "\n".join(f"{i + 1}. {n}" for i, n in enumerate(doc_names))
+    text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
+
+    # Build manifest covering ALL files (PDFs + text-extracted).
+    all_names = list(doc_names) + list(text_parts.keys())
+    numbered = "\n".join(f"{i + 1}. {n}" for i, n in enumerate(all_names))
     manifest = (
-        f"## Documents ({len(doc_names)}) — VALID FILENAMES\n\n"
+        f"## Documents ({len(all_names)}) — VALID FILENAMES\n\n"
         + numbered
         + "\n\nUse each filename EXACTLY as shown when populating ``filename``."
     )
-    parts: list[types.Part] = [
-        types.Part.from_uri(file_uri=uri, mime_type="application/pdf")
-        for uri in gcs_uris
-    ]
+
+    parts: list[types.Part] = []
+    # Short text snippets for text-extracted files (Excel, Word, etc.).
+    # PDFs are intentionally skipped — filenames alone are sufficient for
+    # classification and keeping them out prevents context-window overflow.
+    for filename, text in text_parts.items():
+        snippet = text[:1_500].rstrip()
+        parts.append(
+            types.Part.from_text(
+                text=f"[Document: {filename}]\n{snippet}\n... [truncated for classification] ..."
+            )
+        )
+
     parts.append(types.Part.from_text(text=manifest))
     llm_request.contents.insert(0, types.Content(role="user", parts=parts))
+    logger.info(
+        "ma_classifier: injected manifest (%d filenames) + %d text snippet(s); PDFs classified by filename only",
+        len(all_names),
+        len(text_parts),
+    )
     return None
 
 
@@ -221,6 +244,7 @@ def create_ma_pipeline() -> SequentialAgent:
     """
     classifier = create_ma_classifier_agent()
     classifier.before_model_callback = _inject_pdfs_for_ma_classifier
+    classifier.after_model_callback = _repair_truncated_json
 
     chapter_agents = create_ma_chapter_agents()
     completeness = create_ma_completeness_agent()

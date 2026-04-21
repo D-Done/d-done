@@ -82,6 +82,7 @@ class FileResponse(BaseModel):
     original_name: str
     gcs_uri: str
     doc_type: str
+    folder: str | None = None
     file_size_bytes: int | None
     upload_status: str
     created_at: str
@@ -599,6 +600,24 @@ def _project_to_response(project: Project, current_user_role: str | None = None)
     )
 
 
+def _folder_from_gcs_uri(gcs_uri: str, project_id: str) -> str | None:
+    """Parse the logical folder name from a GCS URI.
+
+    URI format: gs://bucket/{project_id}/{folder}/{filename}
+                gs://bucket/{project_id}/{filename}   (no folder)
+    """
+    try:
+        marker = f"/{project_id}/"
+        idx = gcs_uri.find(marker)
+        if idx == -1:
+            return None
+        rest = gcs_uri[idx + len(marker):]  # e.g. "Agreements/MOU.pdf" or "MOU.pdf"
+        parts = rest.split("/")
+        return parts[0] if len(parts) >= 2 else None
+    except Exception:
+        return None
+
+
 def _file_to_response(f: File) -> FileResponse:
     u = getattr(f, "uploaded_by", None)
     return FileResponse(
@@ -607,6 +626,7 @@ def _file_to_response(f: File) -> FileResponse:
         original_name=f.original_name,
         gcs_uri=f.gcs_uri,
         doc_type=f.doc_type,
+        folder=_folder_from_gcs_uri(f.gcs_uri, str(f.project_id)),
         file_size_bytes=f.file_size_bytes,
         upload_status=f.upload_status,
         created_at=f.created_at.isoformat(),

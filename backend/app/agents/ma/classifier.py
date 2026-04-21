@@ -43,10 +43,6 @@ class MaDocumentClassification(BaseModel):
             "Must be a subset of: " + ", ".join(MA_MANDATORY_CHAPTERS)
         ),
     )
-    notes: str | None = Field(
-        default=None,
-        description="Optional short note on why this file was tagged this way",
-    )
 
 
 class MaClassificationResult(BaseModel):
@@ -70,7 +66,6 @@ For every document in the manifest you produce:
    Multi-label is expected. A share-purchase agreement is typically relevant
    to ``transaction_overview``, ``corporate_governance``, and ``taxation``
    simultaneously.
-4. ``notes`` — optional one-sentence rationale.
 
 ## Inputs
 
@@ -123,6 +118,9 @@ appear exactly once.
 """
 
 
+_CLASSIFIER_MAX_OUTPUT_TOKENS = 65_536  # 410 files × ~6 lines/entry ≈ 2 500 lines ≈ 10 k tokens
+
+
 def create_ma_classifier_agent() -> Agent:
     """Return the Flash agent that tags each uploaded file."""
     return Agent(
@@ -137,5 +135,7 @@ def create_ma_classifier_agent() -> Agent:
         include_contents="none",
         output_schema=MaClassificationResult,
         output_key=STATE_MA_CLASSIFICATION,
-        generate_content_config=make_generate_config(),
+        generate_content_config=make_generate_config(
+            max_output_tokens=_CLASSIFIER_MAX_OUTPUT_TOKENS
+        ),
     )

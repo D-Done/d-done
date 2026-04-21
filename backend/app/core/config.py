@@ -29,15 +29,42 @@ class Settings(BaseSettings):
     # session within this window.
     gcs_signed_url_expiry_seconds: int = 3600  # 1 hour
 
-    # Maximum upload file size in bytes (default 100 MiB).
-    max_upload_size_bytes: int = 100 * 1024 * 1024
+    # Maximum upload file size in bytes (default 500 MiB).
+    max_upload_size_bytes: int = 500 * 1024 * 1024
 
     # Allowed MIME types for upload.
+    # M&A deals surface a wide variety of document formats; we accept everything
+    # that Gemini / the pipeline can meaningfully process.  Unknown MIME types
+    # (e.g. bare .eml files that browsers report as "") are forwarded as
+    # "application/octet-stream" and stored as-is in GCS.
     allowed_content_types: list[str] = [
+        # Documents
         "application/pdf",
+        "application/msword",                                                    # .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # .docx
+        "application/vnd.ms-excel",                                             # .xls
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",    # .xlsx
+        "application/vnd.ms-powerpoint",                                        # .ppt
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # .pptx
+        # Google Workspace exports (Drive "Download as" produces these)
+        "application/vnd.google-apps.document",
+        "application/vnd.google-apps.spreadsheet",
+        "application/vnd.google-apps.presentation",
+        # Plain text / markup
+        "text/plain",
+        "text/html",
+        "text/csv",
+        # Email
+        "message/rfc822",                                                       # .eml
+        "application/vnd.ms-outlook",                                           # .msg
+        # Images
         "image/jpeg",
         "image/png",
         "image/tiff",
+        "image/webp",
+        "image/gif",
+        # Generic binary — covers unknown MIME types the browser doesn't recognise
+        "application/octet-stream",
     ]
 
     # ---- Database (PostgreSQL / Cloud SQL) ----
@@ -101,7 +128,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     # Vertex model IDs (publisher models). Override per environment if needed.
     # Defaults match Vertex AI documentation model IDs.
-    gemini_flash_model: str = "gemini-2.0-flash-001"
+    gemini_flash_model: str = "gemini-2.5-flash"
     gemini_pro_model: str = "gemini-3.1-pro-preview"
 
     # ---- CORS ----

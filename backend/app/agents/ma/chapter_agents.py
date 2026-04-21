@@ -26,8 +26,10 @@ from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
 from app.agents.constants import (
+    STATE_CONTENT_TYPES,
     STATE_DOCUMENT_NAMES,
     STATE_GCS_URIS,
+    STATE_TEXT_PARTS,
 )
 from app.agents.ma.chapter_prompts import build_chapter_prompt
 from app.agents.ma.constants import (
@@ -84,14 +86,22 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
 
         all_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
         all_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
+        all_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
+        text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
 
-        matched_pairs = [
-            (uri, name)
-            for uri, name in zip(all_uris, all_names)
+        matched_triples = [
+            (uri, name, all_types[i] if i < len(all_types) else "application/pdf")
+            for i, (uri, name) in enumerate(zip(all_uris, all_names))
             if name in tagged_names
         ]
+        # Text-extracted files (Excel, Word, etc.) tagged to this chapter.
+        matched_text = {
+            fname: text
+            for fname, text in text_parts.items()
+            if fname in tagged_names
+        }
 
-        if not matched_pairs:
+        if not matched_triples and not matched_text:
             logger.info(
                 "ma_chapter[%s]: no documents tagged, short-circuiting to empty_state",
                 chapter_id,
@@ -104,14 +114,28 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
             )
 
         parts: list[types.Part] = [
-            types.Part.from_uri(file_uri=uri, mime_type="application/pdf")
-            for uri, _ in matched_pairs
+            types.Part.from_uri(file_uri=uri, mime_type=mime)
+            for uri, _, mime in matched_triples
         ]
+        # Append extracted text for non-PDF tagged files.
+        # Cap at 20 000 chars per file to stay within the 1 M-token context
+        # window when many data-heavy Excel files land in the same chapter.
+        _MAX_CHARS_PER_FILE = 20_000
+        for fname, text in matched_text.items():
+            body = text[:_MAX_CHARS_PER_FILE]
+            suffix = "\n... [truncated]" if len(text) > _MAX_CHARS_PER_FILE else ""
+            parts.append(
+                types.Part.from_text(text=f"[Document: {fname}]\n{body}{suffix}")
+            )
+
         parts.append(types.Part.from_text(text=_build_manifest(all_names)))
         parts.append(types.Part.from_text(text=VG_INSTRUCTION))
         llm_request.contents.insert(0, types.Content(role="user", parts=parts))
         logger.info(
-            "ma_chapter[%s]: injected %d tagged PDFs", chapter_id, len(matched_pairs)
+            "ma_chapter[%s]: injected %d PDF(s) + %d text doc(s)",
+            chapter_id,
+            len(matched_triples),
+            len(matched_text),
         )
         return None
 
