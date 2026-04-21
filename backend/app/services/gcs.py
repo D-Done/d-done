@@ -207,11 +207,13 @@ def create_resumable_session(
     original_filename: str,
     content_type: str = "application/pdf",
     origin: str | None = None,
+    folder: str | None = None,
 ) -> tuple[str, str]:
     """Initiate a GCS resumable upload session and return the session URI.
 
-    Files are stored at ``gs://<bucket>/<project_id>/<original_filename>``
-    so the original document name is preserved and visible to lawyers.
+    Files are stored at:
+    - ``gs://<bucket>/<project_id>/<original_filename>``  (no folder)
+    - ``gs://<bucket>/<project_id>/<folder>/<original_filename>``  (with folder)
 
     The backend creates the session (authenticated with ADC or SA key),
     and the frontend uploads directly to the session URI — no signed URL
@@ -231,7 +233,16 @@ def create_resumable_session(
     # Preserve the original filename (lawyers need to see it in the UI).
     # Only strip directory traversal — keep the actual file name.
     safe_name = PurePosixPath(original_filename).name
-    object_name = f"{project_id}/{safe_name}"
+    if folder:
+        # Sanitize folder: strip leading/trailing slashes and collapse path
+        # traversal so a folder named "../../etc" can't escape the project prefix.
+        safe_folder = "/".join(
+            part for part in folder.replace("\\", "/").split("/")
+            if part and part != ".."
+        ) or "documents"
+        object_name = f"{project_id}/{safe_folder}/{safe_name}"
+    else:
+        object_name = f"{project_id}/{safe_name}"
 
     blob = bucket.blob(object_name)
 

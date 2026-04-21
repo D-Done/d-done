@@ -179,6 +179,19 @@ class Project(Base):
     description = Column(Text, nullable=True)
     status = Column(String(50), nullable=False, default="pending")
     pipeline_stage = Column(String(50), nullable=True)  # doc_processing | extraction | synthesis | citation_locating
+    # Drives pipeline dispatch in analysis._run_analysis. See app.agents.schemas.TransactionType.
+    transaction_type = Column(
+        String(50),
+        nullable=False,
+        default="real_estate_finance",
+        server_default="real_estate_finance",
+    )
+    # Structured project details (client_name, role, counterparty_name, free-text description).
+    # Replaces the earlier "stuff it into description" hack; consumed by the M&A viewer.
+    transaction_metadata = Column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=True,
+    )
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(
         DateTime(timezone=True),

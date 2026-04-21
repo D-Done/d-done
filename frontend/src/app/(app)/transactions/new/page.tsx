@@ -24,6 +24,7 @@ import {
   FileUploadZone,
   useFileUpload,
   type FileEntry,
+  type FolderEntry,
 } from "@/components/file-upload-zone";
 import { AnalysisStatus } from "@/components/analysis-status";
 import { Button } from "@/components/ui/button";
@@ -73,11 +74,29 @@ function playSuccessSound() {
 
 type TransactionType = "real_estate_financing" | "ma" | "company_investment";
 type PartyRole = "bank" | "insurance" | "fund" | "other";
+type MaRole =
+  | "target"
+  | "buyer"
+  | "seller"
+  | "investor"
+  | "counsel_target"
+  | "counsel_buyer"
+  | "other";
 
 const ROLE_LABELS: Record<PartyRole, string> = {
   bank: "בנק",
   insurance: "חברת ביטוח",
   fund: "קרן",
+  other: "אחר",
+};
+
+const MA_ROLE_LABELS: Record<MaRole, string> = {
+  target: "חברת המטרה",
+  buyer: "הרוכש",
+  seller: "המוכר",
+  investor: "המשקיע",
+  counsel_target: 'עו"ד חברת המטרה',
+  counsel_buyer: 'עו"ד הרוכש',
   other: "אחר",
 };
 
@@ -122,9 +141,17 @@ export default function NewTransactionPage() {
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
   const [role, setRole] = useState<PartyRole>("bank");
+  const [maRole, setMaRole] = useState<MaRole>("buyer");
   const [roleOtherText, setRoleOtherText] = useState("");
   const [counterpartyName, setCounterpartyName] = useState("");
   const [description, setDescription] = useState("");
+
+  // Labels that shift per transaction type. For M&A the "counterparty" and
+  // the "role" fields are different from the finance flow, so we swap
+  // copy/options without forking the form.
+  const isMa = transactionType === "ma";
+  const counterpartyLabel = isMa ? "שם הצד שכנגד (Counterparty)" : "שם היזם";
+  const roleLabel = "מי אתה מייצג בעסקה?";
   const [detailErrors, setDetailErrors] = useState<{
     transactionType?: string;
     projectName?: string;
@@ -134,8 +161,9 @@ export default function NewTransactionPage() {
 
   // Processing flow — always use Gemini 3.1 Pro (visual grounding)
 
-  // Step 3: File list
+  // Step 3: File list + folder organisation
   const [files, setFiles] = useState<FileEntry[]>([]);
+  const [folders, setFolders] = useState<FolderEntry[]>([]);
   const updateFileAt = useCallback(
     (index: number, patch: Partial<FileEntry>) => {
       setFiles((prev) =>
@@ -158,22 +186,21 @@ export default function NewTransactionPage() {
     [files],
   );
 
+  function currentRoleLabel(): string {
+    if (isMa) {
+      return maRole === "other" && roleOtherText.trim()
+        ? `אחר: ${roleOtherText.trim()}`
+        : MA_ROLE_LABELS[maRole];
+    }
+    return role === "other" && roleOtherText.trim()
+      ? `אחר: ${roleOtherText.trim()}`
+      : ROLE_LABELS[role];
+  }
+
   function buildProjectDescription(): string | undefined {
-    const meta: string[] = [];
-    if (clientName.trim()) meta.push(`- שם הלקוח: ${clientName.trim()}`);
-    meta.push(
-      `- מי אתה מייצג בעסקה?: ${
-        role === "other" && roleOtherText.trim()
-          ? `אחר: ${roleOtherText.trim()}`
-          : ROLE_LABELS[role]
-      }`,
-    );
-    if (counterpartyName.trim())
-      meta.push(`- הצד הנגדי: ${counterpartyName.trim()}`);
-    const desc = description.trim();
-    const block = ["---", "פרטי פרויקט", ...meta].join("\n");
-    const out = [desc, block].filter(Boolean).join("\n\n").trim();
-    return out || undefined;
+    // Kept for the free-text description field only — structured data now
+    // travels as ``transaction_metadata`` on the create-project payload.
+    return description.trim() || undefined;
   }
 
   function validateDetails(): boolean {
@@ -201,9 +228,16 @@ export default function NewTransactionPage() {
     if (!projectName.trim() || !clientName.trim()) return;
     setCreatingProject(true);
     try {
+      const selectedRole = currentRoleLabel();
       const project = await api.createProject({
-        title: projectName.trim(),
-        description: buildProjectDescription(),
+        transaction_type: transactionType,
+        project_name: projectName.trim(),
+        client_name: clientName.trim(),
+        role: selectedRole,
+        role_other:
+          (isMa ? maRole : role) === "other" ? roleOtherText.trim() : null,
+        counterparty_name: counterpartyName.trim() || null,
+        description: buildProjectDescription() ?? null,
       });
       if (transactionType === "real_estate_financing") {
         setProjectDealType(project.id, "real_estate", "project_finance");
@@ -393,6 +427,7 @@ export default function NewTransactionPage() {
                       setTransactionType(t.id);
                       setProjectId(null);
                       setFiles([]);
+                      setFolders([]);
                       setStep("details");
                     }}
                     className={[
@@ -483,25 +518,42 @@ export default function NewTransactionPage() {
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>
-                      מי אתה מייצג בעסקה?{" "}
-                      <span className="text-red-500">*</span>
+                      {roleLabel} <span className="text-red-500">*</span>
                     </Label>
-                    <Select
-                      value={role}
-                      onValueChange={(v) => setRole(v as PartyRole)}
-                    >
-                      <SelectTrigger className="rounded-2xl">
-                        <SelectValue placeholder="בחר תפקיד" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(ROLE_LABELS).map(([k, label]) => (
-                          <SelectItem key={k} value={k}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {role === "other" ? (
+                    {isMa ? (
+                      <Select
+                        value={maRole}
+                        onValueChange={(v) => setMaRole(v as MaRole)}
+                      >
+                        <SelectTrigger className="rounded-2xl">
+                          <SelectValue placeholder="בחר תפקיד" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(MA_ROLE_LABELS).map(([k, label]) => (
+                            <SelectItem key={k} value={k}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Select
+                        value={role}
+                        onValueChange={(v) => setRole(v as PartyRole)}
+                      >
+                        <SelectTrigger className="rounded-2xl">
+                          <SelectValue placeholder="בחר תפקיד" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(ROLE_LABELS).map(([k, label]) => (
+                            <SelectItem key={k} value={k}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {(isMa ? maRole : role) === "other" ? (
                       <Input
                         value={roleOtherText}
                         onChange={(e) => setRoleOtherText(e.target.value)}
@@ -517,12 +569,16 @@ export default function NewTransactionPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="counterparty">שם היזם</Label>
+                    <Label htmlFor="counterparty">{counterpartyLabel}</Label>
                     <Input
                       id="counterparty"
                       value={counterpartyName}
                       onChange={(e) => setCounterpartyName(e.target.value)}
-                      placeholder='לדוגמה: "חברת יזמות בע״מ"'
+                      placeholder={
+                        isMa
+                          ? 'לדוגמה: "Acme Industries Ltd"'
+                          : 'לדוגמה: "חברת יזמות בע״מ"'
+                      }
                       className="rounded-2xl"
                     />
                   </div>
@@ -580,6 +636,10 @@ export default function NewTransactionPage() {
                   onFilesChange={setFiles}
                   isUploading={isUploading}
                   showDocTypeSelector={false}
+                  acceptLabel="PDF, Word, Excel, תמונות ועוד"
+                  showFolders={true}
+                  folders={folders}
+                  onFoldersChange={setFolders}
                 />
 
                 <div className="flex flex-wrap items-center justify-between gap-3">

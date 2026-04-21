@@ -12,6 +12,10 @@ PRO_MODEL = settings.gemini_pro_model
 STATE_PROJECT_ID = "project_id"
 STATE_GCS_URIS = "gcs_uris"
 STATE_DOCUMENT_NAMES = "document_names"
+# Per-file MIME types parallel to STATE_GCS_URIS (e.g. "image/jpeg" for images)
+STATE_CONTENT_TYPES = "content_types"
+# Dict[filename, extracted_text] for non-PDF/image files (Excel, Word, CSV…)
+STATE_TEXT_PARTS = "text_parts"
 
 STATE_DOCAI_OUTPUT_URIS = "docai_output_uris"
 STATE_ENRICHED_REPORT = "enriched_report"

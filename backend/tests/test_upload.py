@@ -86,7 +86,7 @@ class TestInitiateUpload:
             "project_id": project_id,
             "filename": "huge.pdf",
             "content_type": "application/pdf",
-            "file_size": 500 * 1024 * 1024,  # 500 MiB > 100 MiB limit
+            "file_size": 600 * 1024 * 1024,  # 600 MiB > 500 MiB limit
         })
         assert resp.status_code == 400
         assert "exceeds" in resp.json()["detail"].lower()
@@ -219,7 +219,7 @@ class TestCompleteUpload:
 
         resp = client.post("/api/v1/upload/complete", json={
             "file_id": file_id,
-            "file_size_bytes": 500 * 1024 * 1024,  # 500 MiB
+            "file_size_bytes": 600 * 1024 * 1024,  # 600 MiB > 500 MiB limit
         })
         assert resp.status_code == 400
 

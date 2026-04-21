@@ -64,13 +64,19 @@ class UploadInitiateRequest(BaseModel):
         ge=0,
         description="File size in bytes (optional, used for pre-validation)",
     )
+    folder: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Optional folder name for UI organisation; used as GCS sub-path prefix",
+    )
 
 
 class UploadInitiateResponse(BaseModel):
     """Response with the session URI the client will PUT chunks to."""
 
-    upload_url: str = Field(
-        description="GCS session URI — PUT file chunks directly to this URL",
+    upload_url: str | None = Field(
+        default=None,
+        description="GCS session URI — PUT file chunks directly to this URL. Null when already_exists=True.",
     )
     file_id: str = Field(
         description="Database file ID (UUID) — send back in /upload/complete",
@@ -87,6 +93,10 @@ class UploadInitiateResponse(BaseModel):
     cors_origin: str | None = Field(
         default=None,
         description="Origin passed to GCS for CORS (diagnostic)",
+    )
+    already_exists: bool = Field(
+        default=False,
+        description="True when an identical file (same name + size) is already uploaded in this project. No GCS upload needed.",
     )
 
 
@@ -161,6 +171,37 @@ def initiate_upload(
 
     require_project_owner(db, user.id, project_uuid)
 
+    # --- Deduplication: skip if same name + size already uploaded in this project ---
+    if body.file_size is not None and body.file_size > 0:
+        existing = (
+            db.query(File)
+            .filter(
+                File.project_id == project_uuid,
+                File.original_name == body.filename,
+                File.file_size_bytes == body.file_size,
+                File.upload_status == "uploaded",
+            )
+            .first()
+        )
+        if existing:
+            logger.info(
+                "Duplicate skipped: file_id=%s, name=%s, size=%d, project=%s, user=%s",
+                existing.id,
+                body.filename,
+                body.file_size,
+                body.project_id,
+                user.email,
+            )
+            return UploadInitiateResponse(
+                upload_url=None,
+                file_id=str(existing.id),
+                gcs_uri=existing.gcs_uri,
+                max_size_bytes=settings.max_upload_size_bytes,
+                bucket_location=settings.gcs_location,
+                cors_origin=None,
+                already_exists=True,
+            )
+
     # --- Create GCS resumable session ---
     try:
         # GCS resumable upload sessions MUST be created with the browser's
@@ -206,6 +247,7 @@ def initiate_upload(
             original_filename=body.filename,
             content_type=body.content_type,
             origin=origin,
+            folder=body.folder,
         )
     except Exception as exc:
         logger.exception("Failed to create upload session for %s", body.filename)

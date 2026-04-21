@@ -317,10 +317,26 @@ export async function adminGetActivity(): Promise<ActivityResponse> {
 // Projects
 // ============================================================
 
-export async function createProject(data: {
-  title: string;
-  description?: string;
-}): Promise<Project> {
+/**
+ * Payload for the "Brain" project-creation flow. The backend accepts either
+ * this structured shape (persisting transaction_type + transaction_metadata
+ * explicitly) or the legacy {title, description} form. Always prefer the
+ * structured form from the new-transaction page so the M&A pipeline receives
+ * real metadata instead of a scraped description string.
+ */
+export interface ProjectCreateStructured {
+  transaction_type: "real_estate_financing" | "ma" | "company_investment";
+  project_name: string;
+  client_name?: string | null;
+  role?: string | null;
+  role_other?: string | null;
+  counterparty_name?: string | null;
+  description?: string | null;
+}
+
+export async function createProject(
+  data: { title: string; description?: string } | ProjectCreateStructured,
+): Promise<Project> {
   return request<Project>("/projects/", {
     method: "POST",
     body: JSON.stringify(data),
