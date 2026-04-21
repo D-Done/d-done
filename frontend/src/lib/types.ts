@@ -278,11 +278,86 @@ export interface QASummary {
   corrections_he: string[];
 }
 
+// ============================================================
+// M&A DD Report (v1 — 10 mandatory chapters)
+// ============================================================
+
+export type MaChapterId =
+  | "transaction_overview"
+  | "corporate_governance"
+  | "customer_obligations"
+  | "supplier_obligations"
+  | "hr"
+  | "regulatory"
+  | "litigation"
+  | "taxation"
+  | "financial_debt"
+  | "insurance";
+
+export interface MaFinding {
+  id: string;
+  subsection: string;
+  severity: FindingSeverity;
+  title: string;
+  description: string;
+  sources: SourceRef[];
+}
+
+export interface MaFollowUp {
+  id: string;
+  description: string;
+  severity: FindingSeverity;
+  suggested_document?: string | null;
+  related_sources?: SourceRef[];
+}
+
+export interface MaChapterOutput {
+  chapter_id: MaChapterId;
+  chapter_title_he: string;
+  summary_he: string;
+  empty_state: boolean;
+  findings: MaFinding[];
+  follow_ups: MaFollowUp[];
+  timeline_events: TimelineEvent[];
+}
+
+export interface MaCompletenessItem {
+  id: string;
+  chapter_ids: string[];
+  description: string;
+  severity: FindingSeverity;
+  suggested_document?: string | null;
+}
+
+export interface MaCompletenessChecklist {
+  items: MaCompletenessItem[];
+  summary_he?: string | null;
+}
+
+export interface MaProjectHeader {
+  project_name?: string | null;
+  client_name?: string | null;
+  representing_role?: string | null;
+  counterparty_name?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  doc_count?: number | null;
+}
+
+export interface MaDDReport {
+  transaction_type: "ma";
+  project_header?: MaProjectHeader | null;
+  executive_summary?: ExecutiveSummary | null;
+  chapters: MaChapterOutput[];
+  completeness?: MaCompletenessChecklist | null;
+  agent_session_id?: string;
+}
+
 export interface DDReportResponse {
   check_id: string;
   project_id: string;
   status: string;
-  report: (DDReport | RealEstateFinanceDDReport) | null;
+  report: (DDReport | RealEstateFinanceDDReport | MaDDReport) | null;
   error_message?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
@@ -291,7 +366,7 @@ export interface DDReportResponse {
 export interface AnalyzeResponse {
   check_id: string;
   status: string;
-  report: (DDReport | RealEstateFinanceDDReport) | null;
+  report: (DDReport | RealEstateFinanceDDReport | MaDDReport) | null;
   qa_summary?: QASummary | null;
   qa_attempts?: number;
   error_message?: string | null;
@@ -316,12 +391,27 @@ export interface ProjectFile {
   uploaded_by_is_deleted?: boolean;
 }
 
+export type BackendTransactionType =
+  | "real_estate_finance"
+  | "ma"
+  | "company_investment";
+
+export interface ProjectTransactionMetadata {
+  project_name?: string | null;
+  client_name?: string | null;
+  representing_role?: string | null;
+  counterparty_name?: string | null;
+  free_text_description?: string | null;
+}
+
 export interface Project {
   id: string;
   title: string;
   description?: string;
   status: ProjectStatus;
   pipeline_stage?: string | null;
+  transaction_type?: BackendTransactionType | string;
+  transaction_metadata?: ProjectTransactionMetadata | null;
   created_at: string;
   updated_at: string;
   files: ProjectFile[];

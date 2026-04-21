@@ -111,6 +111,8 @@ class ProjectResponse(BaseModel):
     description: str | None = None
     status: str
     pipeline_stage: str | None = None
+    transaction_type: str = "real_estate_finance"
+    transaction_metadata: dict | None = None
     created_at: str
     updated_at: str
     files: list[FileResponse] = []
@@ -221,17 +223,24 @@ def create_project(
     Returns the project with its UUID which the frontend uses as the
     ``project_id`` for subsequent upload calls.
     """
+    transaction_type = "real_estate_finance"
+    transaction_metadata: dict | None = None
+
     if isinstance(body, ProjectCreateLegacyRequest):
         title = body.title
         description = body.description
     else:
         title, description = body.to_title_description()
+        transaction_type = body.to_db_transaction_type()
+        transaction_metadata = body.to_db_transaction_metadata()
 
     project = Project(
         owner_id=user.id,
         organization_id=user.organization_id or DEFAULT_ORGANIZATION_ID,
         title=title,
         description=description,
+        transaction_type=transaction_type,
+        transaction_metadata=transaction_metadata,
     )
     db.add(project)
     db.flush()
@@ -576,6 +585,9 @@ def _project_to_response(project: Project, current_user_role: str | None = None)
         description=project.description,
         status=project.status,
         pipeline_stage=getattr(project, "pipeline_stage", None),
+        transaction_type=getattr(project, "transaction_type", None)
+        or "real_estate_finance",
+        transaction_metadata=getattr(project, "transaction_metadata", None),
         created_at=project.created_at.isoformat(),
         updated_at=project.updated_at.isoformat(),
         files=[_file_to_response(f) for f in project.files],

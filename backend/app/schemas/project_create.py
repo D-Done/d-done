@@ -79,6 +79,42 @@ class ProjectCreateBase(BaseModel):
         combined = "\n\n".join([s for s in [free_text, meta_block] if s]).strip()
         return self.project_name, combined or None
 
+    # Frontend sends UI slugs ("real_estate_financing"); the DB column uses
+    # the canonical ``TransactionType`` enum values ("real_estate_finance").
+    _TRANSACTION_TYPE_MAP: dict[str, str] = {
+        "real_estate_financing": "real_estate_finance",
+        "real_estate_finance": "real_estate_finance",
+        "ma": "ma",
+        "company_investment": "company_investment",
+    }
+
+    def to_db_transaction_type(self) -> str:
+        """Map the UI transaction_type slug to the canonical DB enum value.
+
+        Unknown values pass through — let the DB (or a later guard) fail
+        loudly rather than silently coercing to finance.
+        """
+        return self._TRANSACTION_TYPE_MAP.get(
+            self.transaction_type, self.transaction_type
+        )
+
+    def to_db_transaction_metadata(self) -> dict:
+        """Structured metadata persisted alongside the project.
+
+        Consumed by the M&A pipeline (and the finance report header) so the
+        agent layer doesn't have to re-parse a free-text description.
+        """
+        representing_role = self.role
+        if representing_role == "אחר" and self.role_other:
+            representing_role = self.role_other
+        return {
+            "project_name": self.project_name,
+            "client_name": self.client_name,
+            "representing_role": representing_role,
+            "counterparty_name": self.counterparty_name,
+            "free_text_description": self.description,
+        }
+
 
 class RealEstateFinancingSchema(ProjectCreateBase):
     """Strict validation for Real Estate Financing projects."""

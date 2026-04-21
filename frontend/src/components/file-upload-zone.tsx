@@ -51,7 +51,7 @@ export interface FileUploadZoneProps {
   onFilesChange: (files: FileEntry[]) => void;
   /** Whether uploading is in progress — disables editing controls. */
   isUploading?: boolean;
-  /** Maximum number of files allowed. Defaults to 20. */
+  /** Maximum number of files allowed. Defaults to 200. */
   maxFiles?: number;
   /** Accepted MIME types. Defaults to PDF only. */
   acceptedTypes?: string[];
@@ -73,7 +73,7 @@ export function FileUploadZone({
   files,
   onFilesChange,
   isUploading = false,
-  maxFiles = 20,
+  maxFiles = 200,
   acceptedTypes = DEFAULT_ACCEPTED_TYPES,
   acceptLabel = "PDF",
   showDocTypeSelector = true,

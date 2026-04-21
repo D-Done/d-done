@@ -30,6 +30,7 @@ import * as api from "@/lib/api";
 import type {
   DDReportResponse,
   DocumentType,
+  MaDDReport,
   Project,
   ProjectMember,
   QASummary,
@@ -41,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysisStatus } from "@/components/analysis-status";
 import { TenantTableReview } from "@/components/tenant-table-review";
 import { ReportViewer } from "@/components/report-viewer";
+import { MaReportViewer } from "@/components/ma-report-viewer";
 import { AgentSessionViewer } from "@/components/agent-session-viewer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -1131,15 +1133,34 @@ export default function TransactionPage() {
                 project.status !== "processing" &&
                 ["completed", "partial", "needs_review"].includes(
                   project.status,
-                ) && (
-                  <ReportViewer
-                    report={report}
-                    projectTitle={project.title}
-                    projectId={project.id}
-                    projectFiles={project.files}
-                    checkId={reportData?.check_id}
-                  />
-                )}
+                ) &&
+                (() => {
+                  const isMa =
+                    "transaction_type" in report &&
+                    (report as { transaction_type?: string })
+                      .transaction_type === "ma";
+                  if (isMa) {
+                    return (
+                      <MaReportViewer
+                        report={report as MaDDReport}
+                        projectTitle={project.title}
+                        projectId={project.id}
+                        projectFiles={project.files}
+                      />
+                    );
+                  }
+                  return (
+                    <ReportViewer
+                      report={
+                        report as Exclude<typeof report, MaDDReport>
+                      }
+                      projectTitle={project.title}
+                      projectId={project.id}
+                      projectFiles={project.files}
+                      checkId={reportData?.check_id}
+                    />
+                  );
+                })()}
 
               {!report &&
                 !analyzing &&

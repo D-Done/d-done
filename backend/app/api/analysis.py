@@ -306,16 +306,27 @@ async def start_analysis(
         async def on_stage_change(stage: str) -> None:
             await _set_pipeline_stage(db, project_id, stage)
 
-        # Always use visual grounding pipeline (DocAI flow removed)
-        phase1_only = True  # HITL tenant review
+        # Dispatch by project transaction type. Real-estate finance uses
+        # the original HITL phase-1 flow; M&A (v1) runs a single linear
+        # pipeline to completion with no HITL checkpoint.
+        transaction_type = project.transaction_type or "real_estate_finance"
+        transaction_metadata = project.transaction_metadata or {}
 
-        analysis_result = await _run_analysis(
-            project_id=project_id,
-            uploaded_files=uploaded_files,
-            on_stage_change=on_stage_change,
-            use_visual_grounding=True,
-            phase1_only=phase1_only,
-        )
+        if transaction_type == "ma":
+            analysis_result = await _run_ma_analysis(
+                project_id=project_id,
+                uploaded_files=uploaded_files,
+                transaction_metadata=transaction_metadata,
+                on_stage_change=on_stage_change,
+            )
+        else:
+            analysis_result = await _run_analysis(
+                project_id=project_id,
+                uploaded_files=uploaded_files,
+                on_stage_change=on_stage_change,
+                use_visual_grounding=True,
+                phase1_only=True,
+            )
 
         if analysis_result.needs_review and analysis_result.hitl_data is not None:
             result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
@@ -1239,3 +1250,127 @@ async def _rerun_main_synthesis_with_correction(
         "block": agreement_extraction.get("block"),
         "parcel": agreement_extraction.get("parcel"),
     }
+
+
+# ---------------------------------------------------------------------------
+# M&A pipeline runner (v1 — non-RAG, no HITL, no QA loop).
+# ---------------------------------------------------------------------------
+
+
+async def _run_ma_analysis(
+    *,
+    project_id: UUID,
+    uploaded_files: list[File],
+    transaction_metadata: dict,
+    on_stage_change: Callable[[str], Awaitable[None]] | None = None,
+) -> _AnalysisResult:
+    """Run the M&A v1 DD pipeline to completion and return the report.
+
+    Mirrors ``_run_analysis`` but uses ``create_ma_pipeline`` and skips the
+    phase-1/HITL dance — the M&A v1 pipeline is synchronous and does not
+    pause for user review.
+    """
+    from google.adk.artifacts import InMemoryArtifactService
+    from google.adk.memory import InMemoryMemoryService
+    from google.adk.runners import Runner
+    from google.genai import types
+
+    from app.agents.constants import (
+        APP_NAME,
+        STATE_DOCUMENT_NAMES,
+        STATE_ENRICHED_REPORT,
+        STATE_GCS_URIS,
+        STATE_PROJECT_ID,
+        SYSTEM_USER_ID,
+    )
+    from app.agents.ma.constants import STATE_MA_METADATA
+    from app.agents.ma.pipeline import create_ma_pipeline
+    from app.agents.session_store import get_session_service
+    from app.agents.visual_grounding_pipeline_agent import create_vg_app
+
+    _ensure_genai_env()
+
+    if on_stage_change:
+        await on_stage_change(PIPELINE_STAGE_EXTRACTION)
+
+    gcs_uris = [f.gcs_uri for f in uploaded_files]
+    doc_names = [f.original_name for f in uploaded_files]
+
+    initial_state = {
+        STATE_PROJECT_ID: str(project_id),
+        STATE_GCS_URIS: gcs_uris,
+        STATE_DOCUMENT_NAMES: doc_names,
+        STATE_MA_METADATA: transaction_metadata or {},
+    }
+
+    session_service = get_session_service()
+    session_id = str(uuid4())
+    await session_service.create_session(
+        app_name=APP_NAME,
+        user_id=SYSTEM_USER_ID,
+        session_id=session_id,
+        state=initial_state,
+    )
+
+    pipeline = create_ma_pipeline()
+    # Reuse the VG App wrapper so Gemini context caching kicks in for the
+    # chapter agents' prompt payloads.
+    app = create_vg_app(pipeline, name=APP_NAME)
+    runner = Runner(
+        app=app,
+        app_name=APP_NAME,
+        session_service=session_service,
+        artifact_service=InMemoryArtifactService(),
+        memory_service=InMemoryMemoryService(),
+        auto_create_session=False,
+    )
+
+    manifest_lines = [f"{i + 1}. {name}" for i, name in enumerate(doc_names)]
+    user_message = types.Content(
+        role="user",
+        parts=[
+            types.Part.from_text(
+                text=(
+                    "Run M&A due-diligence check.\n\n"
+                    "Transaction type: ma\n\n"
+                    f"Documents ({len(doc_names)}):\n" + "\n".join(manifest_lines)
+                )
+            )
+        ],
+    )
+
+    logger.info(
+        "Starting MA DD pipeline for project %s (%d files)",
+        project_id,
+        len(uploaded_files),
+    )
+
+    try:
+        async for _event in runner.run_async(
+            user_id=SYSTEM_USER_ID,
+            session_id=session_id,
+            new_message=user_message,
+        ):
+            pass
+    except BaseExceptionGroup as beg:
+        real = [e for e in beg.exceptions if not isinstance(e, GeneratorExit)]
+        if real:
+            raise
+
+    session = await session_service.get_session(
+        app_name=APP_NAME,
+        user_id=SYSTEM_USER_ID,
+        session_id=session_id,
+    )
+    state = session.state or {}
+
+    report_dict = state.get(STATE_ENRICHED_REPORT) or state.get("ma_dd_report")
+    if not report_dict:
+        raise RuntimeError("M&A pipeline produced no report in session state")
+
+    report_dict["agent_session_id"] = session_id
+
+    return _AnalysisResult(
+        report_dict=report_dict,
+        agent_session_id=session_id,
+    )
