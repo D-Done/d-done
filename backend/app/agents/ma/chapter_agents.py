@@ -9,13 +9,23 @@ Each of the 10 mandatory chapters runs as a Gemini 3.1 Pro agent producing
 - before_model_callback = injects only the PDFs tagged for this chapter
 - after_model_callback = repairs truncated JSON (shared helper)
 
-We intentionally reuse the finance pipeline's ``VG_INSTRUCTION`` and
-``_repair_truncated_json`` helpers so any improvement there flows through
-automatically.
+When more than ``_VG_BATCH_SIZE`` PDFs are tagged to a chapter the callback
+uses a two-tier strategy so every document is analysed:
+
+  Tier 1 — visual grounding batch (≤ ``_VG_BATCH_SIZE`` PDFs):
+      Injected as ``Part.from_uri`` GCS references → full box_2d citations.
+      Sorted by file size ascending so compact, focused documents (IDs,
+      certificates, short reports) get native visual grounding first.
+
+  Tier 2 — overflow batches (remaining PDFs, ``_OVERFLOW_BATCH_SIZE`` each):
+      Each batch is sent to Gemini Flash in parallel with a lightweight
+      extraction prompt.  The returned text is injected as ``Part.from_text``
+      into the same Pro call that handles Tier 1.  No documents are dropped.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
@@ -26,8 +36,10 @@ from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
 from app.agents.constants import (
+    FLASH_MODEL,
     STATE_CONTENT_TYPES,
     STATE_DOCUMENT_NAMES,
+    STATE_FILE_SIZES,
     STATE_GCS_URIS,
     STATE_TEXT_PARTS,
 )
@@ -50,6 +62,18 @@ from app.agents.visual_grounding_pipeline_agent import (
 
 logger = logging.getLogger(__name__)
 
+# PDFs injected as GCS URIs (native visual-grounding / box_2d support).
+_VG_BATCH_SIZE = 15
+# PDFs per overflow Flash-extraction call. Each call fits well within the
+# Flash 1 M-token limit (≤ 15 PDFs × ~50 k tokens/PDF = ~750 k tokens).
+_OVERFLOW_BATCH_SIZE = 15
+# Character cap on the text returned by each overflow extraction call.
+# ~30 k chars ≈ 7 500 tokens per batch; keeps 10 overflow batches within
+# ~75 k tokens of the Pro call's context budget.
+_MAX_EXTRACTION_CHARS = 30_000
+# Character cap per text-only file (Excel, Word, etc.).
+_MAX_CHARS_PER_FILE = 10_000
+
 
 def _empty_chapter_json(chapter_id: str) -> str:
     """Serialized default ``ChapterOutput`` for the no-docs-tagged fallback."""
@@ -61,16 +85,79 @@ def _empty_chapter_json(chapter_id: str) -> str:
     ).model_dump_json()
 
 
-def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
-    """Return a ``before_model_callback`` that filters PDFs by chapter tag.
+async def _extract_overflow_batch(
+    batch: list[tuple[str, str, str]],
+    chapter_id: str,
+    batch_index: int,
+) -> str:
+    """Call Gemini Flash to extract relevant text from one overflow PDF batch.
 
-    Reads ``STATE_MA_CLASSIFICATION`` written by the M&A classifier and
-    picks only the documents whose ``chapter_tags`` include this chapter.
-    When nothing matches, short-circuits with an empty_state ChapterOutput —
-    saves a Pro-tier API call.
+    Returns the extracted text capped at ``_MAX_EXTRACTION_CHARS`` characters.
+    On failure returns a short error placeholder so the chapter can continue.
+    """
+    from google.genai import Client
+
+    chapter_title = CHAPTER_TITLES_HE.get(chapter_id, chapter_id)
+    names_str = ", ".join(name for _, name, _ in batch)
+
+    parts: list[types.Part] = [
+        types.Part.from_uri(file_uri=uri, mime_type=mime)
+        for uri, _, mime in batch
+    ]
+    parts.append(
+        types.Part.from_text(
+            text=(
+                f"You are reviewing M&A due-diligence documents for the chapter: '{chapter_title}'.\n"
+                f"Documents in this batch: {names_str}\n\n"
+                "Extract ALL relevant information from these documents: facts, dates, monetary amounts, "
+                "party names, key clauses, obligations, conditions, risks, and red flags. "
+                "Organise your output by document name. Be thorough and preserve important details verbatim. "
+                "This extracted text will feed a senior analyst writing the final chapter."
+            )
+        )
+    )
+
+    try:
+        client = Client()
+        response = await client.aio.models.generate_content(
+            model=FLASH_MODEL,
+            contents=parts,
+        )
+        text = (response.text or "").strip()
+        if len(text) > _MAX_EXTRACTION_CHARS:
+            text = text[:_MAX_EXTRACTION_CHARS] + "\n... [extraction truncated]"
+        logger.info(
+            "ma_chapter[%s]: overflow batch %d extracted %d chars from %d PDF(s)",
+            chapter_id,
+            batch_index,
+            len(text),
+            len(batch),
+        )
+        return text
+    except Exception as exc:
+        logger.warning(
+            "ma_chapter[%s]: overflow batch %d extraction failed: %s",
+            chapter_id,
+            batch_index,
+            exc,
+        )
+        return f"[Overflow batch {batch_index + 1} extraction failed: {exc}]"
+
+
+def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
+    """Return an async ``before_model_callback`` that filters PDFs by chapter tag.
+
+    Reads ``STATE_MA_CLASSIFICATION`` written by the M&A classifier and picks
+    only documents whose ``chapter_tags`` include this chapter.  When nothing
+    matches, short-circuits with an empty_state ChapterOutput.
+
+    For chapters with many tagged PDFs the two-tier strategy is applied:
+    the first ``_VG_BATCH_SIZE`` PDFs (smallest first) go in as GCS URIs for
+    visual grounding; the rest are extracted in parallel by Flash and injected
+    as text — so every document is analysed.
     """
 
-    def _callback(
+    async def _callback(
         callback_context: CallbackContext, llm_request: LlmRequest
     ) -> LlmResponse | None:
         classification: dict = (
@@ -87,21 +174,27 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
         all_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
         all_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
         all_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
+        all_sizes: list[int] = callback_context.state.get(STATE_FILE_SIZES, [])
         text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
 
-        matched_triples = [
-            (uri, name, all_types[i] if i < len(all_types) else "application/pdf")
+        matched_with_size: list[tuple[str, str, str, int]] = [
+            (
+                uri,
+                name,
+                all_types[i] if i < len(all_types) else "application/pdf",
+                all_sizes[i] if i < len(all_sizes) else 0,
+            )
             for i, (uri, name) in enumerate(zip(all_uris, all_names))
             if name in tagged_names
         ]
-        # Text-extracted files (Excel, Word, etc.) tagged to this chapter.
+
         matched_text = {
             fname: text
             for fname, text in text_parts.items()
             if fname in tagged_names
         }
 
-        if not matched_triples and not matched_text:
+        if not matched_with_size and not matched_text:
             logger.info(
                 "ma_chapter[%s]: no documents tagged, short-circuiting to empty_state",
                 chapter_id,
@@ -113,14 +206,63 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
                 )
             )
 
+        # Sort by file size ascending — smaller files are typically more focused
+        # (IDs, certificates, short extracts) and get visual grounding first.
+        matched_with_size.sort(key=lambda x: x[3])
+
+        vg_batch = matched_with_size[:_VG_BATCH_SIZE]
+        overflow = matched_with_size[_VG_BATCH_SIZE:]
+
+        logger.info(
+            "ma_chapter[%s]: %d PDF(s) tagged — %d in VG batch, %d in overflow",
+            chapter_id,
+            len(matched_with_size),
+            len(vg_batch),
+            len(overflow),
+        )
+
+        # Tier 1: GCS URI parts for the VG batch (visual grounding preserved).
         parts: list[types.Part] = [
             types.Part.from_uri(file_uri=uri, mime_type=mime)
-            for uri, _, mime in matched_triples
+            for uri, _, mime, _ in vg_batch
         ]
-        # Append extracted text for non-PDF tagged files.
-        # Cap at 20 000 chars per file to stay within the 1 M-token context
-        # window when many data-heavy Excel files land in the same chapter.
-        _MAX_CHARS_PER_FILE = 20_000
+
+        # Tier 2: parallel Flash extraction for all overflow batches.
+        if overflow:
+            overflow_triples = [(uri, name, mime) for uri, name, mime, _ in overflow]
+            batches = [
+                overflow_triples[i : i + _OVERFLOW_BATCH_SIZE]
+                for i in range(0, len(overflow_triples), _OVERFLOW_BATCH_SIZE)
+            ]
+            logger.info(
+                "ma_chapter[%s]: extracting %d overflow batch(es) via Flash in parallel",
+                chapter_id,
+                len(batches),
+            )
+            extractions: list[str | BaseException] = await asyncio.gather(
+                *[
+                    _extract_overflow_batch(batch, chapter_id, idx)
+                    for idx, batch in enumerate(batches)
+                ],
+                return_exceptions=True,
+            )
+            for idx, result in enumerate(extractions):
+                if isinstance(result, BaseException):
+                    text = f"[Overflow batch {idx + 1} extraction raised: {result}]"
+                else:
+                    text = result
+                overflow_names = [name for _, name, _ in batches[idx]]
+                parts.append(
+                    types.Part.from_text(
+                        text=(
+                            f"[Extracted content — overflow batch {idx + 1} "
+                            f"({len(overflow_names)} PDF(s): {', '.join(overflow_names)})]\n"
+                            f"{text}"
+                        )
+                    )
+                )
+
+        # Text-only files (Excel, Word, etc.) tagged to this chapter.
         for fname, text in matched_text.items():
             body = text[:_MAX_CHARS_PER_FILE]
             suffix = "\n... [truncated]" if len(text) > _MAX_CHARS_PER_FILE else ""
@@ -132,9 +274,10 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
         parts.append(types.Part.from_text(text=VG_INSTRUCTION))
         llm_request.contents.insert(0, types.Content(role="user", parts=parts))
         logger.info(
-            "ma_chapter[%s]: injected %d PDF(s) + %d text doc(s)",
+            "ma_chapter[%s]: injected %d VG PDF(s), %d overflow PDF(s), %d text doc(s)",
             chapter_id,
-            len(matched_triples),
+            len(vg_batch),
+            len(overflow),
             len(matched_text),
         )
         return None
@@ -152,8 +295,8 @@ def _create_chapter_agent(chapter_id: str) -> Agent:
         instruction=instruction,
         description=(
             f"M&A chapter agent for {CHAPTER_TITLES_HE[chapter_id]}. "
-            f"Reads only PDFs tagged for '{chapter_id}' and produces the "
-            f"ChapterOutput with box_2d citations."
+            f"Reads PDFs tagged for '{chapter_id}' (VG batch as GCS URIs + "
+            f"overflow batches as Flash-extracted text) and produces ChapterOutput."
         ),
         output_schema=ChapterOutput,
         output_key=chapter_state_key(chapter_id),
