@@ -1371,6 +1371,7 @@ async def _run_ma_analysis(
         STATE_CONTENT_TYPES,
         STATE_DOCUMENT_NAMES,
         STATE_ENRICHED_REPORT,
+        STATE_FILE_SIZES,
         STATE_GCS_URIS,
         STATE_PROJECT_ID,
         STATE_TEXT_PARTS,
@@ -1408,12 +1409,14 @@ async def _run_ma_analysis(
     gcs_uris = [f.gcs_uri for f, _ in gemini_files]
     doc_names = [f.original_name for f, _ in gemini_files]
     content_types = [m for _, m in gemini_files]
+    file_sizes = [f.file_size_bytes or 0 for f, _ in gemini_files]
 
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
         STATE_DOCUMENT_NAMES: doc_names,
         STATE_CONTENT_TYPES: content_types,
+        STATE_FILE_SIZES: file_sizes,
         STATE_TEXT_PARTS: text_parts,
         STATE_MA_METADATA: transaction_metadata or {},
     }

@@ -14,6 +14,8 @@ STATE_GCS_URIS = "gcs_uris"
 STATE_DOCUMENT_NAMES = "document_names"
 # Per-file MIME types parallel to STATE_GCS_URIS (e.g. "image/jpeg" for images)
 STATE_CONTENT_TYPES = "content_types"
+# Per-file sizes in bytes parallel to STATE_GCS_URIS (used to skip oversized files)
+STATE_FILE_SIZES = "file_sizes"
 # Dict[filename, extracted_text] for non-PDF/image files (Excel, Word, CSV…)
 STATE_TEXT_PARTS = "text_parts"
 

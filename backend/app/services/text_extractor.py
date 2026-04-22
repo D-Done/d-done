@@ -84,26 +84,34 @@ def _xlsx_to_text(content: bytes, filename: str) -> str:
     if _is_html_content(content):
         return _html_to_text(content, filename)
 
-    wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True, read_only=True)
-    parts = [f"=== Excel document: {filename} ==="]
-    per_sheet_budget = MAX_TEXT_CHARS // max(1, len(wb.sheetnames))
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
-        sheet_lines: list[str] = []
-        chars = 0
-        for row in ws.iter_rows(values_only=True):
-            if any(c is not None for c in row):
-                line = "\t".join("" if c is None else str(c) for c in row)
-                sheet_lines.append(line)
-                chars += len(line)
-                if chars >= per_sheet_budget:
-                    sheet_lines.append("... [sheet truncated] ...")
-                    break
-        if sheet_lines:
-            parts.append(f"\n--- Sheet: {sheet_name} ---")
-            parts.extend(sheet_lines)
-    wb.close()
-    return "\n".join(parts)[:MAX_TEXT_CHARS]
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+        parts = [f"=== Excel document: {filename} ==="]
+        per_sheet_budget = MAX_TEXT_CHARS // max(1, len(wb.sheetnames))
+        for sheet_name in wb.sheetnames:
+            ws = wb[sheet_name]
+            sheet_lines: list[str] = []
+            chars = 0
+            for row in ws.iter_rows(values_only=True):
+                if any(c is not None for c in row):
+                    line = "\t".join("" if c is None else str(c) for c in row)
+                    sheet_lines.append(line)
+                    chars += len(line)
+                    if chars >= per_sheet_budget:
+                        sheet_lines.append("... [sheet truncated] ...")
+                        break
+            if sheet_lines:
+                parts.append(f"\n--- Sheet: {sheet_name} ---")
+                parts.extend(sheet_lines)
+        wb.close()
+        return "\n".join(parts)[:MAX_TEXT_CHARS]
+    except Exception:
+        logger.warning("openpyxl failed for %s, trying xlrd fallback", filename)
+        try:
+            return _xls_to_text(content, filename)
+        except Exception:
+            logger.warning("xlrd also failed for %s, skipping extraction", filename)
+            return f"=== Could not parse Excel file: {filename} (unsupported format) ==="
 
 
 def _xls_to_text(content: bytes, filename: str) -> str:
