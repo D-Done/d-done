@@ -387,7 +387,6 @@ async def start_analysis(
         user.email,
     )
 
-    # Fire and forget — response returns immediately, pipeline runs in background.
     asyncio.create_task(
         _run_analysis_task(
             check_id=check_id,

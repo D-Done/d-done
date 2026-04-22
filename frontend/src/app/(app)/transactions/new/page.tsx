@@ -329,10 +329,7 @@ export default function NewTransactionPage() {
               }
             : undefined;
 
-        // Fire the analysis — backend returns 202 immediately and runs in the
-        // background. Do NOT await the result; start polling right away.
         api.analyzeProjectWithOptions(projectId, options).catch(() => {
-          // A network error on the trigger itself is a real failure.
           if (!cancelled) {
             setAnalysisError("הניתוח נכשל. צוותנו קיבל הודעה ונטפל בהקדם.");
             setAnalyzing(false);
