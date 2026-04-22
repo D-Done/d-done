@@ -19,8 +19,11 @@ from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
-# Files larger than this will not be downloaded/extracted.
+# Files larger than this will not be downloaded/extracted (non-PDF formats).
 MAX_EXTRACT_BYTES = 10 * 1024 * 1024  # 10 MiB
+
+# PDFs that exceed Gemini's inline GCS limit are text-extracted up to this size.
+MAX_PDF_EXTRACT_BYTES = 200 * 1024 * 1024  # 200 MiB
 
 # Maximum characters kept per extracted file (~30k tokens for most models).
 MAX_TEXT_CHARS = 120_000
@@ -38,6 +41,9 @@ _SKIP_EXTENSIONS: frozenset[str] = frozenset({
 _EXTRACTABLE_EXTENSIONS: frozenset[str] = frozenset({
     "xlsx", "xls", "docx", "csv", "txt", "html", "htm", "eml",
 })
+
+# PDF is handled separately (larger size limit, pypdf-based extraction).
+_PDF_EXTENSION = "pdf"
 
 
 class TextPart(NamedTuple):
@@ -220,6 +226,36 @@ def _eml_to_text(content: bytes, filename: str) -> str:
     return text[:MAX_TEXT_CHARS]
 
 
+def _pdf_to_text(content: bytes, filename: str) -> str:
+    """Extract plain text from a PDF using pypdf.
+
+    Used as a fallback when a PDF is too large for Gemini's inline GCS limit.
+    Visual grounding (box_2d) is not available for text-extracted PDFs.
+    """
+    import pypdf  # type: ignore[import]
+
+    reader = pypdf.PdfReader(io.BytesIO(content))
+    parts = [
+        f"=== PDF document (text-extracted, no visual citations): {filename} ===",
+        f"Total pages: {len(reader.pages)}",
+    ]
+    chars = sum(len(p) for p in parts)
+    for i, page in enumerate(reader.pages):
+        try:
+            page_text = page.extract_text() or ""
+        except Exception:
+            logger.warning("pypdf: failed to extract page %d of %s", i + 1, filename)
+            page_text = ""
+        if page_text.strip():
+            entry = f"\n--- Page {i + 1} ---\n{page_text}"
+            parts.append(entry)
+            chars += len(entry)
+        if chars >= MAX_TEXT_CHARS:
+            parts.append(f"\n... [truncated after page {i + 1} of {len(reader.pages)}] ...")
+            break
+    return "\n".join(parts)[:MAX_TEXT_CHARS]
+
+
 def _extract_bytes(content: bytes, filename: str, ext: str) -> str | None:
     """Dispatch to the correct extractor by extension."""
     try:
@@ -237,6 +273,8 @@ def _extract_bytes(content: bytes, filename: str, ext: str) -> str | None:
             return _html_to_text(content, filename)
         if ext == "eml":
             return _eml_to_text(content, filename)
+        if ext == _PDF_EXTENSION:
+            return _pdf_to_text(content, filename)
     except Exception:
         logger.warning("Text extraction failed for %s", filename, exc_info=True)
     return None
@@ -367,5 +405,98 @@ async def extract_text_parts(files: list) -> list[TextPart]:
 
     logger.info(
         "text_extractor: %d/%d files yielded text", len(results), len(tasks)
+    )
+    return results
+
+
+def _download_and_extract_pdf(
+    gcs_uri: str,
+    filename: str,
+    file_size_bytes: int | None,
+) -> TextPart | None:
+    """Download an oversized PDF from GCS and extract its text via pypdf.
+
+    Uses ``MAX_PDF_EXTRACT_BYTES`` (200 MiB) instead of the smaller
+    ``MAX_EXTRACT_BYTES`` limit used for office documents.  Designed to be
+    called via ``asyncio.to_thread``.
+    """
+    size = file_size_bytes or 0
+    if size > MAX_PDF_EXTRACT_BYTES:
+        logger.warning(
+            "text_extractor: skipping %s — PDF size %d bytes exceeds hard limit %d",
+            filename,
+            size,
+            MAX_PDF_EXTRACT_BYTES,
+        )
+        return None
+
+    try:
+        from google.cloud import storage  # type: ignore[import]
+
+        bucket_name, obj_path = _parse_gcs_uri(gcs_uri)
+        client = storage.Client()
+        blob = client.bucket(bucket_name).blob(obj_path)
+        content = blob.download_as_bytes()
+    except Exception:
+        logger.warning(
+            "text_extractor: GCS download failed for PDF %s (%s)",
+            filename,
+            gcs_uri,
+            exc_info=True,
+        )
+        return None
+
+    try:
+        text = _pdf_to_text(content, filename)
+    except Exception:
+        logger.warning(
+            "text_extractor: pypdf extraction failed for %s", filename, exc_info=True
+        )
+        return None
+
+    logger.info(
+        "text_extractor: extracted %d chars from oversized PDF %s", len(text), filename
+    )
+    return TextPart(filename=filename, text=text)
+
+
+async def extract_oversized_pdf_text_parts(files: list) -> list[TextPart]:
+    """Text-extract PDFs that exceed Gemini's 50 MiB inline file limit.
+
+    ``files`` is a list of File ORM objects that are native PDFs/images but
+    too large to be passed as ``Part.from_uri``.  They are downloaded from GCS
+    and their text is extracted via ``pypdf`` so chapter agents can still read
+    their content (without visual ``box_2d`` citations for those files).
+    """
+    if not files:
+        return []
+
+    logger.warning(
+        "text_extractor: %d file(s) exceed Gemini inline limit — falling back to "
+        "pypdf text extraction (visual citations unavailable for these files): %s",
+        len(files),
+        [f.original_name for f in files],
+    )
+
+    coros = [
+        asyncio.to_thread(
+            _download_and_extract_pdf,
+            f.gcs_uri,
+            f.original_name,
+            getattr(f, "file_size_bytes", None),
+        )
+        for f in files
+    ]
+    outcomes = await asyncio.gather(*coros, return_exceptions=True)
+
+    results: list[TextPart] = []
+    for outcome in outcomes:
+        if isinstance(outcome, TextPart):
+            results.append(outcome)
+        elif isinstance(outcome, Exception):
+            logger.warning("text_extractor: PDF extraction task error: %s", outcome)
+
+    logger.info(
+        "text_extractor: %d/%d oversized PDFs yielded text", len(results), len(files)
     )
     return results

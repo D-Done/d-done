@@ -28,7 +28,6 @@ from google.genai import types
 from app.agents.constants import (
     STATE_CONTENT_TYPES,
     STATE_DOCUMENT_NAMES,
-    STATE_FILE_SIZES,
     STATE_GCS_URIS,
     STATE_TEXT_PARTS,
 )
@@ -88,27 +87,13 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
         all_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
         all_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
         all_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
-        all_sizes: list[int] = callback_context.state.get(STATE_FILE_SIZES, [])
         text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
 
-        _GEMINI_MAX_FILE_BYTES = 50 * 1024 * 1024  # Gemini inline file limit
-
-        matched_triples = []
-        for i, (uri, name) in enumerate(zip(all_uris, all_names)):
-            if name not in tagged_names:
-                continue
-            mime = all_types[i] if i < len(all_types) else "application/pdf"
-            size = all_sizes[i] if i < len(all_sizes) else 0
-            if size > _GEMINI_MAX_FILE_BYTES:
-                logger.warning(
-                    "ma_chapter[%s]: skipping %s — size %d bytes exceeds Gemini %d-byte limit",
-                    chapter_id,
-                    name,
-                    size,
-                    _GEMINI_MAX_FILE_BYTES,
-                )
-                continue
-            matched_triples.append((uri, name, mime))
+        matched_triples = [
+            (uri, name, all_types[i] if i < len(all_types) else "application/pdf")
+            for i, (uri, name) in enumerate(zip(all_uris, all_names))
+            if name in tagged_names
+        ]
         # Text-extracted files (Excel, Word, etc.) tagged to this chapter.
         matched_text = {
             fname: text
