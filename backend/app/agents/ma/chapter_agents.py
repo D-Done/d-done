@@ -28,6 +28,7 @@ from google.genai import types
 from app.agents.constants import (
     STATE_CONTENT_TYPES,
     STATE_DOCUMENT_NAMES,
+    STATE_FILE_SIZES,
     STATE_GCS_URIS,
     STATE_TEXT_PARTS,
 )
@@ -87,13 +88,41 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
         all_uris: list[str] = callback_context.state.get(STATE_GCS_URIS, [])
         all_names: list[str] = callback_context.state.get(STATE_DOCUMENT_NAMES, [])
         all_types: list[str] = callback_context.state.get(STATE_CONTENT_TYPES, [])
+        all_sizes: list[int] = callback_context.state.get(STATE_FILE_SIZES, [])
         text_parts: dict[str, str] = callback_context.state.get(STATE_TEXT_PARTS, {})
 
-        matched_triples = [
-            (uri, name, all_types[i] if i < len(all_types) else "application/pdf")
+        # Collect matched files with their sizes for budget-aware selection.
+        _MAX_PDF_PARTS = 15  # stay well within the 1M-token context window
+
+        matched_with_size = [
+            (
+                uri,
+                name,
+                all_types[i] if i < len(all_types) else "application/pdf",
+                all_sizes[i] if i < len(all_sizes) else 0,
+            )
             for i, (uri, name) in enumerate(zip(all_uris, all_names))
             if name in tagged_names
         ]
+
+        if len(matched_with_size) > _MAX_PDF_PARTS:
+            # Prefer smaller files (certificates, IDs, short reports) which tend
+            # to be more focused. Larger files are still partially covered via
+            # the text-extracted text_parts when they were oversized (>50 MB).
+            matched_with_size.sort(key=lambda x: x[3])
+            excluded = matched_with_size[_MAX_PDF_PARTS:]
+            matched_with_size = matched_with_size[:_MAX_PDF_PARTS]
+            logger.warning(
+                "ma_chapter[%s]: %d PDF(s) tagged, capped at %d to stay within "
+                "context limit; excluded %d: %s",
+                chapter_id,
+                len(matched_with_size) + len(excluded),
+                _MAX_PDF_PARTS,
+                len(excluded),
+                [name for _, name, _, _ in excluded],
+            )
+
+        matched_triples = [(uri, name, mime) for uri, name, mime, _ in matched_with_size]
         # Text-extracted files (Excel, Word, etc.) tagged to this chapter.
         matched_text = {
             fname: text
@@ -118,9 +147,8 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
             for uri, _, mime in matched_triples
         ]
         # Append extracted text for non-PDF tagged files.
-        # Cap at 20 000 chars per file to stay within the 1 M-token context
-        # window when many data-heavy Excel files land in the same chapter.
-        _MAX_CHARS_PER_FILE = 20_000
+        # 10 000 chars ≈ 2 500 tokens per file; keeps 20 text files within ~50 k tokens.
+        _MAX_CHARS_PER_FILE = 10_000
         for fname, text in matched_text.items():
             body = text[:_MAX_CHARS_PER_FILE]
             suffix = "\n... [truncated]" if len(text) > _MAX_CHARS_PER_FILE else ""
