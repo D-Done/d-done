@@ -328,7 +328,15 @@ export default function NewTransactionPage() {
                 use_visual_grounding: true,
               }
             : undefined;
-        await api.analyzeProjectWithOptions(projectId, options);
+
+        api.analyzeProjectWithOptions(projectId, options).catch(() => {
+          if (!cancelled) {
+            setAnalysisError("הניתוח נכשל. צוותנו קיבל הודעה ונטפל בהקדם.");
+            setAnalyzing(false);
+            analysisStartedRef.current = false;
+          }
+        });
+
         if (cancelled) return;
 
         const poll = async () => {
