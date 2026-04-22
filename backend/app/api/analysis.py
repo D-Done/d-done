@@ -1371,6 +1371,7 @@ async def _run_ma_analysis(
         STATE_CONTENT_TYPES,
         STATE_DOCUMENT_NAMES,
         STATE_ENRICHED_REPORT,
+        STATE_FILE_SIZES,
         STATE_GCS_URIS,
         STATE_PROJECT_ID,
         STATE_TEXT_PARTS,
@@ -1380,18 +1381,26 @@ async def _run_ma_analysis(
     from app.agents.ma.pipeline import create_ma_pipeline
     from app.agents.session_store import get_session_service
     from app.agents.visual_grounding_pipeline_agent import create_vg_app
-    from app.services.text_extractor import extract_text_parts
+    from app.services.text_extractor import (
+        extract_oversized_pdf_text_parts,
+        extract_text_parts,
+    )
 
     _ensure_genai_env()
 
     if on_stage_change:
         await on_stage_change(PIPELINE_STAGE_EXTRACTION)
 
-    # Gemini natively processes PDFs and images via GCS URI.
-    # Excel, Word, CSV, HTML and email files are text-extracted and injected
-    # as Part.from_text() alongside the PDF parts so the model sees their content.
-    gemini_files = [(f, _gemini_mime(f)) for f in uploaded_files]
-    gemini_files = [(f, m) for f, m in gemini_files if m is not None]
+    # Gemini natively processes PDFs and images via GCS URI, but has a 50 MiB
+    # per-file limit for inline GCS references. Files exceeding this limit are
+    # text-extracted via pypdf and injected as Part.from_text instead.
+    _GEMINI_MAX_FILE_BYTES = 50 * 1024 * 1024
+
+    all_gemini = [(f, _gemini_mime(f)) for f in uploaded_files]
+    all_gemini = [(f, m) for f, m in all_gemini if m is not None]
+
+    gemini_files = [(f, m) for f, m in all_gemini if (f.file_size_bytes or 0) <= _GEMINI_MAX_FILE_BYTES]
+    oversized_files = [f for f, _ in all_gemini if (f.file_size_bytes or 0) > _GEMINI_MAX_FILE_BYTES]
 
     non_gemini = [f for f in uploaded_files if _gemini_mime(f) is None]
     if non_gemini:
@@ -1400,20 +1409,28 @@ async def _run_ma_analysis(
             len(non_gemini),
             [f.original_name for f in non_gemini],
         )
+
     text_parts_list = await extract_text_parts(non_gemini)
-    text_parts: dict[str, str] = {tp.filename: tp.text for tp in text_parts_list}
+    oversized_text_parts_list = await extract_oversized_pdf_text_parts(oversized_files)
+
+    text_parts: dict[str, str] = {
+        tp.filename: tp.text
+        for tp in (*text_parts_list, *oversized_text_parts_list)
+    }
     if text_parts:
         logger.info("MA: Text extracted from %d file(s): %s", len(text_parts), list(text_parts.keys()))
 
     gcs_uris = [f.gcs_uri for f, _ in gemini_files]
     doc_names = [f.original_name for f, _ in gemini_files]
     content_types = [m for _, m in gemini_files]
+    file_sizes = [f.file_size_bytes or 0 for f, _ in gemini_files]
 
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
         STATE_DOCUMENT_NAMES: doc_names,
         STATE_CONTENT_TYPES: content_types,
+        STATE_FILE_SIZES: file_sizes,
         STATE_TEXT_PARTS: text_parts,
         STATE_MA_METADATA: transaction_metadata or {},
     }
