@@ -18,6 +18,7 @@ Citation architecture:
 from __future__ import annotations
 
 
+import asyncio
 import logging
 import traceback
 from collections.abc import Awaitable, Callable
@@ -84,7 +85,7 @@ async def _handle_analysis_failure(
     check_id: UUID,
     project_id: UUID,
     db: AsyncSession,
-    user: CurrentUser,
+    user_email: str,
 ) -> None:
     """Update DB to failed and log at ERROR for GCP (logging only)."""
     logger.exception("DD analysis failed: check_id=%s", check_id)
@@ -107,7 +108,7 @@ async def _handle_analysis_failure(
     log_analysis_failure(
         project_id=str(project_id),
         check_id=str(check_id),
-        user_email=user.email,
+        user_email=user_email,
         error_message=_format_error_message(exc)[:2000],
         project_title=project.title if project else None,
         traceback_str=traceback.format_exc(),
@@ -238,6 +239,88 @@ class AgentSessionEventsResponse(BaseModel):
 # ---- Endpoints ----
 
 
+async def _run_analysis_task(
+    *,
+    check_id: UUID,
+    project_id: UUID,
+    uploaded_files: list,
+    transaction_type: str,
+    transaction_metadata: dict,
+    user_email: str,
+) -> None:
+    """Background coroutine that runs the full pipeline with its own DB session.
+
+    Fired via ``asyncio.create_task()`` so the HTTP response is returned
+    immediately and the Cloud Run request timeout does not apply.
+    """
+    from app.db.session import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+
+        async def on_stage_change(stage: str) -> None:
+            await _set_pipeline_stage(db, project_id, stage)
+
+        try:
+            if transaction_type == "ma":
+                analysis_result = await _run_ma_analysis(
+                    project_id=project_id,
+                    uploaded_files=uploaded_files,
+                    transaction_metadata=transaction_metadata,
+                    on_stage_change=on_stage_change,
+                )
+            else:
+                analysis_result = await _run_analysis(
+                    project_id=project_id,
+                    uploaded_files=uploaded_files,
+                    on_stage_change=on_stage_change,
+                    use_visual_grounding=True,
+                    phase1_only=True,
+                )
+
+            if analysis_result.needs_review and analysis_result.hitl_data is not None:
+                result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
+                dd_check = result.scalar_one()
+                dd_check.status = "needs_review"
+                dd_check.agent_session_id = analysis_result.agent_session_id
+                dd_check.hitl_data = analysis_result.hitl_data
+
+                result = await db.execute(select(Project).where(Project.id == project_id))
+                project_row = result.scalar_one()
+                project_row.status = "needs_review"
+                project_row.pipeline_stage = PIPELINE_STAGE_HITL_TENANT_REVIEW
+
+                await db.commit()
+                logger.info(
+                    "DD analysis Phase 1 complete, awaiting tenant table review: check_id=%s",
+                    check_id,
+                )
+                return
+
+            result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
+            dd_check = result.scalar_one()
+            dd_check.status = "completed"
+            dd_check.report = analysis_result.report_dict
+            dd_check.agent_session_id = analysis_result.agent_session_id
+            dd_check.completed_at = datetime.now(timezone.utc)
+
+            result = await db.execute(select(Project).where(Project.id == project_id))
+            project = result.scalar_one()
+            project.status = "completed"
+            project.pipeline_stage = None
+
+            await db.commit()
+            logger.info("DD analysis completed: check_id=%s", check_id)
+
+        except ExceptionGroup as eg:
+            await _handle_analysis_failure(
+                eg, check_id=check_id, project_id=project_id, db=db, user_email=user_email
+            )
+        except Exception as exc:
+            await _handle_analysis_failure(
+                exc, check_id=check_id, project_id=project_id, db=db, user_email=user_email
+            )
+
+
 @router.post("/{project_id}/analyze", response_model=AnalyzeResponse)
 async def start_analysis(
     project_id: UUID,
@@ -247,8 +330,9 @@ async def start_analysis(
 ):
     """Trigger a DD analysis for a project.
 
-    Uses an async session so that agent calls (which are ``await``-ed) share
-    the same event loop — no nested ``asyncio.run()`` required.
+    Returns 202 immediately and runs the pipeline as a background asyncio task
+    so the HTTP connection is not held open for the duration of the analysis.
+    The frontend polls GET /projects/{id} for status updates.
     """
     # --- Verify project (owner only) ---
     project = await require_project_owner_async(db, user.id, project_id)
@@ -292,101 +376,34 @@ async def start_analysis(
     await db.refresh(dd_check)
 
     check_id = dd_check.id
+    transaction_type = project.transaction_type or "real_estate_finance"
+    transaction_metadata = project.transaction_metadata or {}
 
     logger.info(
-        "Starting DD analysis: check_id=%s, project=%s, files=%d, user=%s",
+        "Starting DD analysis (async): check_id=%s, project=%s, files=%d, user=%s",
         check_id,
         project_id,
         len(uploaded_files),
         user.email,
     )
 
-    try:
-
-        async def on_stage_change(stage: str) -> None:
-            await _set_pipeline_stage(db, project_id, stage)
-
-        # Dispatch by project transaction type. Real-estate finance uses
-        # the original HITL phase-1 flow; M&A (v1) runs a single linear
-        # pipeline to completion with no HITL checkpoint.
-        transaction_type = project.transaction_type or "real_estate_finance"
-        transaction_metadata = project.transaction_metadata or {}
-
-        if transaction_type == "ma":
-            analysis_result = await _run_ma_analysis(
-                project_id=project_id,
-                uploaded_files=uploaded_files,
-                transaction_metadata=transaction_metadata,
-                on_stage_change=on_stage_change,
-            )
-        else:
-            analysis_result = await _run_analysis(
-                project_id=project_id,
-                uploaded_files=uploaded_files,
-                on_stage_change=on_stage_change,
-                use_visual_grounding=True,
-                phase1_only=True,
-            )
-
-        if analysis_result.needs_review and analysis_result.hitl_data is not None:
-            result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
-            dd_check = result.scalar_one()
-            dd_check.status = "needs_review"
-            dd_check.agent_session_id = analysis_result.agent_session_id
-            dd_check.hitl_data = analysis_result.hitl_data
-
-            result = await db.execute(select(Project).where(Project.id == project_id))
-            project_row = result.scalar_one()
-            project_row.status = "needs_review"
-            project_row.pipeline_stage = PIPELINE_STAGE_HITL_TENANT_REVIEW
-
-            await db.commit()
-            await db.refresh(dd_check)
-
-            logger.info(
-                "DD analysis Phase 1 complete, awaiting tenant table review: check_id=%s",
-                check_id,
-            )
-
-            return AnalyzeResponse(
-                check_id=str(dd_check.id),
-                status="needs_review",
-                report=None,
-            )
-
-        result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
-        dd_check = result.scalar_one()
-        dd_check.status = "completed"
-        dd_check.report = analysis_result.report_dict
-        dd_check.agent_session_id = analysis_result.agent_session_id
-        dd_check.completed_at = datetime.now(timezone.utc)
-
-        result = await db.execute(select(Project).where(Project.id == project_id))
-        project = result.scalar_one()
-        project.status = "completed"
-        project.pipeline_stage = None
-
-        await db.commit()
-        await db.refresh(dd_check)
-
-        logger.info("DD analysis completed: check_id=%s", check_id)
-
-        return AnalyzeResponse(
-            check_id=str(dd_check.id),
-            status="completed",
-            report=analysis_result.report_dict,
+    # Fire and forget — response returns immediately, pipeline runs in background.
+    asyncio.create_task(
+        _run_analysis_task(
+            check_id=check_id,
+            project_id=project_id,
+            uploaded_files=uploaded_files,
+            transaction_type=transaction_type,
+            transaction_metadata=transaction_metadata,
+            user_email=user.email,
         )
+    )
 
-    except ExceptionGroup as eg:
-        await _handle_analysis_failure(
-            eg, check_id=check_id, project_id=project_id, db=db, user=user
-        )
-        raise HTTPException(status_code=500)
-    except Exception as exc:
-        await _handle_analysis_failure(
-            exc, check_id=check_id, project_id=project_id, db=db, user=user
-        )
-        raise HTTPException(status_code=500)
+    return AnalyzeResponse(
+        check_id=str(check_id),
+        status="processing",
+        report=None,
+    )
 
 
 @router.get("/{project_id}/results", response_model=DDReportResponse)
