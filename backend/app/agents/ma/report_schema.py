@@ -17,7 +17,7 @@ Design goals
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -27,6 +27,18 @@ from app.agents.schemas import (
     SourceRef,
     TimelineEvent,
     TransactionType,
+)
+from app.agents.ma.anchor_schemas import (
+    CorporateOwnershipExtraction,
+    TransactionDocumentsExtraction,
+    CustomerRevenueContractsExtraction,
+    ChannelResellerPartnerExtraction,
+    SupplierCriticalVendorExtraction,
+    TechnologyProductCommitmentsExtraction,
+    IpOwnershipTransfersExtraction,
+    IpLicensingExtraction,
+    OssExtraction,
+    EmploymentManagementExtraction,
 )
 
 
@@ -171,6 +183,54 @@ class ChapterOutput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Chapter-specific output schemas (one per anchor chapter)
+# Each subclass embeds the structured extraction alongside the standard
+# ChapterOutput fields (summary_he, findings, follow_ups, timeline_events).
+# The assembler strips the anchor field and routes it to anchor_extractions.
+# ---------------------------------------------------------------------------
+
+
+class CorporateGovernanceChapterOutput(ChapterOutput):
+    corporate_ownership_extraction: CorporateOwnershipExtraction | None = None
+
+
+class TransactionOverviewChapterOutput(ChapterOutput):
+    transaction_documents_extraction: TransactionDocumentsExtraction | None = None
+
+
+class CustomerObligationsChapterOutput(ChapterOutput):
+    customer_revenue_extraction: CustomerRevenueContractsExtraction | None = None
+
+
+class SupplierObligationsChapterOutput(ChapterOutput):
+    supplier_critical_vendor_extraction: SupplierCriticalVendorExtraction | None = None
+
+
+class ChannelResellerPartnerChapterOutput(ChapterOutput):
+    channel_reseller_partner_extraction: ChannelResellerPartnerExtraction | None = None
+
+
+class HrChapterOutput(ChapterOutput):
+    employment_management_extraction: EmploymentManagementExtraction | None = None
+
+
+class TechnologyProductChapterOutput(ChapterOutput):
+    technology_product_extraction: TechnologyProductCommitmentsExtraction | None = None
+
+
+class IpOwnershipChapterOutput(ChapterOutput):
+    ip_ownership_extraction: IpOwnershipTransfersExtraction | None = None
+
+
+class IpLicensingChapterOutput(ChapterOutput):
+    ip_licensing_extraction: IpLicensingExtraction | None = None
+
+
+class OssChapterOutput(ChapterOutput):
+    oss_extraction: OssExtraction | None = None
+
+
+# ---------------------------------------------------------------------------
 # Completeness checklist (cross-chapter aggregation)
 # ---------------------------------------------------------------------------
 
@@ -253,6 +313,14 @@ class MaDDReport(BaseModel):
         description="Global completeness checklist (cross-chapter dedup)",
     )
 
+    anchor_extractions: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Structured per-chapter anchor extractions keyed by chapter_id. "
+            "Populated for the 10 anchor chapters; absent for the 5 unchanged chapters."
+        ),
+    )
+
     # NOTE: the frontend-facing report dict also carries an additional
     # ``_visual_grounding`` marker (set in the assembler callback) to indicate
     # that box_2d -> bounding_boxes conversion has already happened on the
@@ -265,6 +333,16 @@ __all__ = [
     "CompletenessChecklist",
     "CompletenessItem",
     "ChapterOutput",
+    "CorporateGovernanceChapterOutput",
+    "TransactionOverviewChapterOutput",
+    "CustomerObligationsChapterOutput",
+    "SupplierObligationsChapterOutput",
+    "ChannelResellerPartnerChapterOutput",
+    "HrChapterOutput",
+    "TechnologyProductChapterOutput",
+    "IpOwnershipChapterOutput",
+    "IpLicensingChapterOutput",
+    "OssChapterOutput",
     "MaDDReport",
     "MaFinding",
     "MaFollowUp",

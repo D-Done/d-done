@@ -45,12 +45,34 @@ from app.agents.constants import (
 )
 from app.agents.ma.chapter_prompts import build_chapter_prompt
 from app.agents.ma.constants import (
+    CHAPTER_CHANNEL_RESELLER_PARTNER,
+    CHAPTER_CORPORATE_GOVERNANCE,
+    CHAPTER_CUSTOMER_OBLIGATIONS,
+    CHAPTER_HR,
+    CHAPTER_IP_LICENSING,
+    CHAPTER_IP_OWNERSHIP,
+    CHAPTER_OSS,
+    CHAPTER_SUPPLIER_OBLIGATIONS,
+    CHAPTER_TECHNOLOGY_PRODUCT,
+    CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_TITLES_HE,
     MA_MANDATORY_CHAPTERS,
     STATE_MA_CLASSIFICATION,
     chapter_state_key,
 )
-from app.agents.ma.report_schema import ChapterOutput
+from app.agents.ma.report_schema import (
+    ChapterOutput,
+    ChannelResellerPartnerChapterOutput,
+    CorporateGovernanceChapterOutput,
+    CustomerObligationsChapterOutput,
+    HrChapterOutput,
+    IpLicensingChapterOutput,
+    IpOwnershipChapterOutput,
+    OssChapterOutput,
+    SupplierObligationsChapterOutput,
+    TechnologyProductChapterOutput,
+    TransactionOverviewChapterOutput,
+)
 from app.agents.utils import make_generate_config
 from app.agents.visual_grounding_pipeline_agent import (
     GEMINI_31_PRO,
@@ -73,6 +95,20 @@ _OVERFLOW_BATCH_SIZE = 15
 _MAX_EXTRACTION_CHARS = 30_000
 # Character cap per text-only file (Excel, Word, etc.).
 _MAX_CHARS_PER_FILE = 10_000
+
+
+_CHAPTER_OUTPUT_SCHEMAS: dict[str, type[ChapterOutput]] = {
+    CHAPTER_TRANSACTION_OVERVIEW: TransactionOverviewChapterOutput,
+    CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,
+    CHAPTER_CUSTOMER_OBLIGATIONS: CustomerObligationsChapterOutput,
+    CHAPTER_SUPPLIER_OBLIGATIONS: SupplierObligationsChapterOutput,
+    CHAPTER_CHANNEL_RESELLER_PARTNER: ChannelResellerPartnerChapterOutput,
+    CHAPTER_HR: HrChapterOutput,
+    CHAPTER_TECHNOLOGY_PRODUCT: TechnologyProductChapterOutput,
+    CHAPTER_IP_OWNERSHIP: IpOwnershipChapterOutput,
+    CHAPTER_IP_LICENSING: IpLicensingChapterOutput,
+    CHAPTER_OSS: OssChapterOutput,
+}
 
 
 def _empty_chapter_json(chapter_id: str) -> str:
@@ -298,7 +334,7 @@ def _create_chapter_agent(chapter_id: str) -> Agent:
             f"Reads PDFs tagged for '{chapter_id}' (VG batch as GCS URIs + "
             f"overflow batches as Flash-extracted text) and produces ChapterOutput."
         ),
-        output_schema=ChapterOutput,
+        output_schema=_CHAPTER_OUTPUT_SCHEMAS.get(chapter_id, ChapterOutput),
         output_key=chapter_state_key(chapter_id),
         generate_content_config=make_generate_config(
             max_output_tokens=VG_MAX_OUTPUT_TOKENS

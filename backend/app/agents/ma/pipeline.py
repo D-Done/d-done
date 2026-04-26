@@ -156,7 +156,23 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
     Runs as the SequentialAgent's ``after_agent_callback`` — at this point
     all chapter agents and the completeness agent have written their outputs.
     """
+    # Anchor chapter IDs mapped to their structured extraction field name.
+    # The field is popped from the chapter dict and stored under anchor_extractions.
+    _ANCHOR_EXTRACTION_FIELDS: dict[str, str] = {
+        "transaction_overview": "transaction_documents_extraction",
+        "corporate_governance": "corporate_ownership_extraction",
+        "customer_obligations": "customer_revenue_extraction",
+        "supplier_obligations": "supplier_critical_vendor_extraction",
+        "channel_reseller_partner": "channel_reseller_partner_extraction",
+        "hr": "employment_management_extraction",
+        "technology_product": "technology_product_extraction",
+        "ip_ownership": "ip_ownership_extraction",
+        "ip_licensing": "ip_licensing_extraction",
+        "oss": "oss_extraction",
+    }
+
     chapters: list[dict] = []
+    anchor_extractions: dict[str, object] = {}
     for chapter_id in MA_MANDATORY_CHAPTERS:
         chapter_dict = callback_context.state.get(chapter_state_key(chapter_id))
         if not chapter_dict:
@@ -173,6 +189,13 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
                 "follow_ups": [],
                 "timeline_events": [],
             }
+
+        anchor_field = _ANCHOR_EXTRACTION_FIELDS.get(chapter_id)
+        if anchor_field and isinstance(chapter_dict, dict):
+            anchor_data = chapter_dict.pop(anchor_field, None)
+            if anchor_data is not None:
+                anchor_extractions[chapter_id] = anchor_data
+
         chapters.append(chapter_dict)
 
     completeness = callback_context.state.get(STATE_MA_COMPLETENESS) or {
@@ -209,6 +232,7 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
         "executive_summary": executive_summary.model_dump(),
         "chapters": chapters,
         "completeness": completeness,
+        "anchor_extractions": anchor_extractions,
     }
 
     report = _convert_box2d_to_bboxes(report)

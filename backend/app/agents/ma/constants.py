@@ -15,24 +15,34 @@ CHAPTER_TRANSACTION_OVERVIEW: Final = "transaction_overview"
 CHAPTER_CORPORATE_GOVERNANCE: Final = "corporate_governance"
 CHAPTER_CUSTOMER_OBLIGATIONS: Final = "customer_obligations"
 CHAPTER_SUPPLIER_OBLIGATIONS: Final = "supplier_obligations"
+CHAPTER_CHANNEL_RESELLER_PARTNER: Final = "channel_reseller_partner"
 CHAPTER_HR: Final = "hr"
 CHAPTER_REGULATORY: Final = "regulatory"
 CHAPTER_LITIGATION: Final = "litigation"
 CHAPTER_TAXATION: Final = "taxation"
 CHAPTER_FINANCIAL_DEBT: Final = "financial_debt"
 CHAPTER_INSURANCE: Final = "insurance"
+CHAPTER_TECHNOLOGY_PRODUCT: Final = "technology_product"
+CHAPTER_IP_OWNERSHIP: Final = "ip_ownership"
+CHAPTER_IP_LICENSING: Final = "ip_licensing"
+CHAPTER_OSS: Final = "oss"
 
 MA_MANDATORY_CHAPTERS: Final[tuple[str, ...]] = (
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
     CHAPTER_SUPPLIER_OBLIGATIONS,
+    CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_HR,
     CHAPTER_REGULATORY,
     CHAPTER_LITIGATION,
     CHAPTER_TAXATION,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_INSURANCE,
+    CHAPTER_TECHNOLOGY_PRODUCT,
+    CHAPTER_IP_OWNERSHIP,
+    CHAPTER_IP_LICENSING,
+    CHAPTER_OSS,
 )
 
 CHAPTER_TITLES_HE: Final[dict[str, str]] = {
@@ -40,12 +50,17 @@ CHAPTER_TITLES_HE: Final[dict[str, str]] = {
     CHAPTER_CORPORATE_GOVERNANCE: "ממשל תאגידי",
     CHAPTER_CUSTOMER_OBLIGATIONS: "התחייבויות ללקוחות",
     CHAPTER_SUPPLIER_OBLIGATIONS: "התחייבויות לספקים",
+    CHAPTER_CHANNEL_RESELLER_PARTNER: "ערוצי הפצה ושותפים",
     CHAPTER_HR: "משאבי אנוש",
     CHAPTER_REGULATORY: "רגולציה ורישוי",
     CHAPTER_LITIGATION: "התדיינויות וסיכונים",
     CHAPTER_TAXATION: "מיסוי",
     CHAPTER_FINANCIAL_DEBT: "חוב פיננסי",
     CHAPTER_INSURANCE: "ביטוח",
+    CHAPTER_TECHNOLOGY_PRODUCT: "מחויבויות טכנולוגיה ומוצר",
+    CHAPTER_IP_OWNERSHIP: "בעלות על קניין רוחני",
+    CHAPTER_IP_LICENSING: "רישיונות קניין רוחני",
+    CHAPTER_OSS: "קוד פתוח ורכיבי צד שלישי",
 }
 
 
@@ -55,13 +70,48 @@ CHAPTER_TITLES_HE: Final[dict[str, str]] = {
 # per-document chapter_tags list the router also emits.
 
 MA_DOC_KINDS: Final[tuple[str, ...]] = (
+    # Transaction documents
     "spa",
+    "apa",
+    "loi",
+    "term_sheet",
+    "merger_agreement",
+    "disclosure_schedule",
+    "escrow_agreement",
+    "side_letter",
+    # Corporate governance
     "cap_table",
     "board_resolutions",
     "shareholders_agreement",
-    "employment_agreement",
+    "articles_of_association",
+    # Customer contracts
     "customer_contract",
+    "msa",
+    "sow",
+    "order_form",
+    "dpa",
+    "security_addendum",
+    # Channel / reseller / partner
+    "reseller_agreement",
+    "distribution_agreement",
+    "referral_agreement",
+    "oem_agreement",
+    "partnership_agreement",
+    # Supplier / vendor
     "supplier_contract",
+    # IP
+    "ip_assignment",
+    "license_agreement",
+    "joint_development_agreement",
+    # OSS
+    "oss_inventory",
+    "sbom",
+    "oss_policy",
+    # HR
+    "employment_agreement",
+    "change_in_control_agreement",
+    "non_compete_agreement",
+    # Other
     "nda",
     "license_permit",
     "financial_statement",

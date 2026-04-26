@@ -13,15 +13,20 @@ extracted output is Hebrew).
 from __future__ import annotations
 
 from app.agents.ma.constants import (
+    CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_HR,
     CHAPTER_INSURANCE,
+    CHAPTER_IP_LICENSING,
+    CHAPTER_IP_OWNERSHIP,
     CHAPTER_LITIGATION,
+    CHAPTER_OSS,
     CHAPTER_REGULATORY,
     CHAPTER_SUPPLIER_OBLIGATIONS,
     CHAPTER_TAXATION,
+    CHAPTER_TECHNOLOGY_PRODUCT,
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_TITLES_HE,
 )
@@ -92,103 +97,326 @@ When documents conflict, prefer:
 
 
 _CHAPTER_SPECS: dict[str, dict[str, str]] = {
+    # -----------------------------------------------------------------------
+    # Anchor chapters — updated with structured extraction spec
+    # -----------------------------------------------------------------------
     CHAPTER_TRANSACTION_OVERVIEW: {
         "subsections": """\
 Subsections (use these exact English strings for ``subsection``):
-- Deal Structure
-- Parties and Roles
-- Consideration
+- Document Type and Status
+- Deal Structure and Parties
+- Consideration and Payment
 - Earn-out
 - Purchase Price Adjustments
-- Signing and Closing Timeline
-- Outside Date
-- Key Milestones
+- Escrow and Holdback
+- Closing Mechanics and Timeline
+- Conditions Precedent
+- Pre-closing Covenants
+- Termination Rights and Remedies
+- Representations, Warranties, and Indemnities
+- Disclosure Schedules
+- Internal Inconsistencies and Gaps
 """,
         "focus": """\
-Focus on the main deal instrument (SPA/APA/merger agreement). Extract deal
-structure, parties and their roles, the consideration (cash / stock / mix /
-escrow), any earn-out mechanism, purchase-price adjustments
-(Working Capital / Locked Box), signing/closing schedule, outside date, and
-key milestones. Flag silence on any of these as a follow-up.
+# Extraction scope (Transaction Documents anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document is a Disclosure Schedule or exhibit, extract the schedule
+identifier and listed items.
+
+Extract under the following categories:
+A) Document type and status — LOI/Term Sheet/SPA/APA/Merger Agreement/
+   Disclosure Schedule/Escrow/Holdback/Side Letter; binding vs non-binding;
+   governing law; dispute resolution.
+B) Deal structure and parties — transaction type as stated; what is being
+   acquired; any exclusions; all parties and their roles.
+C) Consideration — purchase price/currency; cash/stock/rollover/debt
+   components; earn-out (metrics, period, cap, acceleration); working capital
+   adjustment or locked box; escrow/holdback (amount, duration, conditions);
+   set-off/withholding rights.
+D) Closing mechanics — signing date, closing date, outside date, deliverables,
+   flow of funds, pre-closing covenants.
+E) Conditions precedent — regulatory approvals, third-party consents,
+   shareholder approvals, financing, no-MAE, bring-down; who benefits; waiver
+   rights.
+F) Termination rights — termination events, drop-dead dates, break fees,
+   reverse break fee, specific performance.
+G) Reps, warranties, and indemnities — categories of reps (only those listed);
+   materiality/knowledge qualifiers; survival periods; basket/cap/mini-basket;
+   sandbagging; escrow-backed indemnities.
+H) Disclosure schedules — schedule identifiers, topics, and listed items.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``transaction_documents_extraction`` field with the structured
+extraction object matching the TransactionDocumentsExtraction schema.
 """,
     },
     CHAPTER_CORPORATE_GOVERNANCE: {
         "subsections": """\
 Subsections:
-- Cap Table and Capitalization
-- Shareholders and Share Classes
-- Board Minutes and Resolutions Coverage
-- Shareholder/Investor Rights and Transfer Restrictions
-- Required Approvals
+- Company Identity and Corporate Details
+- Share Capital and Capitalization
+- Cap Table and Holders
+- Equity-Linked Instruments
+- Transfer Restrictions and Shareholder Rights
+- Change of Control Provisions
+- Governance and Approval Thresholds
 - Authorized Signatories and Signing Rules
-- Equity Incentive Plans
-- Inconsistencies and Gaps
+- Internal Inconsistencies and Gaps
 """,
         "focus": """\
-Read the cap table, shareholders agreement, board and shareholder
-resolutions, signing-authority protocols, and any ESOP/option plans. Pay
-attention to protective provisions / veto rights, ROFR/ROFO, tag-along /
-drag-along, lock-ups, consent requirements, and change-of-control
-acceleration on options. Record conflicts across documents as findings with
-severity ``warning`` or ``critical`` depending on materiality.
+# Extraction scope (Corporate & Ownership anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Always extract every single shareholder name and exact percentage — do not
+summarize. If the data is in a table, copy it faithfully.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document refers to a Disclosure Schedule for the shareholder list,
+state that explicitly and extract any names visible in signature blocks or
+recitals.
+
+Extract under the following categories:
+A) Company identity — full legal name(s), registration/company number,
+   jurisdiction, entity type, registered address.
+B) Share capital — authorized capital, issued/outstanding by class, par value,
+   options/warrants/convertibles affecting fully diluted ownership.
+C) Cap table / holders — every shareholder, holdings amount, %, share class,
+   voting rights.
+D) Transfer restrictions — ROFR/ROFO, co-sale, tag-along, drag-along, lock-up,
+   prohibitions, board/investor consent; change-of-control definition and
+   effects; class rights, veto matters, protective provisions.
+E) Governance and approvals — board/shareholder approval thresholds for sale,
+   merger, issuance, financing, related-party transactions; quorum, voting
+   thresholds, committee delegation.
+F) Signing authority — authorized signatories, signing rules, monetary
+   thresholds, board approval prerequisites.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``corporate_ownership_extraction`` field with the structured
+extraction object matching the CorporateOwnershipExtraction schema.
 """,
     },
     CHAPTER_CUSTOMER_OBLIGATIONS: {
         "subsections": """\
 Subsections:
-- Customers and Scope
-- Commercial Commitments
-- Service Levels, Warranties, and Credits
-- Term, Renewal, and Auto-renew Traps
+- Contract Profile and Linkage
+- Commercials and Pricing
+- Price Changes and MFN
+- Term and Renewal
 - Termination and Suspension
-- Change of Control, Merger, Assignment/Transfer
-- Technology/Product Commitments
-- Execution Status
+- Change of Control and Assignment
+- Service Levels and Credits
+- Audit and Reporting
+- Liability and Indemnities
+- Data Protection and Security
+- Operational Constraints
+- Internal Inconsistencies and Gaps
 """,
         "focus": """\
-Review customer contracts, SOWs, order forms, and side letters. Extract
-customer concentration (if financials tag it), commercial commitments
-(pricing, discounts, minimums, MFN), SLA/warranty/LD exposure, renewal and
-termination mechanics, and — critically — change-of-control / assignment
-clauses that may be triggered by the transaction.
+# Extraction scope (Customer Revenue Contracts anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document is an Amendment/Addendum/SOW/Order Form/DPA, extract what it
+amends, precedence rules, and the specific changed terms.
+
+Extract under the following categories:
+A) Contract profile — document type (MSA/SaaS/SOW/Order Form/Amendment/DPA/
+   Security Addendum); parties and roles; whether it amends another agreement
+   and any precedence rules; effective date.
+B) Commercials — pricing model; fees/rate card; invoicing and payment terms;
+   taxes; price increase clauses; discounts/volume tiers; minimum commitments;
+   true-ups; MFN/price parity; benchmarking.
+C) Term and renewal — initial term, auto-renew, renewal term, non-renewal
+   notice window, evergreen, renewal pricing uplift.
+D) Termination and suspension — termination for convenience (by whom); notice
+   and fees; refunds; termination for cause (grounds, cure, non-payment,
+   insolvency); suspension rights.
+E) Change of control and assignment — CoC definition, effects, consent/notice
+   required, termination triggers; assignment restrictions including by
+   operation of law, merger, sale of assets.
+F) Service levels — SLA metrics, availability, service credits, caps, exclusions.
+G) Audit and reporting — audit rights (financial/security/compliance), process,
+   cost allocation, remediation.
+H) Liability and indemnities — limitation of liability (cap, basis, exclusions,
+   carve-outs); IP indemnity, data/privacy indemnity, third-party claims.
+I) Data protection and security — DPA terms (controller/processor roles,
+   sub-processing, cross-border transfers, breach notice, security measures,
+   data retention); security addendum (standards, pen tests, encryption).
+J) Operational constraints — exclusivity, non-compete, most significant
+   customer-friendly terms.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``customer_revenue_extraction`` field with the structured
+extraction object matching the CustomerRevenueContractsExtraction schema.
 """,
     },
     CHAPTER_SUPPLIER_OBLIGATIONS: {
         "subsections": """\
 Subsections:
-- Key Suppliers and Scope
-- Commercial and Financial Commitments
-- Term, Renewal, and Continuity
-- Termination Rights and Fees
+- Contract Profile and Criticality
+- Commercial and Payment Terms
+- Minimum Commitments
+- Service Levels and Remedies
+- Term and Renewal
+- Termination and Exit
 - Change of Control and Assignment
-- Disputes
-- Execution Status
+- Subcontracting and Key Personnel
+- Internal Inconsistencies and Gaps
 """,
         "focus": """\
-Review supplier / vendor agreements, MSAs, and SOWs. Focus on minimum
-commitments, step-in / substitution rights, CoC / assignment restrictions
-(including by operation of law), and termination exposure (for-convenience
-fees, cure periods).
+# Extraction scope (Supplier & Critical Vendor Contracts anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Do not group or summarize multiple contracts — extract each document's terms
+individually. Always extract the exact notice period and the specific Change
+of Control consequences. If the document contains a list of vendors, extract
+each as a separate entry.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document is an Amendment/SOW/Order Form, extract what it amends,
+precedence rules, and specific changed terms.
+
+Extract under the following categories:
+A) Contract profile — document type (vendor MSA/SOW/cloud/payment processor/
+   outsourcing/professional services/manufacturing/logistics); parties and
+   roles; products/services and criticality indicators; precedence rules.
+B) Commercial and payment terms — pricing model; fees/rate card; payment
+   terms; invoicing; taxes; late fees; price increase clauses; true-ups/
+   overages/volume bands.
+C) Minimum commitments — take-or-pay, MQC, minimum fees, committed spend,
+   reserved capacity (amount, measurement period, true-up, penalties).
+D) Service levels and remedies — SLA/uptime metrics, service credits,
+   penalties/LDs, step-in/substitution rights, audit/inspection rights.
+E) Term and renewal — initial term, renewal, auto-renew, notice window,
+   lock-in, evergreen.
+F) Termination and continuity — termination for convenience (who, notice,
+   fees); termination for cause (grounds, cure, non-performance, non-payment,
+   insolvency); exit/transition (assistance, handover, data return, DR).
+G) Change of control and assignment — CoC definition, effects, consent/notice,
+   termination and repricing triggers; assignment restrictions including by
+   operation of law; subcontracting approval requirements.
+H) Key personnel — commitments, replacement rights.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``supplier_critical_vendor_extraction`` field with the structured
+extraction object matching the SupplierCriticalVendorExtraction schema.
+""",
+    },
+    CHAPTER_CHANNEL_RESELLER_PARTNER: {
+        "subsections": """\
+Subsections:
+- Contract Profile and Territory
+- Commercial Model and KPIs
+- Exclusivity and Restrictions
+- Term, Renewal, and Termination
+- Change of Control and Assignment
+- Branding, IP, and Marketing
+- Compliance and Regulatory
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (Channel/Reseller/Partner Contracts anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document is an Amendment/Addendum/Side Letter/SOW, extract what it
+amends, precedence rules, and specific changed terms.
+
+Extract under the following categories:
+A) Contract profile — document type (reseller/distributor/referral/OEM/
+   strategic partnership/marketplace); parties and roles; territory and
+   channel scope; products/services covered.
+B) Commercial model — discount/margin/commission/referral/revenue-share
+   structure; minimum commitments, sales targets, quotas, KPI requirements;
+   reporting and audit rights.
+C) Exclusivity and restrictions — exclusive/non-exclusive; scope and
+   exceptions; non-compete/channel conflict restrictions; price restrictions
+   (MAP, price floors/ceilings, parity, discount controls); territory/
+   customer segment restrictions.
+D) Term, renewal, and termination — term, renewal, auto-renew, notice window;
+   termination for convenience (who, notice, fees, post-termination duties);
+   termination for cause (grounds, cure, KPI failure triggers).
+E) Change of control and assignment — CoC definition, effects, consent/notice,
+   termination; assignment restrictions including by operation of law, merger.
+F) Branding, IP, and marketing — trademark/brand usage license (scope,
+   guidelines, approvals); marketing obligations, co-marketing, publicity;
+   IP ownership of jointly developed materials.
+G) Compliance — anti-bribery, export controls, sanctions, data/privacy
+   obligations.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``channel_reseller_partner_extraction`` field with the structured
+extraction object matching the ChannelResellerPartnerExtraction schema.
 """,
     },
     CHAPTER_HR: {
         "subsections": """\
 Subsections:
-- Workforce Overview
-- Key Employment Terms
-- Change in Control / Golden Parachute / Retention
+- Document Profile and Employee Identity
+- Compensation and Benefits
+- Change in Control and Retention
+- Equity Acceleration
+- Termination and Severance
 - Restrictive Covenants
-- Independent Contractors
-- Execution Status
+- Key Person Dependency
+- Internal Inconsistencies and Gaps
 """,
         "focus": """\
-Review employment agreements (especially executives and key employees),
-option plans, restrictive covenants (non-compete, non-solicit, no-hire),
-CoC acceleration, retention bonuses, severance, and contractor
-classification indicators. Note missing IP-assignment clauses as
-``critical`` follow-ups.
+# Extraction scope (Employment & Management anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document is a policy/handbook that applies generally (not individual-
+specific), extract obligations as policy-level and set individual-specific
+fields to "unknown".
+
+Extract under the following categories:
+A) Document profile — document type (executive employment/retention-CoC/bonus
+   plan/non-compete/confidentiality/handbook/disciplinary); employee name/
+   title if individual; employer; effective date and term.
+B) Compensation and benefits — base salary, bonus/commission, benefits, equity
+   references (only as stated).
+C) Change in control and retention — CoC definition (if present); cash
+   severance or retention bonus triggered by CoC; single/double trigger (only
+   if explicitly described); trigger window; required conditions.
+D) Equity acceleration — awards covered; acceleration terms; percentage/
+   amount; full vs partial; treatment of performance awards.
+E) Termination — categories defined (cause/without cause/good reason/
+   resignation); notice periods; severance amounts; continued benefits;
+   garden leave; release requirements; mitigation.
+F) Restrictive covenants — non-compete (duration, scope, territory, remedies);
+   non-solicit (customers and employees separately); no-hire/no-poach;
+   confidentiality (duration, scope).
+G) Key person indicators — any language marking the person as "key", "critical",
+   "founder", or subject to special retention; consent requirements for CoC.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``employment_management_extraction`` field with the structured
+extraction object matching the EmploymentManagementExtraction schema.
 """,
     },
+    # -----------------------------------------------------------------------
+    # Unchanged chapters — original prompts preserved
+    # -----------------------------------------------------------------------
     CHAPTER_REGULATORY: {
         "subsections": """\
 Subsections:
@@ -265,6 +493,204 @@ Subsections:
 Inventory policies (D&O, E&O, Cyber, GL, Property, etc.), their limits,
 exclusions, CoC / assignment language, and run-off / tail obligations.
 Flag coverage gaps as follow-ups.
+""",
+    },
+    # -----------------------------------------------------------------------
+    # New anchor chapters
+    # -----------------------------------------------------------------------
+    CHAPTER_TECHNOLOGY_PRODUCT: {
+        "subsections": """\
+Subsections:
+- Document Profile and Scope
+- Deliverables and Acceptance
+- Service Levels and Operational Commitments
+- Penalties, Credits, and Remedies
+- Warranties and Performance Assurances
+- Security and Compliance Commitments
+- EOL / EOS and Sunsetting
+- Key Personnel Commitments
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (Technology & Product Commitments anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If commitments are referenced but not fully described (e.g. "per roadmap"),
+extract the reference and mark details as "unknown".
+
+Extract under the following categories:
+A) Document profile — document type (roadmap commitment/SOW-deliverables/
+   support policy/EOL-EOS/warranty terms/security commitment); products/
+   services covered; linkage to master agreement; precedence rules.
+B) Deliverables and acceptance — specific deliverables (features,
+   integrations, milestones); delivery timelines/milestones; dependencies;
+   acceptance criteria and acceptance process; deemed acceptance.
+C) Service levels and operational commitments — SLA commitments stricter than
+   standard; support hours, response times, escalation; availability
+   commitments; maintenance windows; dedicated resources.
+D) Penalties, credits, and remedies — LDs, penalties, service credits, fee
+   reductions, termination rights tied to performance; caps/limits.
+E) Warranties and performance assurances — warranties (conformity, non-
+   infringement, security, uptime); warranty period; remedies (repair/replace/
+   refund/credits); disclaimers and exclusions.
+F) Security and compliance — security measures (encryption, access controls);
+   standards/certifications (SOC2/ISO); vulnerability remediation timelines;
+   breach notification timing; customer audit rights.
+G) EOL/EOS/sunset — notice period; support continuation; migration assistance;
+   backward compatibility.
+H) Key personnel / dedicated team — named resources, minimum staffing,
+   dedicated CSM/engineer, replacement rights.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``technology_product_extraction`` field with the structured
+extraction object matching the TechnologyProductCommitmentsExtraction schema.
+""",
+    },
+    CHAPTER_IP_OWNERSHIP: {
+        "subsections": """\
+Subsections:
+- Document Profile and Parties
+- IP Assets Covered
+- Ownership and Assignment Mechanics
+- License-backs and Retained Rights
+- Third-Party and Background IP
+- Moral Rights
+- Confidentiality and Trade Secrets
+- Joint Development and Joint Ownership
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (IP Ownership & Transfers anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If the document lists IP assets without identifiers (application/registration
+numbers), extract what is present and set missing identifiers to "unknown".
+
+Extract under the following categories:
+A) Document profile — document type (employee invention assignment/contractor
+   IP assignment/IP assignment deed/development agreement/joint development
+   agreement/IP registration extract/IP schedule); parties (assignor/assignee/
+   developer/client/joint owners); effective date.
+B) IP assets covered — for each asset: IP type (patent/trademark/copyright/
+   software/database/trade secret/know-how/domain name); title; application/
+   registration number; jurisdiction; filing date; scope description.
+C) Chain of title / ownership — assignment language type (present/future/
+   mixed); "hereby assigns" vs "will assign"; works-made-for-hire language;
+   further assurances obligation; power of attorney.
+D) Third-party created IP — background IP, pre-existing IP, open source
+   references; license-backs or retained rights by assignor; field-of-use
+   limits; exclusivity.
+E) Moral rights — waiver or consent; attribution; right of integrity (only if
+   stated).
+F) Confidentiality / trade secrets — obligations tied to IP creation or
+   transfer.
+G) Joint development / joint ownership — ownership allocation; exploitation
+   rights; prosecution/enforcement rights; accounting/royalties.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``ip_ownership_extraction`` field with the structured extraction
+object matching the IpOwnershipTransfersExtraction schema.
+""",
+    },
+    CHAPTER_IP_LICENSING: {
+        "subsections": """\
+Subsections:
+- License Profile and Direction
+- Scope and Restrictions
+- Commercials and Royalties
+- Change of Control and Assignment
+- Termination and Effects
+- Source Code Escrow
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (IP Licensing — Inbound/Outbound anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not infer missing values —
+output "unknown" for fields not explicitly stated. Evidence is mandatory for
+every material item: include source_document_name, page_number, and box_2d.
+Identify executed status: "executed" ONLY if signatures/signature blocks are
+present; "not_executed" ONLY if explicitly stated as draft; else "unknown".
+If license terms are incorporated by reference (e.g. "per standard terms"),
+extract the reference and mark details as "unknown" unless the actual terms
+are in the provided documents.
+
+Extract under the following categories:
+A) License profile — inbound (company is licensee) or outbound (company is
+   licensor); document type (software/content/database/SDK/OEM/franchise/
+   sublicense); parties (licensor/licensee/sublicensor); licensed subject
+   matter; effective date; term and renewal; auto-renew.
+B) Scope and restrictions — field-of-use; territory; exclusivity;
+   sublicensing (permitted, conditions); distribution/resale/OEM rights;
+   modification/derivative works restrictions; usage limits; audit and
+   reporting obligations.
+C) Commercials / royalties — fees/royalties (rate/base); minimum royalties;
+   reporting schedule; audit/true-up; payment terms; late fees; taxes.
+D) Change of control and assignment — CoC definition, effects, consent/notice,
+   termination; assignment restrictions including by operation of law, merger,
+   substantially all assets; merger treated as assignment.
+E) Termination and effects — termination for convenience (who, notice, fees);
+   termination for cause (grounds, cure); effects of termination (sell-off/
+   wind-down period, continued use, return/destruction, transition assistance,
+   survival terms).
+F) Source code escrow — existence, escrow agent, release triggers, update
+   deposit obligations, access conditions.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``ip_licensing_extraction`` field with the structured extraction
+object matching the IpLicensingExtraction schema.
+""",
+    },
+    CHAPTER_OSS: {
+        "subsections": """\
+Subsections:
+- Document Profile and Tooling
+- Component Inventory
+- Copyleft / Reciprocal License Analysis
+- OSS Policy and Process
+- Obligations and Notices
+- Risks and Non-compliance Issues
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (Open Source & Third-Party Components anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not use external knowledge
+(including general OSS knowledge beyond what is explicitly stated).
+Do not infer missing values — output "unknown" for fields not explicitly
+stated. Evidence is mandatory for every material item: include
+source_document_name, page_number, and box_2d.
+If a component name/version/license is in tabular form, extract it
+faithfully. If text is partial due to OCR, extract what is present and set
+missing fields to "unknown".
+
+Extract under the following categories:
+A) Document profile — document type (OSS inventory/SBOM/OSS policy/OSS
+   notices); covered products/repos/versions; tooling/scanners mentioned.
+B) Component list — for each component explicitly listed: name, version,
+   supplier/source, license(s), usage context (product/module), whether
+   modified (if stated), whether distributed (if stated).
+C) Copyleft identification — ONLY if the document explicitly labels a license
+   as "copyleft" or lists a "copyleft" category: capture that classification
+   and any stated implications.
+D) Obligations (as stated) — disclosure obligations (source code, written
+   offer); attribution obligations; requirements triggered by distribution/
+   SaaS/modification/linking; internal process obligations.
+E) Risks and exceptions (as stated) — injunction risk, source code disclosure
+   risk, license incompatibility, non-compliance issues, remediation plans,
+   deadlines.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``oss_extraction`` field with the structured extraction object
+matching the OssExtraction schema.
 """,
     },
 }
