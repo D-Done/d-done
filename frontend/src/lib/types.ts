@@ -287,12 +287,321 @@ export type MaChapterId =
   | "corporate_governance"
   | "customer_obligations"
   | "supplier_obligations"
+  | "channel_reseller_partner"
   | "hr"
   | "regulatory"
   | "litigation"
   | "taxation"
   | "financial_debt"
-  | "insurance";
+  | "insurance"
+  | "technology_product"
+  | "ip_ownership"
+  | "ip_licensing"
+  | "oss";
+
+// ---------------------------------------------------------------------------
+// Anchor extraction types (simplified TypeScript mirrors of Python schemas)
+// ---------------------------------------------------------------------------
+
+export interface MaEvidenceRef {
+  source_document_name: string;
+  page_number: number;
+  verbatim_quote?: string | null;
+  bounding_boxes?: { x0: number; y0: number; x1: number; y1: number }[];
+}
+
+// Corporate governance
+export interface MaCapTableHolder {
+  holder_name: string;
+  holder_type: "individual" | "entity" | "unknown";
+  share_class_or_security: string;
+  shares_or_units: number | "unknown";
+  ownership_percentage: number | "unknown";
+  voting_percentage: number | "unknown";
+  notes: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaShareClass {
+  share_class: string;
+  rights_summary: string;
+  par_value: string;
+  issued_or_outstanding: string;
+}
+
+export interface MaAuthorizedSignatory {
+  signatory_name: string;
+  title_or_role: string;
+  signing_rule: string;
+  limitations_or_conditions: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaTransferRestriction {
+  restriction_type: string;
+  applies_to: string;
+  who_must_approve_or_benefits: string;
+  trigger_events: string;
+  process_summary: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaCorporateOwnershipAnchor {
+  anchor_id: "corporate_ownership";
+  executed_status: "executed" | "not_executed" | "unknown";
+  company_identity: {
+    legal_name: string;
+    registration_number: string;
+    jurisdiction: string;
+    entity_type: string;
+    registered_address: string;
+  };
+  share_capital: {
+    authorized_share_capital: string;
+    issued_share_capital: string;
+    share_classes: MaShareClass[];
+  };
+  cap_table: {
+    exists_in_document: boolean | "unknown";
+    holders: MaCapTableHolder[];
+  };
+  authorized_signatories: MaAuthorizedSignatory[];
+  transfer_restrictions_and_shareholder_rights: {
+    restrictions: MaTransferRestriction[];
+  };
+  missing_information: string[];
+}
+
+// Customer obligations
+export interface MaCustomerAnchor {
+  anchor_id: "customer_revenue_contracts";
+  executed_status: "executed" | "not_executed" | "unknown";
+  contract_profile: {
+    agreement_title: string;
+    parties: { name: string; role: string }[];
+    effective_date: string;
+    term_start_date: string;
+    term_end_date: string;
+  };
+  commercials: {
+    fees_and_pricing: {
+      pricing_model: string;
+      fee_amounts_or_rate_card: string;
+      currency: string;
+      invoicing_and_payment_terms: string;
+      minimum_commitments: string;
+    };
+    mfn_and_benchmarking: { mfn_exists: boolean | "unknown"; remedy_if_triggered: string };
+  };
+  term_and_renewal: {
+    initial_term: string;
+    auto_renew: boolean | "unknown";
+    renewal_term: string;
+    non_renewal_notice_window: string;
+  };
+  termination_and_suspension: {
+    termination_for_convenience: {
+      by_customer: boolean | "unknown";
+      notice_period: string;
+      early_termination_fees_or_charges: string;
+    };
+    termination_for_cause: { grounds: string[]; cure_period: string };
+    suspension_rights: { exists: boolean | "unknown"; triggers: string };
+  };
+  change_of_control_and_assignment: {
+    change_of_control: {
+      exists: boolean | "unknown";
+      effects: string;
+      consent_required: boolean | "unknown";
+      termination_right_triggered: boolean | "unknown";
+    };
+    assignment: {
+      restricted: boolean | "unknown";
+      consent_required: boolean | "unknown";
+    };
+  };
+  sla_and_credits: { sla_exists: boolean | "unknown"; sla_summary: string };
+  missing_information: string[];
+}
+
+// Supplier obligations
+export interface MaSupplierAnchor {
+  anchor_id: "supplier_critical_vendor_contracts";
+  executed_status: "executed" | "not_executed" | "unknown";
+  contract_profile: {
+    agreement_title: string;
+    parties: { name: string; role: string }[];
+    services_or_goods: string;
+    criticality_indicators: string;
+    effective_date: string;
+    term_start_date: string;
+    term_end_date: string;
+  };
+  commercial_terms: {
+    fees_and_pricing: {
+      fee_amounts_or_rate_card: string;
+      currency: string;
+      invoicing_and_payment_terms: string;
+      late_fees_interest: string;
+    };
+    price_changes_and_repricing: { notice_period: string };
+    minimum_commitments: {
+      commitment_type: string;
+      amount_or_volume: string;
+      penalties_or_consequences: string;
+    }[];
+  };
+  term_and_renewal: {
+    initial_term: string;
+    auto_renew: boolean | "unknown";
+    non_renewal_notice_window: string;
+  };
+  termination_and_continuity: {
+    termination_for_convenience: {
+      exists: boolean | "unknown";
+      notice_period: string;
+    };
+    termination_for_cause: { grounds: string[]; cure_period: string };
+    exit_and_transition: { business_continuity_dr: string; transition_assistance: string };
+  };
+  change_of_control_and_assignment: {
+    change_of_control: {
+      exists: boolean | "unknown";
+      effects: string;
+      consent_required: boolean | "unknown";
+      termination_right_triggered: boolean | "unknown";
+    };
+    assignment: { consent_required: boolean | "unknown" };
+  };
+  missing_information: string[];
+}
+
+// HR Aggregate
+export interface MaHrKeyEmployee {
+  employee_name: string;
+  title: string;
+  signature_status: "executed" | "not_executed" | "unknown";
+  notice_period: string;
+}
+
+export interface MaHrAggregateAnchor {
+  anchor_id: "hr_aggregate";
+  employee_count_statement: string;
+  key_risk_summary: string;
+  legal_exposure_summary: string;
+  key_employees: MaHrKeyEmployee[];
+  has_independent_contractors: boolean | "unknown";
+  contractor_risk_indicators: string;
+  missing_information: string[];
+}
+
+// Regulatory
+export interface MaRegLicense {
+  license_name: string;
+  issuing_body: string;
+  license_number: string;
+  expiry: string;
+  status: string;
+  change_of_control_approval_required: boolean | "unknown";
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaRegulatoryAnchor {
+  anchor_id: "regulatory";
+  licenses: MaRegLicense[];
+  compliance_plans: { plan_name: string; description: string }[];
+  missing_information: string[];
+}
+
+// Litigation
+export interface MaLitCase {
+  parties_and_case_id: string;
+  status: string;
+  nature_and_relief: string;
+  estimated_exposure: string;
+  risk_assessment: string;
+  additional_notes: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaLitigationAnchor {
+  anchor_id: "litigation";
+  cases: MaLitCase[];
+  settlements: { case_reference: string; settlement_summary: string }[];
+  missing_information: string[];
+}
+
+// Taxation
+export interface MaTaxEntry {
+  entity_or_subject: string;
+  key_details: string;
+  status_and_validity: string;
+  risks_and_implications: string;
+  gaps_and_follow_ups: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaTaxationAnchor {
+  anchor_id: "taxation";
+  entries: MaTaxEntry[];
+  missing_information: string[];
+}
+
+// Financial Debt
+export interface MaDebtLoanItem {
+  lender: string;
+  loan_type: string;
+  principal_and_currency: string;
+  interest_rate: string;
+  maturity: string;
+  coc_consequences: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaDebtLienItem {
+  lien_type: string;
+  collateral: string;
+  registered_owner: string;
+  status: string;
+  related_debt_instrument: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaFinancialDebtAnchor {
+  anchor_id: "financial_debt";
+  loans_and_credit_lines: MaDebtLoanItem[];
+  liens_and_collateral: MaDebtLienItem[];
+  missing_information: string[];
+}
+
+// Insurance
+export interface MaInsurancePolicy {
+  entity_and_policy_type: string;
+  key_data: string;
+  status_and_validity: string;
+  risks_and_implications: string;
+  gaps_and_follow_ups: string;
+  evidence: MaEvidenceRef[];
+}
+
+export interface MaInsuranceAnchor {
+  anchor_id: "insurance";
+  policies: MaInsurancePolicy[];
+  missing_information: string[];
+}
+
+export type MaAnchorExtraction =
+  | MaCorporateOwnershipAnchor
+  | MaCustomerAnchor
+  | MaSupplierAnchor
+  | MaHrAggregateAnchor
+  | MaRegulatoryAnchor
+  | MaLitigationAnchor
+  | MaTaxationAnchor
+  | MaFinancialDebtAnchor
+  | MaInsuranceAnchor
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | Record<string, any>;
 
 export interface MaFinding {
   id: string;
@@ -351,6 +660,7 @@ export interface MaDDReport {
   chapters: MaChapterOutput[];
   completeness?: MaCompletenessChecklist | null;
   agent_session_id?: string;
+  anchor_extractions?: Record<string, MaAnchorExtraction>;
 }
 
 export interface DDReportResponse {
