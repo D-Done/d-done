@@ -219,7 +219,6 @@ def create_visual_grounding_pipeline() -> SequentialAgent:
     from app.agents.doc_classifier_agent import create_classifier_agent
 
     from app.agents.extractors.company_docs.agent import create_agent as company_docs
-    from app.agents.extractors.appendix_a.agent import create_agent as appendix_a
     from app.agents.extractors.credit_committee.agent import (
         create_agent as credit_committee,
     )
@@ -241,13 +240,15 @@ def create_visual_grounding_pipeline() -> SequentialAgent:
     from app.agents.extractors.tabu.agent import create_agent as tabu
     from app.agents.extractors.zero_report.agent import create_agent as zero_report
 
+    # appendix_a_extractor excluded: AppendixAExtraction schema expands to ~71 KB
+    # after $defs inlining, exceeding Vertex AI's response_schema size limit
+    # and causing 400 INVALID_ARGUMENT on every run with credit_committee docs.
     extractors = [
         tabu(),
         zero_report(),
         agreement(),
         agreement_additions(),
         credit_committee(),
-        appendix_a(),
         company_docs(),
         signing_protocol(),
         planning_permit(),
@@ -332,7 +333,6 @@ def create_visual_grounding_pipeline_phase1() -> SequentialAgent:
     from app.agents.doc_classifier_agent import create_classifier_agent
 
     from app.agents.extractors.company_docs.agent import create_agent as company_docs
-    from app.agents.extractors.appendix_a.agent import create_agent as appendix_a
     from app.agents.extractors.credit_committee.agent import (
         create_agent as credit_committee,
     )
@@ -354,13 +354,13 @@ def create_visual_grounding_pipeline_phase1() -> SequentialAgent:
     from app.agents.extractors.tabu.agent import create_agent as tabu
     from app.agents.extractors.zero_report.agent import create_agent as zero_report
 
+    # appendix_a_extractor excluded — see create_visual_grounding_pipeline() comment.
     extractors = [
         tabu(),
         zero_report(),
         agreement(),
         agreement_additions(),
         credit_committee(),
-        appendix_a(),
         company_docs(),
         signing_protocol(),
         planning_permit(),
