@@ -1,3 +1,13 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Only ship the FastAPI application package. eval/, alembic/, assets/, tests/
+# live alongside app/ but must not be treated as installable top-level packages.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
 [project]
 name = "d-done-backend"
 version = "0.2.0"

@@ -1,5 +1,3 @@
-version: "3.9"
-
 # All env vars live in backend/.env.local (and frontend/.env.local). Copy backend/.env.example
 # to backend/.env.local and set DATABASE_URL to postgresql://postgres:postgres@db:5432/d_done
 # for devcontainer. Only container-specific vars are set here (host "db", PYTHONPATH, frontend URL).
