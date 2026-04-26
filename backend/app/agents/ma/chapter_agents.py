@@ -89,6 +89,19 @@ _VG_BATCH_SIZE = 15
 # PDFs per overflow Flash-extraction call. Each call fits well within the
 # Flash 1 M-token limit (≤ 15 PDFs × ~50 k tokens/PDF = ~750 k tokens).
 _OVERFLOW_BATCH_SIZE = 15
+# Gemini hard limit for PDF files passed as GCS URIs (50 MiB).
+# Files exceeding this are routed to the overflow text-extraction path instead.
+_GCS_PDF_MAX_BYTES = 50 * 1024 * 1024  # 50 MiB
+# MIME types accepted as GCS URIs by the Gemini multimodal API.
+_VG_SUPPORTED_MIME_TYPES: frozenset[str] = frozenset(
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+    }
+)
 # Character cap on the text returned by each overflow extraction call.
 # ~30 k chars ≈ 7 500 tokens per batch; keeps 10 overflow batches within
 # ~75 k tokens of the Pro call's context budget.
@@ -246,8 +259,29 @@ def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
         # (IDs, certificates, short extracts) and get visual grounding first.
         matched_with_size.sort(key=lambda x: x[3])
 
-        vg_batch = matched_with_size[:_VG_BATCH_SIZE]
-        overflow = matched_with_size[_VG_BATCH_SIZE:]
+        # Partition: VG batch only takes files that are:
+        #   (a) a MIME type the Gemini multimodal API accepts as a GCS URI, AND
+        #   (b) within the 50 MiB per-file limit enforced by the API.
+        # Oversized or unsupported files go directly to overflow (text extraction).
+        vg_eligible = [
+            item
+            for item in matched_with_size
+            if item[2] in _VG_SUPPORTED_MIME_TYPES and item[3] <= _GCS_PDF_MAX_BYTES
+        ]
+        vg_ineligible = [
+            item
+            for item in matched_with_size
+            if item[2] not in _VG_SUPPORTED_MIME_TYPES or item[3] > _GCS_PDF_MAX_BYTES
+        ]
+        if vg_ineligible:
+            logger.info(
+                "ma_chapter[%s]: %d file(s) skipped for VG (unsupported MIME or >50 MiB) → overflow",
+                chapter_id,
+                len(vg_ineligible),
+            )
+
+        vg_batch = vg_eligible[:_VG_BATCH_SIZE]
+        overflow = vg_eligible[_VG_BATCH_SIZE:] + vg_ineligible
 
         logger.info(
             "ma_chapter[%s]: %d PDF(s) tagged — %d in VG batch, %d in overflow",
