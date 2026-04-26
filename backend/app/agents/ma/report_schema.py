@@ -39,6 +39,12 @@ from app.agents.ma.anchor_schemas import (
     IpLicensingExtraction,
     OssExtraction,
     EmploymentManagementExtraction,
+    HrAggregateExtraction,
+    RegulatoryExtraction,
+    LitigationExtraction,
+    TaxationExtraction,
+    FinancialDebtExtraction,
+    InsuranceExtraction,
 )
 
 
@@ -211,6 +217,7 @@ class ChannelResellerPartnerChapterOutput(ChapterOutput):
 
 
 class HrChapterOutput(ChapterOutput):
+    hr_aggregate_extraction: HrAggregateExtraction | None = None
     employment_management_extraction: EmploymentManagementExtraction | None = None
 
 
@@ -228,6 +235,26 @@ class IpLicensingChapterOutput(ChapterOutput):
 
 class OssChapterOutput(ChapterOutput):
     oss_extraction: OssExtraction | None = None
+
+
+class RegulatoryChapterOutput(ChapterOutput):
+    regulatory_extraction: RegulatoryExtraction | None = None
+
+
+class LitigationChapterOutput(ChapterOutput):
+    litigation_extraction: LitigationExtraction | None = None
+
+
+class TaxationChapterOutput(ChapterOutput):
+    taxation_extraction: TaxationExtraction | None = None
+
+
+class FinancialDebtChapterOutput(ChapterOutput):
+    financial_debt_extraction: FinancialDebtExtraction | None = None
+
+
+class InsuranceChapterOutput(ChapterOutput):
+    insurance_extraction: InsuranceExtraction | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -343,6 +370,11 @@ __all__ = [
     "IpOwnershipChapterOutput",
     "IpLicensingChapterOutput",
     "OssChapterOutput",
+    "RegulatoryChapterOutput",
+    "LitigationChapterOutput",
+    "TaxationChapterOutput",
+    "FinancialDebtChapterOutput",
+    "InsuranceChapterOutput",
     "MaDDReport",
     "MaFinding",
     "MaFollowUp",

@@ -1856,6 +1856,158 @@ class EmploymentManagementExtraction(BaseModel):
     missing_information: list[str] = Field(default_factory=list)
 
 
+# ===========================================================================
+# Anchor 11 — HR Aggregate (replaces EmploymentManagementExtraction for
+#              the chapter-level output; lightweight, UI-first schema)
+# ===========================================================================
+
+
+class HrKeyEmployee(BaseModel):
+    employee_name: str = "unknown"
+    title: str = "unknown"
+    signature_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+    notice_period: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class HrAggregateExtraction(BaseModel):
+    anchor_id: Literal["hr_aggregate"] = "hr_aggregate"
+    employee_count_statement: str = "unknown"
+    key_risk_summary: str = "unknown"
+    legal_exposure_summary: str = "unknown"
+    key_employees: list[HrKeyEmployee] = Field(default_factory=list)
+    has_independent_contractors: BoolOrUnknown = "unknown"
+    contractor_risk_indicators: str = "unknown"
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor 12 — Regulatory (licenses register + compliance plans)
+# ===========================================================================
+
+
+class RegLicense(BaseModel):
+    license_name: str = "unknown"
+    issuing_body: str = "unknown"
+    license_number: str = "unknown"
+    expiry: str = "unknown"
+    status: str = "unknown"
+    change_of_control_approval_required: BoolOrUnknown = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class RegCompliancePlan(BaseModel):
+    plan_name: str = "unknown"
+    description: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class RegulatoryExtraction(BaseModel):
+    anchor_id: Literal["regulatory"] = "regulatory"
+    licenses: list[RegLicense] = Field(default_factory=list)
+    compliance_plans: list[RegCompliancePlan] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor 13 — Litigation (cases table + settlements)
+# ===========================================================================
+
+
+class LitCase(BaseModel):
+    parties_and_case_id: str = "unknown"
+    status: str = "unknown"
+    nature_and_relief: str = "unknown"
+    estimated_exposure: str = "unknown"
+    risk_assessment: str = "unknown"
+    additional_notes: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class LitSettlement(BaseModel):
+    case_reference: str = "unknown"
+    settlement_summary: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class LitigationExtraction(BaseModel):
+    anchor_id: Literal["litigation"] = "litigation"
+    cases: list[LitCase] = Field(default_factory=list)
+    settlements: list[LitSettlement] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor 14 — Taxation (structured entries table)
+# ===========================================================================
+
+
+class TaxEntry(BaseModel):
+    entity_or_subject: str = "unknown"
+    key_details: str = "unknown"
+    status_and_validity: str = "unknown"
+    risks_and_implications: str = "unknown"
+    gaps_and_follow_ups: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class TaxationExtraction(BaseModel):
+    anchor_id: Literal["taxation"] = "taxation"
+    entries: list[TaxEntry] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor 15 — Financial Debt (loans table + liens table)
+# ===========================================================================
+
+
+class DebtLoanItem(BaseModel):
+    lender: str = "unknown"
+    loan_type: str = "unknown"
+    principal_and_currency: str = "unknown"
+    interest_rate: str = "unknown"
+    maturity: str = "unknown"
+    coc_consequences: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class DebtLienItem(BaseModel):
+    lien_type: str = "unknown"
+    collateral: str = "unknown"
+    registered_owner: str = "unknown"
+    status: str = "unknown"
+    related_debt_instrument: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class FinancialDebtExtraction(BaseModel):
+    anchor_id: Literal["financial_debt"] = "financial_debt"
+    loans_and_credit_lines: list[DebtLoanItem] = Field(default_factory=list)
+    liens_and_collateral: list[DebtLienItem] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor 16 — Insurance (policies summary table)
+# ===========================================================================
+
+
+class InsurancePolicy(BaseModel):
+    entity_and_policy_type: str = "unknown"
+    key_data: str = "unknown"
+    status_and_validity: str = "unknown"
+    risks_and_implications: str = "unknown"
+    gaps_and_follow_ups: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class InsuranceExtraction(BaseModel):
+    anchor_id: Literal["insurance"] = "insurance"
+    policies: list[InsurancePolicy] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Public exports
 # ---------------------------------------------------------------------------
@@ -1873,4 +2025,20 @@ __all__ = [
     "IpLicensingExtraction",
     "OssExtraction",
     "EmploymentManagementExtraction",
+    # New UI-focused schemas
+    "HrAggregateExtraction",
+    "HrKeyEmployee",
+    "RegulatoryExtraction",
+    "RegLicense",
+    "RegCompliancePlan",
+    "LitigationExtraction",
+    "LitCase",
+    "LitSettlement",
+    "TaxationExtraction",
+    "TaxEntry",
+    "FinancialDebtExtraction",
+    "DebtLoanItem",
+    "DebtLienItem",
+    "InsuranceExtraction",
+    "InsurancePolicy",
 ]

@@ -12,6 +12,14 @@ extracted output is Hebrew).
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+# Admin UI writes per-chapter overrides here; build_chapter_prompt picks them up.
+_CHAPTER_OVERRIDES_DIR: Path = Path(__file__).resolve().parent / "chapter_prompt_overrides"
+
 from app.agents.ma.constants import (
     CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_CORPORATE_GOVERNANCE,
@@ -410,12 +418,19 @@ G) Key person indicators — any language marking the person as "key", "critical
    "founder", or subject to special retention; consent requirements for CoC.
 
 In addition to the standard summary_he / findings / follow_ups fields, also
-populate the ``employment_management_extraction`` field with the structured
-extraction object matching the EmploymentManagementExtraction schema.
+populate the ``hr_aggregate_extraction`` field:
+- employee_count_statement: one sentence about total headcount or "cannot determine".
+- key_risk_summary: one sentence on the biggest HR risk (e.g. unsigned agreements).
+- legal_exposure_summary: one sentence on legal clauses that create exposure.
+- key_employees: list of all named employees found across ALL documents, each with
+  employee_name, title, signature_status (executed/not_executed/unknown), notice_period.
+- has_independent_contractors: true/false/unknown.
+- contractor_risk_indicators: brief description of mis-classification risk if any.
+- missing_information: list of missing docs or data.
 """,
     },
     # -----------------------------------------------------------------------
-    # Unchanged chapters — original prompts preserved
+    # Structured-anchor chapters (regulatory, litigation, taxation, debt, insurance)
     # -----------------------------------------------------------------------
     CHAPTER_REGULATORY: {
         "subsections": """\
@@ -430,6 +445,16 @@ Subsections:
 Inventory licenses and permits (authority, scope, expiry, conditions). Flag
 anything that requires regulator pre-approval or notice for a
 change-of-control. Extract enforcement actions, fines, and remediation.
+
+In addition to the standard summary_he / findings / follow_ups, populate
+``regulatory_extraction``:
+- licenses: one entry per distinct license/permit found. Each entry must include:
+  license_name, issuing_body, license_number, expiry, status,
+  change_of_control_approval_required (true/false/unknown).
+  ONLY include this table if licenses actually exist in the documents — do NOT
+  emit an empty list just to have the field.
+- compliance_plans: list of named compliance programs with plan_name and description.
+- missing_information: list of gaps (e.g. "License XYZ renewal certificate not found").
 """,
     },
     CHAPTER_LITIGATION: {
@@ -444,8 +469,18 @@ Subsections:
         "focus": """\
 Review pleadings, demand letters, settlement agreements, and related
 correspondence. Record forum, parties, status, claim amounts, likelihood
-assessments, and any ongoing obligations (releases, confidentiality,
-license / assignment terms).
+assessments, and any ongoing obligations.
+
+In addition to summary_he / findings / follow_ups, populate
+``litigation_extraction``:
+- cases: one entry per distinct legal matter found. Each entry: parties_and_case_id
+  (include case number if known), status (pre-litigation / pending / settled / closed),
+  nature_and_relief (brief description of the claim and remedy sought),
+  estimated_exposure (monetary amount or "unknown"),
+  risk_assessment (only if explicitly stated in the documents — else "unknown"),
+  additional_notes.
+- settlements: for resolved matters, case_reference and settlement_summary.
+- missing_information.
 """,
     },
     CHAPTER_TAXATION: {
@@ -459,8 +494,18 @@ Subsections:
 """,
         "focus": """\
 Review tax assessments, rulings, authority correspondence, and financial
-statements for tax exposure. Call out incentives / benefits that are
-at-risk under a change-of-control.
+statements for tax exposure. Call out incentives / benefits at-risk under a
+change-of-control.
+
+In addition to summary_he / findings / follow_ups, populate
+``taxation_extraction``:
+- entries: one row per distinct tax entity, issue, or subject found. Each entry:
+  entity_or_subject (e.g. "XYZ Ltd — corporate income tax" or "Employee A — ESOP"),
+  key_details (amounts, rates, deadlines),
+  status_and_validity (e.g. "Assessed / Paid" / "Assessment pending"),
+  risks_and_implications (CoC impact, exposure amount, "mines"),
+  gaps_and_follow_ups (missing certificates, open items).
+- missing_information.
 """,
     },
     CHAPTER_FINANCIAL_DEBT: {
@@ -477,6 +522,18 @@ Subsections:
 Review loan agreements, promissory notes, guarantees, and
 lien/pledge registrations. Cross-reference what's promised in financing
 documents with what's actually registered. Flag mismatches.
+
+In addition to summary_he / findings / follow_ups, populate
+``financial_debt_extraction``:
+- loans_and_credit_lines: one entry per debt instrument found. Each entry:
+  lender, loan_type (Term Loan / Credit Line / Convertible Note / Guarantee / etc.),
+  principal_and_currency, interest_rate, maturity, coc_consequences
+  (e.g. "Mandatory Prepayment" / "Acceleration" / "Silent").
+- liens_and_collateral: one entry per registered lien/pledge found. Each entry:
+  lien_type (Fixed / Floating / Pledge), collateral (description of secured asset),
+  registered_owner, status ("Registered" / "Gap: not found in registry" / "Unknown"),
+  related_debt_instrument (which loan/agreement this secures).
+- missing_information.
 """,
     },
     CHAPTER_INSURANCE: {
@@ -493,6 +550,16 @@ Subsections:
 Inventory policies (D&O, E&O, Cyber, GL, Property, etc.), their limits,
 exclusions, CoC / assignment language, and run-off / tail obligations.
 Flag coverage gaps as follow-ups.
+
+In addition to summary_he / findings / follow_ups, populate
+``insurance_extraction``:
+- policies: one entry per policy type found. Each entry:
+  entity_and_policy_type (e.g. "General Liability (GL)" / "D&O" / "Cyber"),
+  key_data (insurer name, limit, deductible/retention),
+  status_and_validity (e.g. "In force — expires 31.12.2025"),
+  risks_and_implications (CoC cancellation risk, run-off need, coverage gap),
+  gaps_and_follow_ups (missing renewal cert, gap in limit, etc.).
+- missing_information.
 """,
     },
     # -----------------------------------------------------------------------
@@ -697,7 +764,24 @@ matching the OssExtraction schema.
 
 
 def build_chapter_prompt(chapter_id: str) -> str:
-    """Return the full instruction string for a given chapter id."""
+    """Return the full instruction string for a given chapter id.
+
+    If a per-chapter override file exists (written by the admin prompt-management
+    UI), its content is returned verbatim so that edits from the settings screen
+    take effect immediately without a redeploy.
+    """
+    override_path = _CHAPTER_OVERRIDES_DIR / f"{chapter_id}.md"
+    if override_path.exists():
+        try:
+            content = override_path.read_text(encoding="utf-8")
+            logger.debug("chapter_prompts: loaded override for %s", chapter_id)
+            return content
+        except Exception:
+            logger.warning(
+                "chapter_prompts: failed to read override for %s — using default",
+                chapter_id,
+            )
+
     spec = _CHAPTER_SPECS[chapter_id]
     title_he = CHAPTER_TITLES_HE[chapter_id]
     return (
