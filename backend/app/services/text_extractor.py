@@ -256,25 +256,32 @@ def _pdf_to_text(content: bytes, filename: str) -> str:
     return "\n".join(parts)[:MAX_TEXT_CHARS]
 
 
+def _sanitize(text: str) -> str:
+    """Remove characters that PostgreSQL TEXT/JSONB cannot store (e.g. NUL)."""
+    return text.replace("\x00", "")
+
+
 def _extract_bytes(content: bytes, filename: str, ext: str) -> str | None:
     """Dispatch to the correct extractor by extension."""
     try:
+        result: str | None = None
         if ext == "xlsx":
-            return _xlsx_to_text(content, filename)
-        if ext == "xls":
-            return _xls_to_text(content, filename)
-        if ext == "docx":
-            return _docx_to_text(content, filename)
-        if ext == "csv":
-            return _csv_to_text(content, filename)
-        if ext == "txt":
-            return _txt_to_text(content, filename)
-        if ext in ("html", "htm"):
-            return _html_to_text(content, filename)
-        if ext == "eml":
-            return _eml_to_text(content, filename)
-        if ext == _PDF_EXTENSION:
-            return _pdf_to_text(content, filename)
+            result = _xlsx_to_text(content, filename)
+        elif ext == "xls":
+            result = _xls_to_text(content, filename)
+        elif ext == "docx":
+            result = _docx_to_text(content, filename)
+        elif ext == "csv":
+            result = _csv_to_text(content, filename)
+        elif ext == "txt":
+            result = _txt_to_text(content, filename)
+        elif ext in ("html", "htm"):
+            result = _html_to_text(content, filename)
+        elif ext == "eml":
+            result = _eml_to_text(content, filename)
+        elif ext == _PDF_EXTENSION:
+            result = _pdf_to_text(content, filename)
+        return _sanitize(result) if result is not None else None
     except Exception:
         logger.warning("Text extraction failed for %s", filename, exc_info=True)
     return None
@@ -454,6 +461,7 @@ def _download_and_extract_pdf(
         )
         return None
 
+    text = _sanitize(text)
     logger.info(
         "text_extractor: extracted %d chars from oversized PDF %s", len(text), filename
     )
