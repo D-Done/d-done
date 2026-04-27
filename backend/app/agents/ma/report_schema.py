@@ -218,7 +218,6 @@ class ChannelResellerPartnerChapterOutput(ChapterOutput):
 
 class HrChapterOutput(ChapterOutput):
     hr_aggregate_extraction: HrAggregateExtraction | None = None
-    employment_management_extraction: EmploymentManagementExtraction | None = None
 
 
 class TechnologyProductChapterOutput(ChapterOutput):
