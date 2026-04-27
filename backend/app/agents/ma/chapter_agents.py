@@ -120,22 +120,25 @@ _MAX_EXTRACTION_CHARS = 30_000
 _MAX_CHARS_PER_FILE = 10_000
 
 
+# Schemas whose inlined JSON size exceeds Vertex AI's response_schema limit
+# (~35 KB after $ref expansion) fall back to the plain ChapterOutput.
+# Anchor extraction for those chapters is intentionally skipped for now.
 _CHAPTER_OUTPUT_SCHEMAS: dict[str, type[ChapterOutput]] = {
-    CHAPTER_TRANSACTION_OVERVIEW: TransactionOverviewChapterOutput,
-    CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,
-    CHAPTER_CUSTOMER_OBLIGATIONS: CustomerObligationsChapterOutput,
-    CHAPTER_SUPPLIER_OBLIGATIONS: SupplierObligationsChapterOutput,
-    CHAPTER_CHANNEL_RESELLER_PARTNER: ChannelResellerPartnerChapterOutput,
-    CHAPTER_HR: HrChapterOutput,
-    CHAPTER_REGULATORY: RegulatoryChapterOutput,
-    CHAPTER_LITIGATION: LitigationChapterOutput,
-    CHAPTER_TAXATION: TaxationChapterOutput,
-    CHAPTER_FINANCIAL_DEBT: FinancialDebtChapterOutput,
-    CHAPTER_INSURANCE: InsuranceChapterOutput,
-    CHAPTER_TECHNOLOGY_PRODUCT: TechnologyProductChapterOutput,
-    CHAPTER_IP_OWNERSHIP: IpOwnershipChapterOutput,
-    CHAPTER_IP_LICENSING: IpLicensingChapterOutput,
-    CHAPTER_OSS: OssChapterOutput,
+    CHAPTER_TRANSACTION_OVERVIEW: ChapterOutput,          # 57 KB inlined — too large
+    CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,  # 34 KB — OK
+    CHAPTER_CUSTOMER_OBLIGATIONS: ChapterOutput,          # 58 KB inlined — too large
+    CHAPTER_SUPPLIER_OBLIGATIONS: ChapterOutput,          # 53 KB inlined — too large
+    CHAPTER_CHANNEL_RESELLER_PARTNER: ChapterOutput,      # 51 KB inlined — too large
+    CHAPTER_HR: HrChapterOutput,                          # ~14 KB after fix — OK
+    CHAPTER_REGULATORY: RegulatoryChapterOutput,          # 14 KB — OK
+    CHAPTER_LITIGATION: LitigationChapterOutput,          # 14 KB — OK
+    CHAPTER_TAXATION: TaxationChapterOutput,              # 12 KB — OK
+    CHAPTER_FINANCIAL_DEBT: FinancialDebtChapterOutput,   # 15 KB — OK
+    CHAPTER_INSURANCE: InsuranceChapterOutput,            # 12 KB — OK
+    CHAPTER_TECHNOLOGY_PRODUCT: TechnologyProductChapterOutput,  # 32 KB — OK
+    CHAPTER_IP_OWNERSHIP: IpOwnershipChapterOutput,       # 32 KB — OK
+    CHAPTER_IP_LICENSING: ChapterOutput,                  # 43 KB inlined — too large
+    CHAPTER_OSS: OssChapterOutput,                        # 29 KB — OK
 }
 
 
