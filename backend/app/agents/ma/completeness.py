@@ -87,5 +87,5 @@ def create_ma_completeness_agent() -> Agent:
         include_contents="none",
         output_schema=CompletenessChecklist,
         output_key=STATE_MA_COMPLETENESS,
-        generate_content_config=make_generate_config(max_output_tokens=16_384),
+        generate_content_config=make_generate_config(max_output_tokens=65_536),
     )
