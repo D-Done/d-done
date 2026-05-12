@@ -27,7 +27,7 @@ ENV PORT=8080
 
 EXPOSE ${PORT}
 
-CMD exec uvicorn app.main:app \
+CMD alembic upgrade head && exec uvicorn app.main:app \
     --host 0.0.0.0 \
     --port ${PORT} \
     --workers 1 \
