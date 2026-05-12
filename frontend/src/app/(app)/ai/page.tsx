@@ -277,11 +277,23 @@ export default function AiPage() {
 
   const handleLinkProject = useCallback(
     async (pid: string, ptitle: string) => {
-      if (!currentConvId) return;
       setProjectPickerOpen(false);
-      await updateConversation(currentConvId, { project_id: pid });
+
+      // Create a conversation first if there isn't one
+      let convId = currentConvId;
+      if (!convId) {
+        const conv = await createConversation({ project_id: pid });
+        setConversations((prev) => [conv, ...prev]);
+        setCurrentConvId(conv.id);
+        convId = conv.id;
+        setProjectId(pid);
+        setProjectTitle(ptitle);
+      } else {
+        await updateConversation(convId, { project_id: pid });
+      }
+
       // Reload conversation to get project files
-      const detail = await getConversation(currentConvId);
+      const detail = await getConversation(convId);
       setProjectId(detail.project_id);
       setProjectTitle(detail.project_title);
       setProjectFiles(detail.project_files ?? []);
@@ -352,12 +364,25 @@ export default function AiPage() {
 
     // Auto-create conversation on first send
     if (!convId) {
-      const conv = await createConversation(
-        projectId ? { project_id: projectId } : undefined,
-      );
-      setConversations((prev) => [conv, ...prev]);
-      setCurrentConvId(conv.id);
-      convId = conv.id;
+      try {
+        const conv = await createConversation(
+          projectId ? { project_id: projectId } : undefined,
+        );
+        setConversations((prev) => [conv, ...prev]);
+        setCurrentConvId(conv.id);
+        convId = conv.id;
+      } catch (err) {
+        console.error("Failed to create conversation:", err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: "e-" + Date.now(),
+            role: "assistant" as const,
+            content: "שגיאה ביצירת שיחה. בדוק שהשרת פועל ונסה שנית.",
+          },
+        ]);
+        return;
+      }
     }
 
     const userMsg: LocalMessage = {
@@ -621,7 +646,7 @@ export default function AiPage() {
             </div>
 
             {/* Project link/unlink */}
-            {currentConvId && (
+            {(
               projectTitle ? (
                 <button
                   onClick={handleUnlinkProject}
