@@ -256,7 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 </Button>
                 {showNotifications && (
-                  <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-xl" dir="rtl">
+                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-xl" dir="rtl">
                     <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">
                       התראות
                     </div>
