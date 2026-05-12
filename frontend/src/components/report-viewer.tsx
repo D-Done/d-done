@@ -1310,7 +1310,7 @@ export function ReportViewer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="cursor-help inline-block">
-                  <h2 className="text-xl font-bold mb-4">תקציר בדיקת נאותות</h2>
+                  <h2 className="text-xl font-bold mb-4 dark:text-slate-100">תקציר בדיקת נאותות</h2>
                 </span>
               </TooltipTrigger>
               <TooltipContent side="left" className="max-w-[280px]">
@@ -1324,12 +1324,12 @@ export function ReportViewer({
 
           <div className="grid gap-4">
             {report.findings.map((f, i) => (
-              <Card key={i} className="rounded-2xl border-none shadow-sm p-4">
+              <Card key={i} className="rounded-2xl border-none shadow-sm p-4 dark:bg-slate-900">
                 <div className="flex items-center justify-end gap-2 mb-2">
-                  <h4 className="font-bold">{f.title}</h4>
+                  <h4 className="font-bold dark:text-slate-100">{f.title}</h4>
                   <SeverityIcon severity={f.severity} />
                 </div>
-                <p className="text-sm">
+                <p className="text-sm dark:text-slate-300">
                   {f.description}
                   <CitationKeysInline sources={f.sources} findingIndex={i} />
                 </p>

@@ -150,16 +150,16 @@ function QAReviewBanner({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-2xl border-orange-200 bg-orange-50 shadow-sm">
+      <Card className="rounded-2xl border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 shadow-sm">
         <CardContent className="flex items-start gap-4 py-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100">
-            <ShieldAlert className="h-5 w-5 text-orange-600" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/40">
+            <ShieldAlert className="h-5 w-5 text-orange-600 dark:text-orange-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold text-orange-900">
+            <h3 className="text-lg font-bold text-orange-900 dark:text-orange-100">
               הדוח דורש בדיקת עורך דין
             </h3>
-            <p className="mt-1 text-sm text-orange-800">
+            <p className="mt-1 text-sm text-orange-800 dark:text-orange-200">
               {qaAttempts > 1
                 ? `שופט ה-QA זיהה ממצאים שלא תוקנו גם לאחר ${qaAttempts} סבבי תיקון אוטומטי. `
                 : "שופט ה-QA זיהה ממצאים שאינם עומדים בסף המשפטי הנדרש. "}
@@ -182,10 +182,10 @@ function QAReviewBanner({
       </Card>
 
       {corrections.length > 0 && (
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-2xl shadow-sm dark:bg-slate-900 dark:border-slate-700">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               הערות לתיקון ({corrections.length})
             </CardTitle>
           </CardHeader>
@@ -194,7 +194,7 @@ function QAReviewBanner({
               {corrections.map((note, i) => (
                 <li
                   key={i}
-                  className="flex gap-3 rounded-xl border border-orange-100 bg-orange-50/50 p-3 text-sm text-slate-800"
+                  className="flex gap-3 rounded-xl border border-orange-100 dark:border-orange-900 bg-orange-50/50 dark:bg-orange-950/20 p-3 text-sm text-slate-800 dark:text-slate-200"
                 >
                   <span className="mt-0.5 shrink-0 text-orange-500 font-bold">
                     {i + 1}.
@@ -208,12 +208,12 @@ function QAReviewBanner({
       )}
 
       {scores.length > 0 && (
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-2xl shadow-sm dark:bg-slate-900 dark:border-slate-700">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">ציוני ביקורת QA</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="divide-y">
+            <div className="divide-y dark:divide-slate-700">
               {scores.map((s) => (
                 <div
                   key={s.criterion_id}
@@ -228,7 +228,7 @@ function QAReviewBanner({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-slate-900 text-sm">
+                      <span className="font-medium text-slate-900 dark:text-slate-100 text-sm">
                         {s.criterion_name}
                       </span>
                       <Badge
@@ -238,7 +238,7 @@ function QAReviewBanner({
                         {Math.round(s.confidence * 100)}%
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">{s.reasoning}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{s.reasoning}</p>
                   </div>
                 </div>
               ))}
@@ -565,13 +565,13 @@ export default function TransactionPage() {
         {/* ══════════════════════════════════════════════════════════
             Bubble 1 — Project Header
         ══════════════════════════════════════════════════════════ */}
-        <Card className="rounded-2xl border-none bg-white shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center gap-3 px-5 py-4">
               <Button
                 variant="ghost"
                 size="icon"
-                className="shrink-0 rounded-xl text-slate-400 hover:text-slate-700"
+                className="shrink-0 rounded-xl text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
                 onClick={() => {
                   if (isHitlPending) {
                     toast.warning("יש לאשר את טבלת החתימות לפני עזיבת הדף");
@@ -584,11 +584,11 @@ export default function TransactionPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
 
-              <div className="h-8 w-px bg-slate-100" />
+              <div className="h-8 w-px bg-slate-100 dark:bg-slate-700" />
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="truncate text-2xl font-bold text-slate-900">
+                  <h1 className="truncate text-2xl font-bold text-slate-900 dark:text-slate-100">
                     {project.title}
                   </h1>
                   <Badge
@@ -623,7 +623,7 @@ export default function TransactionPage() {
         {/* ══════════════════════════════════════════════════════════
             Bubble 2 — Tabs: Documents | Project Details | DD Report
         ══════════════════════════════════════════════════════════ */}
-        <Card className="rounded-2xl border-none bg-white shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <Tabs
             value={activeTab}
             onValueChange={(v) => {
@@ -636,25 +636,25 @@ export default function TransactionPage() {
             }}
             dir="rtl"
           >
-            <div className="border-b border-slate-100 px-5">
+            <div className="border-b border-slate-100 dark:border-slate-800 px-5">
               <TabsList className="h-auto bg-transparent gap-1 p-0">
                 <TabsTrigger
                   value="details"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
                 >
                   <Users className="h-4 w-4 ml-2" />
                   פרטי הפרויקט
                 </TabsTrigger>
                 <TabsTrigger
                   value="documents"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
                 >
                   <FolderOpen className="h-4 w-4 ml-2" />
                   מסמכים
                 </TabsTrigger>
                 <TabsTrigger
                   value="report"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
                 >
                   <FileText className="h-4 w-4 ml-2" />
                   דוח DD מלא
@@ -665,7 +665,7 @@ export default function TransactionPage() {
                   ) && (
                     <TabsTrigger
                       value="ai-log"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
                     >
                       <BrainCircuit className="h-4 w-4 ml-2" />
                       יומן AI
@@ -676,7 +676,7 @@ export default function TransactionPage() {
 
             {/* ─── Tab: Documents ──────────────────────────────── */}
             <TabsContent value="documents" className="p-5 space-y-4 m-0">
-              <div className="flex flex-wrap items-center gap-5 text-sm text-slate-500 pb-2">
+              <div className="flex flex-wrap items-center gap-5 text-sm text-slate-500 dark:text-slate-400 pb-2">
                 <div className="flex items-center gap-1.5">
                   <FileText className="h-4 w-4" />
                   <span>{uploadedFiles.length} מסמכים</span>
@@ -713,24 +713,24 @@ export default function TransactionPage() {
                       <TableRow key={f.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                               <FileDown className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
-                              <div className="truncate font-medium text-slate-900">
+                              <div className="truncate font-medium text-slate-900 dark:text-slate-100">
                                 {f.original_name}
                               </div>
-                              <div className="text-xs text-slate-400">
+                              <div className="text-xs text-slate-400 dark:text-slate-500">
                                 {DOC_TYPE_LABELS[f.doc_type as DocumentType] ??
                                   f.doc_type}
                               </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-600">
+                        <TableCell className="text-slate-600 dark:text-slate-300">
                           {formatBytes(f.file_size_bytes)}
                         </TableCell>
-                        <TableCell className="text-slate-600">
+                        <TableCell className="text-slate-600 dark:text-slate-300">
                           {new Date(f.created_at).toLocaleDateString("he-IL")}
                         </TableCell>
                         <TableCell>
@@ -796,7 +796,7 @@ export default function TransactionPage() {
             {/* ─── Tab: Project Details ────────────────────────── */}
             <TabsContent value="details" className="p-5 m-0">
               <div className="space-y-5">
-                <div className="flex flex-wrap items-center gap-5 text-sm text-slate-500 pb-2">
+                <div className="flex flex-wrap items-center gap-5 text-sm text-slate-500 dark:text-slate-400 pb-2">
                   <div className="flex items-center gap-1.5">
                     <FileText className="h-4 w-4" />
                     <span>{uploadedFiles.length} מסמכים</span>
@@ -1053,7 +1053,7 @@ export default function TransactionPage() {
                   <h2 className="text-xl font-semibold text-destructive">
                     הניתוח נכשל
                   </h2>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                     צוותנו קיבל הודעה ונטפל בהקדם. ניתן להריץ בדיקה מחדש למטה.
                   </p>
                   {canAnalyze && !isFinanceProject && (
@@ -1168,13 +1168,13 @@ export default function TransactionPage() {
                 ["completed", "partial", "needs_review"].includes(
                   project.status,
                 ) && (
-                  <div className="rounded-2xl border bg-slate-50 p-10 text-center text-sm text-slate-500">
+                  <div className="rounded-2xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                     הדוח עדיין לא זמין. נסה לרענן בעוד כמה שניות.
                   </div>
                 )}
 
               {!report && !analyzing && project.status === "pending" && (
-                <div className="rounded-2xl border bg-slate-50 p-10 text-center text-sm text-slate-500">
+                <div className="rounded-2xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                   טרם הורצה בדיקת נאותות. העלה מסמכים והפעל בדיקה מלשונית
                   &quot;מסמכים&quot;.
                 </div>
