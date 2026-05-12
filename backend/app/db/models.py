@@ -391,6 +391,41 @@ class Invitation(Base):
         return f"<Invitation id={self.id} email={self.email!r} status={self.status}>"
 
 
+class AiConversation(Base):
+    """A saved AI chat conversation, optionally linked to a project."""
+
+    __tablename__ = "ai_conversations"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        Uuid,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    project_id = Column(
+        Uuid,
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    title = Column(String(500), nullable=True)
+    messages = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+    )
+
+    user = relationship("User", foreign_keys=[user_id])
+    project = relationship("Project")
+
+    def __repr__(self) -> str:
+        return f"<AiConversation id={self.id} user_id={self.user_id}>"
+
+
 class AuditLog(Base):
     """Append-only audit trail (identity frozen at action time)."""
 

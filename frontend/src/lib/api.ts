@@ -746,6 +746,100 @@ export async function askDocument(
 }
 
 // ============================================================
+// AI Chat — conversations + persistent history
+// ============================================================
+
+export interface ConversationOut {
+  id: string;
+  title: string | null;
+  project_id: string | null;
+  project_title: string | null;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationMessageOut {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations?: AskCitation[] | null;
+  tokens?: number | null;
+  file_names?: string[] | null;
+  created_at: string;
+}
+
+export interface ProjectFileOut {
+  id: string;
+  filename: string;
+  gcs_uri: string;
+}
+
+export interface ConversationDetail extends ConversationOut {
+  messages: ConversationMessageOut[];
+  project_files?: ProjectFileOut[] | null;
+}
+
+export interface AiAskResponse extends AskResponse {
+  conversation_id: string;
+}
+
+export async function createConversation(opts?: {
+  project_id?: string;
+  title?: string;
+}): Promise<ConversationOut> {
+  return request<ConversationOut>("/ai/conversations", {
+    method: "POST",
+    body: JSON.stringify(opts ?? {}),
+  });
+}
+
+export async function listConversations(): Promise<ConversationOut[]> {
+  return request<ConversationOut[]>("/ai/conversations", { method: "GET" });
+}
+
+export async function getConversation(id: string): Promise<ConversationDetail> {
+  return request<ConversationDetail>(`/ai/conversations/${id}`, {
+    method: "GET",
+  });
+}
+
+export async function updateConversation(
+  id: string,
+  body: { title?: string; project_id?: string; clear_project?: boolean },
+): Promise<ConversationOut> {
+  return request<ConversationOut>(`/ai/conversations/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  return request<void>(`/ai/conversations/${id}`, { method: "DELETE" });
+}
+
+export async function askInConversation(
+  convId: string,
+  question: string,
+  files?: File[],
+): Promise<AiAskResponse> {
+  const formData = new FormData();
+  formData.append("question", question);
+  if (files) {
+    for (const f of files) formData.append("files", f);
+  }
+  const res = await fetch(
+    `${API_BASE}/ai/conversations/${convId}/ask`,
+    { method: "POST", credentials: "include", body: formData },
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || res.statusText);
+  }
+  return res.json();
+}
+
+// ============================================================
 // Agent session events (post-check diagnostics)
 // ============================================================
 

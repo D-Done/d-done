@@ -18,6 +18,7 @@ from app.api.analysis import router as analysis_router
 from app.api.settings import router as settings_router
 from app.api.auth import router as auth_router
 from app.api.bbox_lab import router as bbox_lab_router
+from app.api.ai_chat import router as ai_chat_router
 from app.api.admin import router as admin_router
 from app.api.organization import router as organization_router
 from app.api.invites import router as invites_router
@@ -83,6 +84,7 @@ app.include_router(upload_router, prefix="/api/v1")
 app.include_router(analysis_router, prefix="/api/v1")
 app.include_router(settings_router, prefix="/api/v1")
 app.include_router(bbox_lab_router, prefix="/api/v1")
+app.include_router(ai_chat_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(organization_router, prefix="/api/v1")
 
