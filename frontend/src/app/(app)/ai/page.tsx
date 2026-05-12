@@ -279,32 +279,34 @@ export default function AiPage() {
     async (pid: string, ptitle: string) => {
       setProjectPickerOpen(false);
 
-      // Create a conversation first if there isn't one
-      let convId = currentConvId;
-      if (!convId) {
-        const conv = await createConversation({ project_id: pid });
-        setConversations((prev) => [conv, ...prev]);
-        setCurrentConvId(conv.id);
-        convId = conv.id;
-        setProjectId(pid);
-        setProjectTitle(ptitle);
-      } else {
-        await updateConversation(convId, { project_id: pid });
-      }
+      try {
+        let convId = currentConvId;
 
-      // Reload conversation to get project files
-      const detail = await getConversation(convId);
-      setProjectId(detail.project_id);
-      setProjectTitle(detail.project_title);
-      setProjectFiles(detail.project_files ?? []);
-      setFiles([]);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === currentConvId
-            ? { ...c, project_id: pid, project_title: ptitle }
-            : c,
-        ),
-      );
+        if (!convId) {
+          const conv = await createConversation({ project_id: pid });
+          setConversations((prev) => [conv, ...prev]);
+          setCurrentConvId(conv.id);
+          convId = conv.id;
+        } else {
+          await updateConversation(convId, { project_id: pid });
+        }
+
+        const detail = await getConversation(convId);
+        setProjectId(detail.project_id);
+        setProjectTitle(detail.project_title);
+        setProjectFiles(detail.project_files ?? []);
+        setFiles([]);
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? { ...c, project_id: pid, project_title: ptitle }
+              : c,
+          ),
+        );
+      } catch (err) {
+        console.error("Failed to link project:", err);
+        alert("שגיאה בקישור הפרויקט: " + (err instanceof Error ? err.message : String(err)));
+      }
     },
     [currentConvId],
   );
@@ -372,13 +374,14 @@ export default function AiPage() {
         setCurrentConvId(conv.id);
         convId = conv.id;
       } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
         console.error("Failed to create conversation:", err);
         setMessages((prev) => [
           ...prev,
           {
             id: "e-" + Date.now(),
             role: "assistant" as const,
-            content: "שגיאה ביצירת שיחה. בדוק שהשרת פועל ונסה שנית.",
+            content: `שגיאה ביצירת שיחה: ${msg}`,
           },
         ]);
         return;
