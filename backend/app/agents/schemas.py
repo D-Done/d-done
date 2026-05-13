@@ -269,7 +269,8 @@ class ZeroReportMetrics(BaseModel):
         default=None,
         description=(
             "Indexation summary (הצמדה למדד): index name, base date, mechanism. "
-            "Set to 'אין התייחסות למדד בדו\"ח האפס' when not mentioned."
+            "Cross-reference both zero report and credit committee. "
+            "Set to 'אין התייחסות למדד' only when neither source mentions indexation."
         ),
     )
     zero_report_date_formatted: str | None = Field(

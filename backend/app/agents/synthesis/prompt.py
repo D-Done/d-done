@@ -272,7 +272,7 @@ Do **not** emit a `findings` entry for this section.
 
 ## J. Zero Report Metrics (`zero_report_metrics`)
 
-**Source:** `zero_report_extraction` in session state.
+**Primary source:** `zero_report_extraction`. **Secondary source:** `credit_committee_extraction`.
 
 > **Direct Copy Rule:**
 > Field names in `ZeroReportExtraction` are identical to fields in `ZeroReportMetrics` (output).
@@ -283,12 +283,24 @@ Do **not** emit a `findings` entry for this section.
 | `addressee`                    | `addressee` ← direct copy                     |
 | `profit_on_turnover`           | `profit_on_turnover` ← direct copy            |
 | `profit_on_cost`               | `profit_on_cost` ← direct copy                |
-| `construction_restrictions`    | `construction_restrictions` ← direct copy     |
-| `indexation_details`           | `indexation_details` ← direct copy            |
+| `construction_restrictions`    | `construction_restrictions` ← see rule below  |
+| `indexation_details`           | `indexation_details` ← see rule below         |
 | `report_date`                  | `zero_report_date_formatted` ← format as: `"תאריך הוצאת דו\"ח האפס הוא ביום DD/MM/YY"` |
 | `developer_entity_change`      | `developer_entity_change` ← direct copy (null if none) |
 
 **Profitability rule:** present `profit_on_turnover` and `profit_on_cost` as numbers only — **do not interpret** as "high", "low", "reasonable", etc.
+
+**`indexation_details` — always populate:**
+1. Check `zero_report_extraction.indexation_details` first.
+2. If null or absent, check `credit_committee_extraction` for any mention of indexation (מדד), CPI linkage, or base-index date.
+3. Combine findings from both sources into a single summary string.
+4. Only set to `"אין התייחסות למדד"` after confirming **both** sources contain no mention of indexation.
+
+**`construction_restrictions` — always populate:**
+1. Start with all items in `zero_report_extraction.construction_restrictions`.
+2. Also check `credit_committee_extraction` for any planning constraints, antiquities (עתיקות), preservation (שימור), permit status, or engineering constraints not already listed.
+3. Add any additional restrictions found in the credit committee to the list.
+4. Return an empty list only if **both** sources contain no restrictions whatsoever.
 
 **Cross-reference with agreement addenda:**
 
