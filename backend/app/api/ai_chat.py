@@ -351,6 +351,9 @@ async def ask_in_conversation(
                 report_json = json.dumps(dd_check.report, ensure_ascii=False)
                 extra_context_parts.append(f"דוח DD של הפרויקט:\n{report_json[:80_000]}")
 
+            # Pass conversation history so Gemini has multi-turn memory
+            history = list(conv.messages or [])
+
             if extra_context_parts:
                 # Text-only path: fast, reliable, no GCS permissions needed.
                 extra_context: str = "\n\n".join(extra_context_parts)
@@ -358,6 +361,7 @@ async def ask_in_conversation(
                     _run_ask_general,
                     question=question,
                     extra_context=extra_context,
+                    history=history,
                 )
             else:
                 # No DD report yet — fall back to GCS file reading.
@@ -371,6 +375,7 @@ async def ask_in_conversation(
                         question=question,
                         gcs_uris=gcs_uris,
                         extra_context=None,
+                        history=history,
                     )
                 except Exception as exc:
                     logger.error("_run_ask_with_gcs failed: %s", exc, exc_info=True)
@@ -380,6 +385,7 @@ async def ask_in_conversation(
                     ) from exc
         else:
             # ── Upload mode or general chat (no files) ────────────────────
+            history = list(conv.messages or [])
             file_entries: list[tuple[bytes, str]] = []
             for f in files:
                 ct = f.content_type or ""
@@ -402,7 +408,11 @@ async def ask_in_conversation(
                 )
             else:
                 # ── General chat — no documents ────────────────────────────
-                resp = await asyncio.to_thread(_run_ask_general, question=question)
+                resp = await asyncio.to_thread(
+                    _run_ask_general,
+                    question=question,
+                    history=history,
+                )
 
         # ── Persist messages ────────────────────────────────────────────
         now_iso = _utcnow().isoformat()
@@ -445,8 +455,10 @@ async def ask_in_conversation(
 
 # ── Gemini helpers ───────────────────────────────────────────────────────────
 
-def _run_ask_general(*, question: str, extra_context: str | None = None) -> object:
-    """Call Gemini with a plain text question (+ optional project context)."""
+def _run_ask_general(
+    *, question: str, extra_context: str | None = None, history: list[dict] | None = None
+) -> object:
+    """Call Gemini with a plain text question (+ optional project context + conversation history)."""
     from google import genai
     from google.genai import types
 
@@ -464,10 +476,26 @@ def _run_ask_general(*, question: str, extra_context: str | None = None) -> obje
         response_mime_type="application/json",
         max_output_tokens=8192,
     )
-    content = (extra_context + "\n\n" + question) if extra_context else question
+
+    # Build multi-turn contents from conversation history.
+    # extra_context (project files / DD report) is prepended to the first user turn.
+    ctx = extra_context  # consumed once at the first user turn
+    contents: list[types.Content] = []
+    for msg in (history or []):
+        role = "model" if msg["role"] == "assistant" else "user"
+        text = msg["content"]
+        if role == "user" and ctx:
+            text = ctx + "\n\n" + text
+            ctx = None  # consumed
+        contents.append(types.Content(role=role, parts=[types.Part.from_text(text=text)]))
+
+    # Current question is the final user turn.
+    current_text = (ctx + "\n\n" + question) if ctx else question
+    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=current_text)]))
+
     response = client.models.generate_content(
         model=GEMINI_CHAT_MODEL,
-        contents=[types.Content(role="user", parts=[types.Part.from_text(text=content)])],
+        contents=contents,
         config=config,
     )
     import json as _json
@@ -493,6 +521,7 @@ def _run_ask_with_gcs(
     question: str,
     gcs_uris: list[tuple[str, str, str]],
     extra_context: str | None,
+    history: list[dict] | None = None,
 ) -> object:
     """Call Gemini with GCS-referenced files instead of inline bytes."""
     from app.api.bbox_lab import ASK_SYSTEM_INSTRUCTION, AskCitation, AskResponse as _AskResp
@@ -519,26 +548,50 @@ def _run_ask_with_gcs(
         max_output_tokens=16_384,
     )
 
-    parts: list[types.Part] = []
-    for gcs_uri, mime_type, _name in gcs_uris:
-        parts.append(types.Part.from_uri(file_uri=gcs_uri, mime_type=mime_type))
+    # Build the GCS file parts once — they go into the first user turn.
+    file_parts: list[types.Part] = [
+        types.Part.from_uri(file_uri=gcs_uri, mime_type=mime_type)
+        for gcs_uri, mime_type, _name in gcs_uris
+    ]
+    ctx_parts: list[types.Part] = (
+        [types.Part.from_text(text=extra_context)] if extra_context else []
+    )
 
-    if extra_context:
-        parts.append(types.Part.from_text(text=extra_context))
+    prior = list(history or [])
+    contents: list[types.Content] = []
 
-    parts.append(types.Part.from_text(text=question))
+    if prior:
+        # First user turn gets the file parts + context + first user message.
+        for i, msg in enumerate(prior):
+            role = "model" if msg["role"] == "assistant" else "user"
+            if i == 0 and role == "user":
+                turn_parts = file_parts + ctx_parts + [types.Part.from_text(text=msg["content"])]
+                contents.append(types.Content(role="user", parts=turn_parts))
+            else:
+                contents.append(
+                    types.Content(role=role, parts=[types.Part.from_text(text=msg["content"])])
+                )
+        # Current question — no need to re-attach files.
+        contents.append(
+            types.Content(role="user", parts=[types.Part.from_text(text=question)])
+        )
+    else:
+        # No history — original single-turn behaviour.
+        parts = file_parts + ctx_parts + [types.Part.from_text(text=question)]
+        contents = [types.Content(role="user", parts=parts)]
 
     logger.info(
-        "Ask-GCS: model=%s files=%d has_context=%s question=%s",
+        "Ask-GCS: model=%s files=%d has_context=%s turns=%d question=%s",
         GEMINI_FILES_MODEL,
         len(gcs_uris),
         bool(extra_context),
+        len(contents),
         question[:100],
     )
 
     response = client.models.generate_content(
         model=GEMINI_FILES_MODEL,
-        contents=[types.Content(role="user", parts=parts)],
+        contents=contents,
         config=config,
     )
 
