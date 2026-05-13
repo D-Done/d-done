@@ -177,15 +177,11 @@ def generate_checklist(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"שגיאה בקריאת הדוח: {exc}") from exc
 
-    # Run generation in thread (Gemini call is blocking)
-    new_items = asyncio.get_event_loop().run_in_executor(
-        None, generate_checklist_items, report
-    )
-    # run_in_executor returns a coroutine-like; since this is a sync route use asyncio.run
-    import concurrent.futures
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        future = pool.submit(generate_checklist_items, report)
-        new_items_list = future.result(timeout=120)
+    try:
+        new_items_list = generate_checklist_items(report)
+    except Exception as exc:
+        logger.error("checklist generation failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"שגיאה ביצירת הרשימה: {exc}") from exc
 
     # Delete uncompleted items for this project
     db.query(ChecklistItem).filter(
