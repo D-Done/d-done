@@ -8,6 +8,7 @@ import {
   BrainCircuit,
   CalendarDays,
   CheckCircle2,
+  ClipboardList,
   Clock,
   Download,
   FileDown,
@@ -44,6 +45,7 @@ import { TenantTableReview } from "@/components/tenant-table-review";
 import { ReportViewer } from "@/components/report-viewer";
 import { MaReportViewer } from "@/components/ma-report-viewer";
 import { AgentSessionViewer } from "@/components/agent-session-viewer";
+import { ChecklistPanel } from "@/components/checklist-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -675,6 +677,18 @@ export default function TransactionPage() {
                       יומן AI
                     </TabsTrigger>
                   )}
+                {isFinanceProject &&
+                  ["completed", "partial", "needs_review"].includes(
+                    project.status,
+                  ) && (
+                    <TabsTrigger
+                      value="checklist"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
+                    >
+                      <ClipboardList className="h-4 w-4 ml-2" />
+                      רשימת השלמות
+                    </TabsTrigger>
+                  )}
               </TabsList>
             </div>
 
@@ -1237,6 +1251,14 @@ export default function TransactionPage() {
                 />
               </TabsContent>
             )}
+            {isFinanceProject &&
+              ["completed", "partial", "needs_review"].includes(
+                project.status,
+              ) && (
+                <TabsContent value="checklist" className="p-5 m-0">
+                  <ChecklistPanel projectId={project.id} />
+                </TabsContent>
+              )}
           </Tabs>
         </Card>
       </div>

@@ -1038,6 +1038,113 @@ export async function exportReportToWord(
   return { blob, filename };
 }
 
+// ── Checklist ─────────────────────────────────────────────────────────────────
+
+export interface ChecklistItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string | null;
+  is_completed: boolean;
+  completed_at: string | null;
+  completed_by: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface PublicChecklist {
+  project_name: string;
+  items: ChecklistItem[];
+}
+
+export async function listChecklist(projectId: string): Promise<ChecklistItem[]> {
+  return request<ChecklistItem[]>(`/projects/${projectId}/checklist`);
+}
+
+export async function generateChecklist(projectId: string): Promise<ChecklistItem[]> {
+  return request<ChecklistItem[]>(`/projects/${projectId}/checklist/generate`, {
+    method: "POST",
+  });
+}
+
+export async function addChecklistItem(
+  projectId: string,
+  data: { category: string; title: string; description?: string },
+): Promise<ChecklistItem> {
+  return request<ChecklistItem>(`/projects/${projectId}/checklist/items`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateChecklistItem(
+  projectId: string,
+  itemId: string,
+  patch: { is_completed?: boolean; title?: string; description?: string; category?: string },
+): Promise<ChecklistItem> {
+  return request<ChecklistItem>(`/projects/${projectId}/checklist/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function deleteChecklistItem(projectId: string, itemId: string): Promise<void> {
+  await request<void>(`/projects/${projectId}/checklist/${itemId}`, { method: "DELETE" });
+}
+
+export async function exportChecklistWord(
+  projectId: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch(
+    `${API_BASE}/projects/${projectId}/checklist/export`,
+    { method: "GET", credentials: "include" },
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body.detail ?? "Export failed");
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match =
+    disposition.match(/filename\*=UTF-8''([^;]+)/i) ??
+    disposition.match(/filename="?([^";]+)"?/i);
+  const filename = match ? decodeURIComponent(match[1]) : "checklist.docx";
+  return { blob, filename };
+}
+
+export async function shareChecklist(
+  projectId: string,
+  data: { invited_email: string; message?: string },
+): Promise<{ share_url: string; invited_email: string; expires_at: string; email_sent: boolean }> {
+  return request(`/projects/${projectId}/checklist/share`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getPublicChecklist(token: string): Promise<PublicChecklist> {
+  const res = await fetch(`${API_BASE.replace("/api/v1", "")}/checklist/public/${token}`);
+  if (!res.ok) throw new Error("Checklist not found or expired");
+  return res.json();
+}
+
+export async function publicUploadChecklistFile(
+  token: string,
+  itemId: string,
+  file: File,
+  uploaderName: string,
+): Promise<void> {
+  const form = new FormData();
+  form.append("item_id", itemId);
+  form.append("file", file);
+  form.append("uploader_name", uploaderName);
+  const res = await fetch(
+    `${API_BASE.replace("/api/v1", "")}/checklist/public/${token}/upload`,
+    { method: "POST", body: form },
+  );
+  if (!res.ok) throw new Error("Upload failed");
+}
+
 // ── Groups ────────────────────────────────────────────────────────────────────
 
 export interface GroupMember {

@@ -212,6 +212,8 @@ class Project(Base):
     files = relationship("File", back_populates="project", cascade="all, delete-orphan")
     dd_checks = relationship("DDCheck", back_populates="project", cascade="all, delete-orphan")
     report_comments = relationship("ReportComment", back_populates="project", cascade="all, delete-orphan")
+    checklist_items = relationship("ChecklistItem", back_populates="project", cascade="all, delete-orphan")
+    checklist_shares = relationship("ChecklistShare", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Project id={self.id} title={self.title!r} status={self.status}>"
@@ -559,3 +561,51 @@ class ReportComment(Base):
 
     def __repr__(self) -> str:
         return f"<ReportComment id={self.id} section={self.section_key!r}>"
+
+
+class ChecklistItem(Base):
+    """A single item in the project's completeness checklist."""
+
+    __tablename__ = "checklist_items"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id = Column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    check_id = Column(Uuid, nullable=True)  # which DD check generated this
+    category = Column(String(50), nullable=False)  # missing_doc | warning_note | mortgage | lender | signing | corporate | other
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    is_completed = Column(Boolean, nullable=False, default=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    completed_by = Column(String(200), nullable=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    project = relationship("Project", back_populates="checklist_items")
+
+    def __repr__(self) -> str:
+        return f"<ChecklistItem id={self.id} category={self.category!r} completed={self.is_completed}>"
+
+
+class ChecklistShare(Base):
+    """Token-based share link giving an external party view + upload access."""
+
+    __tablename__ = "checklist_shares"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id = Column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash = Column(String(64), nullable=False, unique=True)
+    invited_email = Column(String(200), nullable=False)
+    message = Column(Text, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_by_email = Column(String(200), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    project = relationship("Project", back_populates="checklist_shares")
+
+    def __repr__(self) -> str:
+        return f"<ChecklistShare id={self.id} email={self.invited_email!r}>"

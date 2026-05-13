@@ -162,6 +162,80 @@ def send_vdr_completion_notification(
         return False
 
 
+def send_checklist_invitation(
+    *,
+    to_email: str,
+    checklist_url: str,
+    project_name: str,
+    inviter_name: str | None,
+    message: str | None = None,
+    expires_days: int = 30,
+) -> bool:
+    """Send a checklist upload invitation to an external party."""
+    if not settings.resend_api_key or not settings.email_from:
+        logger.warning("Resend not configured; skipping checklist invite to %s", to_email)
+        return False
+
+    try:
+        import resend  # type: ignore[import-untyped]
+    except ImportError:
+        logger.error("resend package not installed")
+        return False
+
+    resend.api_key = settings.resend_api_key
+    from_addr = _normalize_resend_from(settings.email_from)
+    if not from_addr:
+        return False
+
+    inviter_display = inviter_name or "D-Done"
+    message_block = (
+        f'<p style="color:#475569;line-height:1.6;margin:0 0 16px;'
+        f'background:#f8fafc;border-right:3px solid #0f172a;padding:12px 16px;border-radius:4px">'
+        f'{message}</p>'
+    ) if message else ""
+
+    html = f"""<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f8f9fa;margin:0;padding:20px">
+<div style="max-width:540px;margin:auto;background:#fff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div style="text-align:center;margin-bottom:32px">
+    <span style="font-size:28px;font-weight:700;letter-spacing:-1px;color:#0f172a">D<span style="color:#64748b">-Done</span></span>
+  </div>
+  <h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">רשימת השלמות — {project_name}</h2>
+  <p style="color:#475569;line-height:1.6;margin:0 0 16px">
+    {inviter_display} שלח/ה לך רשימת מסמכים ופעולות שיש להשלים עבור הפרויקט <strong>{project_name}</strong>.
+  </p>
+  {message_block}
+  <p style="color:#475569;line-height:1.6;margin:0 0 24px">
+    ניתן לצפות ברשימה ולהעלות את המסמכים הנדרשים דרך הקישור הבא (תקף ל-{expires_days} ימים):
+  </p>
+  <div style="text-align:center;margin:32px 0">
+    <a href="{checklist_url}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600">
+      צפייה ברשימת ההשלמות
+    </a>
+  </div>
+  <p style="color:#94a3b8;font-size:12px;margin:0;text-align:center">
+    אם לא ביקשת גישה זו, ניתן להתעלם ממייל זה.
+  </p>
+</div>
+</body>
+</html>"""
+
+    try:
+        resend.Emails.send({
+            "from": from_addr,
+            "to": [to_email],
+            "subject": f"רשימת השלמות — {project_name}",
+            "html": html,
+        })
+        logger.info("Checklist invitation sent to %s", to_email)
+        return True
+    except Exception as exc:
+        logger.exception("Failed to send checklist invite: %s", exc)
+        return False
+
+
 def send_report_ready_notification(
     *,
     to_email: str,
