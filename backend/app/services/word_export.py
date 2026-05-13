@@ -277,7 +277,7 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
                 _set_rtl_run(run)
 
     # ---- 9. Finance Analysis ----
-    if report.finance_analysis:
+    if getattr(report, "finance_analysis", None):
         _add_heading(doc, "9. ניתוח פיננסי", level=1)
         fa = report.finance_analysis
         if fa.lender_definition_match is not None:
