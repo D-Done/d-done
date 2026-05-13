@@ -100,10 +100,10 @@ function LoginContent() {
           <FileSearch className="h-7 w-7" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight">
-          ברוכים הבאים ל-D-Done
+          Welcome to D-Done
         </h1>
         <p className="text-muted-foreground text-sm mt-1.5">
-          פלטפורמת בדיקת נאותות חכמה לעורכי דין בתחום הנדל&quot;ן
+          AI-powered due diligence platform
         </p>
       </div>
 
