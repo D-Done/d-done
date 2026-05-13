@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link href="/dashboard" className="flex min-w-0 items-center gap-2 font-semibold">
                 <span className="truncate text-lg">D-Done</span>
               </Link>
-              <Logo className="h-10 w-10 shrink-0" />
+              <Logo className="h-14 w-14 shrink-0" />
             </div>
 
             <nav className="mt-2 flex flex-1 flex-col gap-1 px-3">
