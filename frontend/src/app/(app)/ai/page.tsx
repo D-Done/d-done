@@ -69,6 +69,41 @@ const PdfCitationViewer = dynamic(
   { ssr: false },
 );
 
+import ReactMarkdown from "react-markdown";
+
+function MarkdownContent({ content, isUser }: { content: string; isUser: boolean }) {
+  if (isUser) {
+    return <p className="whitespace-pre-wrap">{content}</p>;
+  }
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+        strong: ({ children }) => <strong className="font-semibold text-zinc-900 dark:text-zinc-100">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="mb-2 mr-4 space-y-1 list-disc">{children}</ul>,
+        ol: ({ children }) => <ol className="mb-2 mr-4 space-y-1 list-decimal">{children}</ol>,
+        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+        h1: ({ children }) => <h1 className="text-base font-bold mb-2 mt-3 first:mt-0 text-zinc-900 dark:text-zinc-100">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-sm font-bold mb-1.5 mt-3 first:mt-0 text-zinc-900 dark:text-zinc-100">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0 text-zinc-800 dark:text-zinc-200">{children}</h3>,
+        code: ({ children }) => (
+          <code className="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[13px] font-mono text-zinc-700 dark:text-zinc-300">{children}</code>
+        ),
+        pre: ({ children }) => (
+          <pre className="mb-2 overflow-x-auto rounded-lg bg-zinc-100 dark:bg-zinc-900 p-3 text-[13px] font-mono text-zinc-700 dark:text-zinc-300">{children}</pre>
+        ),
+        hr: () => <hr className="my-3 border-zinc-200 dark:border-zinc-700" />,
+        blockquote: ({ children }) => (
+          <blockquote className="border-r-2 border-indigo-400 pr-3 italic text-zinc-500 dark:text-zinc-400 my-2">{children}</blockquote>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────
 
 function convertBox2dToBbox(box2d: number[]): BoundingBox {
@@ -874,7 +909,7 @@ export default function AiPage() {
                         )}
                       </div>
                     )}
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <MarkdownContent content={msg.content} isUser={msg.role === "user"} />
 
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-zinc-200/50 dark:border-zinc-700/50">
