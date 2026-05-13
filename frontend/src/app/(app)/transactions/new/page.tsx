@@ -259,7 +259,7 @@ export default function NewTransactionPage() {
     }
   }
 
-  async function handleUploadThenClassifyAndContinue() {
+  const handleUploadThenClassifyAndContinue = useCallback(async () => {
     if (!projectId || files.length === 0) {
       toast.error("יש לבחור לפחות מסמך אחד");
       return;
@@ -290,7 +290,19 @@ export default function NewTransactionPage() {
         description: err instanceof Error ? err.message : "נסה שנית",
       });
     }
-  }
+  }, [files, projectId, updateFileAt, uploadAll]);
+
+  // Auto-upload: when files are added on the documents step, start uploading
+  // after a short debounce (to collect multi-file drops before firing).
+  useEffect(() => {
+    if (step !== "documents" || !projectId || isUploading) return;
+    const hasPending = files.some((f) => f.status === "pending");
+    if (!hasPending) return;
+    const timer = setTimeout(() => {
+      handleUploadThenClassifyAndContinue();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [files, step, projectId, isUploading, handleUploadThenClassifyAndContinue]);
 
   function handleCancelUpload() {
     abort();
@@ -659,24 +671,31 @@ export default function NewTransactionPage() {
                   >
                     ערוך פרטים
                   </Button>
-                  <div className="flex gap-3">
-                    {isUploading ? (
-                      <Button
-                        variant="destructive"
-                        onClick={handleCancelUpload}
-                        className="rounded-2xl"
-                      >
-                        ביטול
-                      </Button>
-                    ) : (
+                  <div className="flex items-center gap-3">
+                    {isUploading && (
+                      <>
+                        <span className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          מעלה מסמכים...
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelUpload}
+                          className="rounded-2xl"
+                        >
+                          ביטול
+                        </Button>
+                      </>
+                    )}
+                    {!isUploading && files.length > 0 && !files.some(f => f.status === "pending") && (
                       <Button
                         onClick={handleUploadThenClassifyAndContinue}
-                        disabled={!projectId || files.length === 0}
                         size="lg"
                         className="rounded-2xl"
                       >
                         <FileUp className="ml-2 h-4 w-4" />
-                        העלה מסמכים והמשך
+                        המשך לניתוח
                       </Button>
                     )}
                   </div>
