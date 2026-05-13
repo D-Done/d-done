@@ -5,7 +5,7 @@ but:
   1. Does NOT receive source PDFs -- grounding was already done by extractors.
   2. Carries forward box_2d values from extractor JSON as-is.
   3. The after_agent_callback converts box_2d -> bounding_boxes (no citation resolver).
-  4. Uses Gemini 2.5 Pro (synthesis does not need visual grounding).
+  4. Uses Gemini 2.5 Flash (synthesis is text-only JSON audit; no visual grounding needed).
   5. Context caching via ADK App (create_vg_app) — audit prompt + schema (~8K tokens)
      cached per run; Gemini context caching ($0.20/1M vs $2/1M) reduces cost on that portion.
 """
@@ -20,6 +20,7 @@ from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.readonly_context import ReadonlyContext
 
 from app.agents.constants import (
+    FLASH_MODEL,
     STATE_DOCUMENT_NAMES,
     STATE_ENRICHED_REPORT,
     STATE_REPRESENTING_ROLE,
@@ -29,11 +30,14 @@ from app.agents.synthesis.prompt import get_details_prompt, get_main_prompt
 from app.agents.synthesis.schema import RealEstateFinanceDDReport
 from app.agents.utils import make_generate_config
 from app.agents.visual_grounding_pipeline_agent import (
-    GEMINI_31_PRO,
-    VG_MAX_OUTPUT_TOKENS,
     _repair_truncated_json,
 )
 from app.agents.synthesis.agent import EXTRACTOR_OUTPUTS
+
+# Synthesis is text-only JSON audit (box_2d already in extractor output).
+# Flash is significantly faster than 3.1 Pro and handles structured output well.
+SYNTHESIS_MODEL = FLASH_MODEL
+SYNTHESIS_MAX_OUTPUT_TOKENS = 32_768
 
 logger = logging.getLogger(__name__)
 
@@ -271,11 +275,11 @@ def _make_agent(
     after_agent_callback=None,
 ) -> Agent:
     generate_content_config = make_generate_config(
-        max_output_tokens=VG_MAX_OUTPUT_TOKENS
+        max_output_tokens=SYNTHESIS_MAX_OUTPUT_TOKENS
     )
     kwargs: dict = dict(
         name=name,
-        model=GEMINI_31_PRO,
+        model=SYNTHESIS_MODEL,
         instruction=instruction,
         description=(
             "Senior underwriter -- audits extraction data (which already contains "

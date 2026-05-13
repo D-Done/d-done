@@ -37,7 +37,7 @@ from app.agents.utils import make_generate_config
 logger = logging.getLogger(__name__)
 
 GEMINI_31_PRO = "gemini-3.1-pro-preview"
-VG_MAX_OUTPUT_TOKENS = 65_536  # Max for all extractors — avoids truncation on large docs
+VG_MAX_OUTPUT_TOKENS = 40_960  # Per-extractor limit; 40K is generous for any single doc type
 
 
 def _build_manifest(doc_names: list[str]) -> str:
