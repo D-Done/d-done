@@ -8,7 +8,7 @@ export function Logo({ className }: { className?: string }) {
         alt="D-Done logo"
         width={48}
         height={48}
-        className="h-full w-full object-contain invert"
+        className="h-full w-full object-contain"
         aria-label="D-Done logo"
         priority
       />
