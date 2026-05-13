@@ -843,26 +843,33 @@ def export_check_word(
     project_title = project.title or "report"
 
     # Attach in-app comments as Word margin annotations
-    from app.db.models import ReportComment
-    raw_comments = (
-        db.query(ReportComment)
-        .filter(ReportComment.project_id == project_id)
-        .order_by(ReportComment.created_at.asc())
-        .all()
-    )
     comments_by_section: dict[str, list[dict]] = {}
-    for c in raw_comments:
-        key = c.section_key
-        if key not in comments_by_section:
-            comments_by_section[key] = []
-        comments_by_section[key].append({
-            "content": c.content,
-            "author_name": c.author_name,
-            "author_email": c.author_email,
-            "created_at": c.created_at,
-        })
+    try:
+        from app.db.models import ReportComment
+        raw_comments = (
+            db.query(ReportComment)
+            .filter(ReportComment.project_id == project_id)
+            .order_by(ReportComment.created_at.asc())
+            .all()
+        )
+        for c in raw_comments:
+            key = c.section_key
+            if key not in comments_by_section:
+                comments_by_section[key] = []
+            comments_by_section[key].append({
+                "content": c.content,
+                "author_name": c.author_name,
+                "author_email": c.author_email,
+                "created_at": c.created_at,
+            })
+    except Exception as exc:
+        logger.warning("Word export: could not load comments (table may not exist yet): %s", exc)
 
-    docx_bytes = generate_word_report(report, project_title, comments_by_section or None)
+    try:
+        docx_bytes = generate_word_report(report, project_title, comments_by_section or None)
+    except Exception as exc:
+        logger.error("Word export: generate_word_report failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"שגיאה בייצוא הדוח: {exc}") from exc
 
     safe_title = (
         "".join(c for c in project_title if c.isalnum() or c in " -_")

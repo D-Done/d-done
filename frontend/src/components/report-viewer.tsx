@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import * as api from "@/lib/api";
 import type { ReportComment } from "@/lib/api";
+import { toast } from "sonner";
 import type {
   BoundingBox,
   DDReport,
@@ -702,6 +703,8 @@ export function ReportViewer({
       }, 60_000);
     } catch (err) {
       console.error("Word export failed:", err);
+      const msg = err instanceof Error ? err.message : "שגיאה בייצוא הדוח";
+      toast.error(msg);
     } finally {
       setExportingWord(false);
     }

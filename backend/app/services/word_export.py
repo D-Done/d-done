@@ -574,7 +574,8 @@ def _inject_word_comments(
             rpr = etree.SubElement(ref_run, f"{{{_W}}}rPr")
             rs = etree.SubElement(rpr, f"{{{_W}}}rStyle")
             rs.set(f"{{{_W}}}val", "CommentReference")
-            etree.SubElement(ref_run, f"{{{_W}}}annotationRef")
+            comment_ref = etree.SubElement(ref_run, f"{{{_W}}}commentReference")
+            comment_ref.set(f"{{{_W}}}id", str(cid))
             para.append(ref_run)
 
             author = cmt.get("author_name") or cmt.get("author_email") or "Reviewer"
