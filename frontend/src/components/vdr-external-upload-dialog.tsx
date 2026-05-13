@@ -5,6 +5,7 @@ import { Building2, BriefcaseBusiness, Check, Copy, LineChart, Loader2, Mail, Se
 import { toast } from "sonner";
 
 import * as api from "@/lib/api";
+import { setProjectDealType } from "@/lib/deal-type-store";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,6 +111,11 @@ export function VdrExternalUploadDialog({ open, onOpenChange, onSuccess }: Props
         role: getRoleLabel() || null,
         counterparty_name: counterpartyName.trim() || null,
       });
+      const dealType =
+        transactionType === "real_estate_financing" ? "real_estate"
+        : transactionType === "ma" ? "ma"
+        : "company_investment";
+      setProjectDealType(result.project_id, dealType, null);
       setEmailSent(result.email_sent);
       setUploadUrl(result.upload_url ?? null);
       setStep("done");
