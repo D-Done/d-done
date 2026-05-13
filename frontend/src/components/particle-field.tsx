@@ -52,10 +52,9 @@ export function ParticleField() {
           size: 1.5, // Equal sized dots
           angle: Math.random() * Math.PI * 2, // Direction of drift
           speed: 0.15 + Math.random() * 0.25, // Speed of drift
-          // Match the D-Done indigo/slate theme - darker colors
-          color: Math.random() > 0.5 
-            ? "rgba(67, 56, 202, 0.6)"    // indigo-700
-            : "rgba(99, 102, 241, 0.5)"   // indigo-500
+          color: Math.random() > 0.5
+            ? "rgba(100, 100, 100, 0.35)"
+            : "rgba(150, 150, 150, 0.25)"
         };
       });
     }

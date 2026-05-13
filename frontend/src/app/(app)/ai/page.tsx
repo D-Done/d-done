@@ -95,7 +95,7 @@ function MarkdownContent({ content, isUser }: { content: string; isUser: boolean
         ),
         hr: () => <hr className="my-3 border-zinc-200 dark:border-zinc-700" />,
         blockquote: ({ children }) => (
-          <blockquote className="border-r-2 border-indigo-400 pr-3 italic text-zinc-500 dark:text-zinc-400 my-2">{children}</blockquote>
+          <blockquote className="border-r-2 border-zinc-400 pr-3 italic text-zinc-500 dark:text-zinc-400 my-2">{children}</blockquote>
         ),
       }}
     >
@@ -551,7 +551,7 @@ export default function AiPage() {
                 <Button
                   onClick={handleNewConversation}
                   size="sm"
-                  className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white gap-2 h-9 font-medium shadow-sm"
+                  className="w-full rounded-xl bg-zinc-900 hover:bg-zinc-700 text-white gap-2 h-9 font-medium shadow-sm"
                 >
                   <Plus className="h-4 w-4" />
                   שיחה חדשה
@@ -576,7 +576,7 @@ export default function AiPage() {
                     onClick={() => selectConversation(conv.id)}
                     className={`group w-full text-right rounded-xl px-3 py-2.5 transition-all duration-150 flex flex-col gap-1 ${
                       currentConvId === conv.id
-                        ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-500/30"
+                        ? "bg-zinc-100 dark:bg-zinc-900/10 text-zinc-900 dark:text-zinc-100 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40"
                         : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60 text-zinc-700 dark:text-zinc-200"
                     }`}
                   >
@@ -594,8 +594,8 @@ export default function AiPage() {
                     </div>
                     {conv.project_title && (
                       <div className="flex items-center gap-1 pr-5">
-                        <FolderOpen className="h-3 w-3 text-indigo-400 shrink-0" />
-                        <span className="text-[10px] text-indigo-500 dark:text-indigo-400 truncate font-medium">
+                        <FolderOpen className="h-3 w-3 text-zinc-400 shrink-0" />
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-300 truncate font-medium">
                           {conv.project_title}
                         </span>
                       </div>
@@ -632,7 +632,7 @@ export default function AiPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-indigo-500/20 backdrop-blur-sm border-2 border-dashed border-indigo-400"
+                className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-zinc-900/10 backdrop-blur-sm border-2 border-dashed border-zinc-400"
               >
                 <motion.div
                   initial={{ scale: 0.9, y: 10 }}
@@ -640,7 +640,7 @@ export default function AiPage() {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   className="text-center bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md p-6 rounded-2xl shadow-xl ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40"
                 >
-                  <FileUp className="mx-auto h-12 w-12 text-indigo-500 mb-3" />
+                  <FileUp className="mx-auto h-12 w-12 text-zinc-500 mb-3" />
                   <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
                     שחרר כדי להעלות
                   </p>
@@ -663,7 +663,7 @@ export default function AiPage() {
               )}
             </button>
 
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-500/20">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-900/10 text-zinc-800 dark:text-zinc-300 ring-1 ring-inset ring-zinc-900/15">
               <Bot className="h-4 w-4" />
             </div>
 
@@ -672,7 +672,7 @@ export default function AiPage() {
                 D-DONE AI
               </h1>
               {projectTitle ? (
-                <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium truncate">
+                <p className="text-xs text-zinc-500 dark:text-zinc-300 font-medium truncate">
                   {projectTitle}
                 </p>
               ) : (
@@ -696,7 +696,7 @@ export default function AiPage() {
               ) : (
                 <button
                   onClick={openProjectPicker}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all ring-1 ring-inset ring-indigo-200 dark:ring-indigo-500/30 bg-white/60 dark:bg-zinc-800/60"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-all ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40 bg-white/60 dark:bg-zinc-800/60"
                 >
                   <Link2 className="h-3.5 w-3.5" />
                   קשר פרויקט
@@ -708,7 +708,7 @@ export default function AiPage() {
               variant="outline"
               className="gap-1.5 border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm text-xs py-1 px-2.5 shadow-sm shrink-0"
             >
-              <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+              <Sparkles className="h-3.5 w-3.5 text-zinc-500" />
               Gemini 3 Flash
             </Badge>
           </div>
@@ -725,7 +725,7 @@ export default function AiPage() {
               >
                 <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
                   {hasProjectContext ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900/10 border border-zinc-200 dark:border-zinc-700/50 px-2.5 py-1 text-xs font-medium text-zinc-900 dark:text-zinc-100">
                       <FolderOpen className="h-3 w-3 shrink-0" />
                       <span>{projectTitle || "פרויקט מקושר"}</span>
                     </span>
@@ -786,7 +786,7 @@ export default function AiPage() {
                   variants={itemVariants}
                   className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/60 dark:bg-zinc-800/60 backdrop-blur-xl shadow-lg ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40"
                 >
-                  <Bot className="h-10 w-10 text-indigo-500" />
+                  <Bot className="h-10 w-10 text-zinc-500" />
                 </motion.div>
                 <motion.h2
                   variants={itemVariants}
@@ -804,7 +804,7 @@ export default function AiPage() {
                 <motion.div variants={itemVariants} className="flex gap-3 mt-2">
                   <Button
                     onClick={handleNewConversation}
-                    className="rounded-xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-500 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-10 px-5 font-medium gap-2"
+                    className="rounded-xl bg-zinc-900 text-white shadow-lg hover:bg-zinc-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-10 px-5 font-medium gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     שיחה חדשה
@@ -824,7 +824,7 @@ export default function AiPage() {
             {/* Conversation loading */}
             {convLoading && (
               <div className="flex h-full items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
               </div>
             )}
 
@@ -872,7 +872,7 @@ export default function AiPage() {
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 ring-inset ${
                       msg.role === "user"
                         ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 ring-zinc-200/50 dark:ring-zinc-700/50"
-                        : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-indigo-500/20"
+                        : "bg-zinc-900/10 text-zinc-800 dark:text-zinc-300 ring-zinc-900/15"
                     }`}
                   >
                     {msg.role === "user" ? (
@@ -884,7 +884,7 @@ export default function AiPage() {
                   <div
                     className={`max-w-[85%] rounded-3xl px-5 py-3.5 text-[15px] leading-relaxed shadow-sm ring-1 ring-inset ${
                       msg.role === "user"
-                        ? "bg-indigo-600 text-white ring-indigo-500/50 rounded-tr-sm"
+                        ? "bg-zinc-900 text-white ring-zinc-800/40 rounded-tr-sm"
                         : "bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md text-zinc-800 dark:text-zinc-200 ring-zinc-200/50 dark:ring-zinc-700/40 rounded-tl-sm"
                     }`}
                     dir="auto"
@@ -917,7 +917,7 @@ export default function AiPage() {
                           <button
                             key={idx}
                             onClick={() => openCitationDrawer(msg.citations!, cit.page)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-800 hover:ring-indigo-200 dark:hover:ring-indigo-500/30 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:ring-zinc-200 dark:hover:ring-zinc-600/40 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
                           >
                             <MapPin className="h-3 w-3" />
                             <span className="max-w-[180px] truncate">
@@ -945,11 +945,11 @@ export default function AiPage() {
                   transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   className="flex gap-4"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-500/20 shadow-sm">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-zinc-900/10 text-zinc-800 dark:text-zinc-300 ring-1 ring-inset ring-zinc-900/15 shadow-sm">
                     <Bot className="h-4 w-4" />
                   </div>
                   <div className="rounded-3xl rounded-tl-sm bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40 px-5 py-3.5 text-[14px] text-zinc-500 dark:text-zinc-400 flex items-center gap-2.5 shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+                    <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
                     <span className="animate-pulse">מנתח את המסמכים...</span>
                   </div>
                 </motion.div>
@@ -970,7 +970,7 @@ export default function AiPage() {
                 <button
                   key={q}
                   onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                  className="rounded-full text-xs px-3 py-1.5 bg-white/70 dark:bg-zinc-800/70 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-500/30 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors shadow-sm backdrop-blur-sm"
+                  className="rounded-full text-xs px-3 py-1.5 bg-white/70 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-300 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-colors shadow-sm backdrop-blur-sm"
                 >
                   {q}
                 </button>
@@ -980,7 +980,7 @@ export default function AiPage() {
 
           {/* Input area */}
           <div className="relative z-10 p-4 sm:p-5 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border-t border-zinc-200/50 dark:border-zinc-700/40">
-            <div className="relative flex items-end gap-3 rounded-2xl bg-white/70 dark:bg-zinc-800/70 backdrop-blur-xl ring-1 ring-inset ring-zinc-200/80 dark:ring-zinc-700/80 p-2 shadow-sm focus-within:ring-indigo-500/50 focus-within:shadow-md transition-all duration-300">
+            <div className="relative flex items-end gap-3 rounded-2xl bg-white/70 dark:bg-zinc-800/70 backdrop-blur-xl ring-1 ring-inset ring-zinc-200/80 dark:ring-zinc-700/80 p-2 shadow-sm focus-within:ring-zinc-800/40 focus-within:shadow-md transition-all duration-300">
               {/* File upload button — only in non-project mode */}
               {!hasProjectContext && (
                 <button
@@ -1007,7 +1007,7 @@ export default function AiPage() {
                 onClick={handleSend}
                 disabled={!canSend}
                 size="icon"
-                className="h-10 w-10 shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100 disabled:opacity-50"
+                className="h-10 w-10 shrink-0 rounded-xl bg-zinc-900 hover:bg-zinc-700 shadow-sm transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100 disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
@@ -1041,7 +1041,7 @@ export default function AiPage() {
           </DialogHeader>
           {projectsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
             </div>
           ) : projects.length === 0 ? (
             <p className="text-center text-sm text-zinc-400 py-8">
@@ -1053,9 +1053,9 @@ export default function AiPage() {
                 <button
                   key={p.id}
                   onClick={() => handleLinkProject(p.id, p.title)}
-                  className="w-full text-right rounded-xl px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors group flex items-center gap-3"
+                  className="w-full text-right rounded-xl px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-colors group flex items-center gap-3"
                 >
-                  <FolderOpen className="h-4 w-4 text-indigo-400 shrink-0" />
+                  <FolderOpen className="h-4 w-4 text-zinc-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                       {p.title}
@@ -1098,7 +1098,7 @@ export default function AiPage() {
                     scrollKeyRef.current += 1;
                     setDrawerScrollPage(cit.page + scrollKeyRef.current * 0.001);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-800 shadow-sm ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-700 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-800 shadow-sm ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <MapPin className="h-3.5 w-3.5" />
                   {`עמ׳ ${cit.page}`}
