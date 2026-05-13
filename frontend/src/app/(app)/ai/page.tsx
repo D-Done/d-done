@@ -855,17 +855,24 @@ export default function AiPage() {
                     }`}
                     dir="auto"
                   >
-                    {msg.fileNames && (
+                    {msg.fileNames && msg.fileNames.length > 0 && (
                       <div className="mb-2.5 flex flex-wrap gap-1.5">
-                        {msg.fileNames.map((n) => (
-                          <span
-                            key={n}
-                            className="inline-flex items-center gap-1 rounded-md bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm"
-                          >
-                            <Paperclip className="h-3 w-3" />
-                            {n}
+                        {hasProjectContext ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
+                            <FolderOpen className="h-3 w-3" />
+                            {projectTitle || "פרויקט מקושר"}
                           </span>
-                        ))}
+                        ) : (
+                          msg.fileNames.map((n) => (
+                            <span
+                              key={n}
+                              className="inline-flex items-center gap-1 rounded-md bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm"
+                            >
+                              <Paperclip className="h-3 w-3" />
+                              {n}
+                            </span>
+                          ))
+                        )}
                       </div>
                     )}
                     <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -916,6 +923,24 @@ export default function AiPage() {
             </AnimatePresence>
             <div ref={chatEndRef} className="h-2" />
           </div>
+
+          {/* Quick replies */}
+          {hasContext && !loading && (
+            <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-2 pt-1">
+              {(hasProjectContext
+                ? ["סכם את המסמכים", "מה הסיכונים העיקריים?", "פרט את הצדדים בעסקה", "בדוק תאריכים ומועדים חשובים"]
+                : ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
+              ).map((q) => (
+                <button
+                  key={q}
+                  onClick={() => { setInput(q); inputRef.current?.focus(); }}
+                  className="rounded-full text-xs px-3 py-1.5 bg-white/70 dark:bg-zinc-800/70 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-500/30 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors shadow-sm backdrop-blur-sm"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Input area */}
           <div className="relative z-10 p-4 sm:p-5 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border-t border-zinc-200/50 dark:border-zinc-700/40">
