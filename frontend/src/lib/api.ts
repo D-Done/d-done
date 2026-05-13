@@ -676,6 +676,106 @@ export async function deleteProjectFile(
 }
 
 // ============================================================
+// VDR (external-party upload)
+// ============================================================
+
+export interface VdrCreateRequest {
+  invited_email: string;
+  transaction_type: string;
+  project_name: string;
+  client_name?: string | null;
+  role?: string | null;
+  counterparty_name?: string | null;
+  description?: string | null;
+}
+
+export interface VdrCreateResponse {
+  vdr_request_id: string;
+  project_id: string;
+  invited_email: string;
+  status: string;
+  expires_at: string;
+  email_sent: boolean;
+}
+
+export interface VdrPublicInfo {
+  project_name: string;
+  status: string;
+}
+
+export interface VdrUploadInitiateResponse {
+  upload_url: string | null;
+  file_id: string;
+  gcs_uri: string;
+  max_size_bytes: number;
+  already_exists: boolean;
+}
+
+export interface VdrUploadCompleteResponse {
+  file_id: string;
+  upload_status: string;
+}
+
+// Strip the /api/v1 suffix from API_BASE to get the server root for public VDR endpoints
+const VDR_SERVER_ROOT = API_BASE.replace(/\/api\/v1\/?$/, "");
+
+async function publicRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  const res = await fetch(`${VDR_SERVER_ROOT}${path}`, { ...options, headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, detailMessage(body));
+  }
+  if (res.status === 204) return undefined as unknown as T;
+  return res.json() as Promise<T>;
+}
+
+export async function createVdrRequest(data: VdrCreateRequest): Promise<VdrCreateResponse> {
+  return request<VdrCreateResponse>("/vdr/requests", {
+    method: "POST",
+    body: JSON.stringify(data),
+    credentials: "include",
+  });
+}
+
+export async function getVdrPublicInfo(token: string): Promise<VdrPublicInfo> {
+  return publicRequest<VdrPublicInfo>(`/api/v1/vdr/public/${token}`);
+}
+
+export async function vdrInitiateUpload(
+  token: string,
+  body: { filename: string; content_type: string; file_size?: number; folder?: string },
+): Promise<VdrUploadInitiateResponse> {
+  return publicRequest<VdrUploadInitiateResponse>(
+    `/api/v1/vdr/public/${token}/upload/initiate`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function vdrCompleteUpload(
+  token: string,
+  fileId: string,
+  fileSizeBytes: number,
+): Promise<VdrUploadCompleteResponse> {
+  return publicRequest<VdrUploadCompleteResponse>(
+    `/api/v1/vdr/public/${token}/upload/complete`,
+    { method: "POST", body: JSON.stringify({ file_id: fileId, file_size_bytes: fileSizeBytes }) },
+  );
+}
+
+export async function vdrSubmit(token: string): Promise<{ status: string; message: string }> {
+  return publicRequest<{ status: string; message: string }>(
+    `/api/v1/vdr/public/${token}/submit`,
+    { method: "POST" },
+  );
+}
+
+// ============================================================
 // Bbox Lab (Gemini bbox extraction on PDFs)
 // ============================================================
 

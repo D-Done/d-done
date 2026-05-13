@@ -12,6 +12,7 @@ import {
   Loader2,
   Minus,
   Plus,
+  RefreshCw,
   ZoomIn,
   ChevronDown,
 } from "lucide-react";
@@ -169,7 +170,8 @@ export function TenantTableReview({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(true);
   const [scrollToPage, setScrollToPage] = useState<number | null>(null);
   const [mode, setMode] = useState<ReviewMode>("review");
   const [correctionText, setCorrectionText] = useState("");
@@ -236,27 +238,74 @@ export function TenantTableReview({
 
   const activeGroup = docGroups[activeGroupIdx] ?? docGroups[0] ?? null;
 
+  // Pick the best "agreement" file: prefer project_agreement doc type, then filename match.
+  const preferredFileId = useMemo(() => {
+    if (uploadedFiles.length === 0) return null;
+    const agreementFile = uploadedFiles.find(
+      (f) =>
+        f.doc_type === "project_agreement" ||
+        f.original_name.includes("הסכם") ||
+        f.original_name.toLowerCase().includes("agreement"),
+    );
+    return (agreementFile ?? uploadedFiles[0]).id;
+  }, [uploadedFiles]);
+
+  // As soon as we know uploaded files, pre-select the agreement so it loads immediately.
+  useEffect(() => {
+    if (preferredFileId && !selectedFileId) {
+      setSelectedFileId(preferredFileId);
+    }
+  }, [preferredFileId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When active doc group changes, switch the PDF to the group's source document.
   useEffect(() => {
     if (!activeGroup) return;
     const targetFileId = activeGroup.fileId;
     if (targetFileId && targetFileId !== selectedFileId) {
       setSelectedFileId(targetFileId);
-    } else if (!targetFileId && !selectedFileId && uploadedFiles.length > 0) {
-      setSelectedFileId(uploadedFiles[0].id);
+    } else if (!targetFileId && uploadedFiles.length > 0) {
+      setSelectedFileId(preferredFileId);
     }
-  }, [activeGroup, uploadedFiles]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeGroup, uploadedFiles, preferredFileId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadPdfUrl = useCallback(
+    async (fileId: string) => {
+      setPdfLoading(true);
+      setPdfUrl(null);
+      setPdfError(null);
+      try {
+        const { url } = await getFileViewUrl(projectId, fileId);
+        setPdfUrl(url);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "שגיאה בטעינת המסמך";
+        console.error("[TenantTableReview] Failed to load PDF view URL:", err);
+        setPdfError(msg);
+      } finally {
+        setPdfLoading(false);
+      }
+    },
+    [projectId],
+  );
 
   useEffect(() => {
-    if (!selectedFileId) return;
+    if (!selectedFileId) {
+      setPdfLoading(false);
+      return;
+    }
     let cancelled = false;
     setPdfLoading(true);
     setPdfUrl(null);
+    setPdfError(null);
     (async () => {
       try {
         const { url } = await getFileViewUrl(projectId, selectedFileId);
         if (!cancelled) setPdfUrl(url);
-      } catch {
-        if (!cancelled) setPdfUrl(null);
+      } catch (err) {
+        if (!cancelled) {
+          const msg = err instanceof Error ? err.message : "שגיאה בטעינת המסמך";
+          console.error("[TenantTableReview] Failed to load PDF view URL:", err);
+          setPdfError(msg);
+        }
       } finally {
         if (!cancelled) setPdfLoading(false);
       }
@@ -493,8 +542,25 @@ export function TenantTableReview({
                 maxWidth={pdfMaxWidth}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                לא ניתן לטעון את המסמך
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-400 px-6 text-center">
+                <FileText className="h-10 w-10 opacity-30" />
+                <div>
+                  <p className="font-medium text-slate-500">לא ניתן לטעון את המסמך</p>
+                  {pdfError && (
+                    <p className="mt-1 text-xs text-red-400 max-w-xs break-words">{pdfError}</p>
+                  )}
+                </div>
+                {selectedFileId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-1 gap-1.5 text-xs"
+                    onClick={() => loadPdfUrl(selectedFileId)}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    נסה שוב
+                  </Button>
+                )}
               </div>
             )}
           </div>

@@ -140,7 +140,9 @@ All tenant-table observations (unsigned owners, name mismatches, missing warning
 
 - **Prerequisite**: if either `lender_definition_clause` or `actual_lender` is null, set `lender_compliance_note = null`. **Do NOT claim a match without evidence from both sides.**
 - **Red flag** — the agreement defines "בנק/חברת ביטוח" but the actual lender is a "קרן" (fund):
-  - Field `financing.lender_compliance_note`: detailed description of the contradiction.
+  - First, check `credit_committee_extraction` for a combined-financer structure:
+    - If the fund operates **jointly** with a bank/insurance that **issues guarantees (ערבויות)** to tenants/buyers → set `lender_compliance_note` to: `"המממן פועל כמממן משולב: הקרן פועלת בשילוב עם בנק/חברת ביטוח המוציאים את הערבויות. מדובר במממן משולב התואם להגדרות ההסכם — ניתן להתקדם ללא צורך באישור הדיירים/נציגות."`
+    - If the fund acts as the **sole or primary lender** (no bank/insurance co-financer issuing guarantees) → set `lender_compliance_note` to: `"המממן נבחר כקרן, אך הסכם המימון מגדיר את הגוף המממן כבנק או חברת ביטוח. קרן השקעות מוזכרת בהסכם רק בשילוב עם בנק/חברת ביטוח ולא כגוף מממן עצמאי. נדרש לקבל את אישור הדיירים/נציגות לשינוי אופי הגוף המממן."`
 - **Match** — both sides present and compatible: `financing.lender_compliance_note`: "המממן תואם להגדרות ההסכם".
 
 **Mezzanine financing:**
@@ -387,7 +389,7 @@ Below is a representative (abbreviated) example of the expected output structure
   "project_header": null,
   "executive_summary": {
     "risk_level": "medium",
-    "summary": "פרויקט פינוי-בינוי ברחוב הרצל 12, תל אביב (גוש 6660, חלקה 590). היזם — חברת אלפא השקעות בע\"מ. הממן בפועל — קרן XYZ. נדרש אישור דיירים לשינוי הגדרת המממן בהסכם.",
+    "summary": "פרויקט פינוי-בינוי ברחוב הרצל 12, תל אביב (גוש 6660, חלקה 590). היזם — חברת אלפא השקעות בע\"מ. הממן בפועל — קרן XYZ. הסכם מגדיר גוף מממן כבנק/חב' ביטוח; נדרש אישור הדיירים/נציגות לשינוי אופי הגוף המממן.",
   },
   "compound_details": {
     "address": "רחוב הרצל 12, תל אביב",
@@ -441,7 +443,7 @@ Below is a representative (abbreviated) example of the expected output structure
   "financing": {
     "lender_definition_clause": "\"בנק\" — בנק מסחרי כהגדרתו בחוק הבנקאות (רישוי), תשמ\"א-1981 או חברת ביטוח",
     "actual_lender": "קרן XYZ",
-    "lender_compliance_note": "קיימת סתירה — ההסכם מגדיר בנק/חב' ביטוח, המממן בפועל הוא קרן",
+    "lender_compliance_note": "המממן נבחר כקרן, אך הסכם המימון מגדיר את הגוף המממן כבנק או חברת ביטוח. קרן השקעות מוזכרת בהסכם רק בשילוב עם בנק/חברת ביטוח ולא כגוף מממן עצמאי. נדרש לקבל את אישור הדיירים/נציגות לשינוי אופי הגוף המממן.",
     "mezzanine_loan_exists": null,
     "mezzanine_loan_details": null
   },
@@ -480,7 +482,7 @@ Below is a representative (abbreviated) example of the expected output structure
     ]
   },
   "high_risk_flags": [
-    "קיימת סתירה בין הגדרת המממן בהסכם (בנק/חב' ביטוח) לבין המממן בפועל (קרן). נדרש אישור דיירים לשינוי זה."
+    "המממן נבחר כקרן, אך הסכם המימון מגדיר את הגוף המממן כבנק או חברת ביטוח. נדרש לקבל את אישור הדיירים/נציגות לשינוי אופי הגוף המממן."
   ],
   "findings": [
     {

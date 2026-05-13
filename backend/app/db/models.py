@@ -426,6 +426,47 @@ class AiConversation(Base):
         return f"<AiConversation id={self.id} user_id={self.user_id}>"
 
 
+class VdrRequest(Base):
+    """An external-party VDR (Virtual Data Room) upload request.
+
+    The owner creates a request, which generates a secure token that is emailed
+    to an external party. The external party uses the token to upload documents
+    without authenticating. The owner receives a notification when analysis
+    completes; the external party never sees any project data.
+    """
+
+    __tablename__ = "vdr_requests"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id = Column(
+        Uuid,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    invited_by_id = Column(
+        Uuid,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    invited_email = Column(String(500), nullable=False, index=True)
+    # SHA-256 hex of the raw upload token (never stored raw)
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    # pending → awaiting upload | uploaded → files received, analysis running
+    # done → report ready | expired | revoked
+    status = Column(String(20), nullable=False, default="pending")
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    uploaded_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    project = relationship("Project")
+    invited_by = relationship("User", foreign_keys=[invited_by_id])
+
+    def __repr__(self) -> str:
+        return f"<VdrRequest id={self.id} email={self.invited_email!r} status={self.status}>"
+
+
 class AuditLog(Base):
     """Append-only audit trail (identity frozen at action time)."""
 

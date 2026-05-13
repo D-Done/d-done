@@ -12,6 +12,7 @@ import {
   MapPin,
   Plus,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import * as api from "@/lib/api";
@@ -31,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { VdrExternalUploadDialog } from "@/components/vdr-external-upload-dialog";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "חדש",
@@ -309,6 +311,8 @@ function TransactionsList() {
 }
 
 export default function TransactionsPage() {
+  const [vdrDialogOpen, setVdrDialogOpen] = useState(false);
+
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -319,6 +323,14 @@ export default function TransactionsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="rounded-2xl"
+            onClick={() => setVdrDialogOpen(true)}
+          >
+            <Upload className="ml-2 h-4 w-4" />
+            העלאת VDR באמצעות צד חיצוני
+          </Button>
           <Button asChild className="rounded-2xl">
             <Link href="/transactions/new">
               <Plus className="ml-2 h-4 w-4" />
@@ -327,6 +339,7 @@ export default function TransactionsPage() {
           </Button>
         </div>
       </div>
+      <VdrExternalUploadDialog open={vdrDialogOpen} onOpenChange={setVdrDialogOpen} />
 
       <Suspense
         fallback={
