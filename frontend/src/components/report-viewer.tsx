@@ -234,27 +234,27 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
     return m;
   }, [graph.nodes]);
 
-  // Individuals (UBOs) at top → owned companies below.
-  // Edge semantics: from_id owns share_pct of to_id.
-  // Roots = nodes not owned by anyone (not in to_id) = ultimate owners (individuals).
-  const childrenByFromId = useMemo(() => {
+  // Render with project company at bottom, owners fanning out above.
+  // Keep original graph traversal (root = project company, children = its owners)
+  // but render children ABOVE the parent node.
+  const childrenByToId = useMemo(() => {
     const m = new Map<
       string,
       Array<{ node: UboNode; share_pct: string | null }>
     >();
     graph.edges.forEach((e: UboEdge) => {
-      const node = nodeMap.get(e.to_id);
+      const node = nodeMap.get(e.from_id);
       if (!node) return;
-      const list = m.get(e.from_id) ?? [];
+      const list = m.get(e.to_id) ?? [];
       list.push({ node, share_pct: e.share_pct ?? null });
-      m.set(e.from_id, list);
+      m.set(e.to_id, list);
     });
     return m;
   }, [graph.edges, nodeMap]);
 
   const rootIds = useMemo(() => {
-    const toIds = new Set(graph.edges.map((e) => e.to_id));
-    return graph.nodes.filter((n) => !toIds.has(n.id)).map((n) => n.id);
+    const fromIds = new Set(graph.edges.map((e) => e.from_id));
+    return graph.nodes.filter((n) => !fromIds.has(n.id)).map((n) => n.id);
   }, [graph.nodes, graph.edges]);
 
   function TreeNode({
@@ -266,9 +266,25 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
   }) {
     const node = nodeMap.get(nodeId);
     if (!node) return null;
-    const children = childrenByFromId.get(nodeId) ?? [];
+    const children = childrenByToId.get(nodeId) ?? [];
     return (
       <div className="flex flex-col items-center">
+        {/* Owners rendered ABOVE */}
+        {children.length > 0 && (
+          <>
+            <div className="flex flex-wrap justify-center gap-4 pb-2">
+              {children.map(({ node: child, share_pct }) => (
+                <TreeNode
+                  key={child.id}
+                  nodeId={child.id}
+                  sharePct={share_pct}
+                />
+              ))}
+            </div>
+            <div className="w-px h-3 bg-slate-200 dark:bg-slate-600" />
+          </>
+        )}
+        {/* This company rendered BELOW its owners */}
         <div
           className={cn(
             "rounded-xl border px-3 py-2 text-center min-w-[140px] max-w-[220px]",
@@ -291,20 +307,6 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
             </p>
           )}
         </div>
-        {children.length > 0 && (
-          <>
-            <div className="w-px h-3 bg-slate-200 dark:bg-slate-600" />
-            <div className="flex flex-wrap justify-center gap-4 pt-2">
-              {children.map(({ node: child, share_pct }) => (
-                <TreeNode
-                  key={child.id}
-                  nodeId={child.id}
-                  sharePct={share_pct}
-                />
-              ))}
-            </div>
-          </>
-        )}
       </div>
     );
   }
