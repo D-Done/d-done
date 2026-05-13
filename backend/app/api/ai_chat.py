@@ -355,10 +355,7 @@ async def ask_in_conversation(
                 extra_context=extra_context,
             )
         else:
-            # ── Upload mode (existing behaviour) ──────────────────────────
-            if not files:
-                raise HTTPException(status_code=400, detail="לא הועלו קבצים")
-
+            # ── Upload mode or general chat (no files) ────────────────────
             file_entries: list[tuple[bytes, str]] = []
             for f in files:
                 ct = f.content_type or ""
@@ -372,16 +369,16 @@ async def ask_in_conversation(
                     file_entries.append((data, ct))
                     file_names.append(f.filename or "")
 
-            if not file_entries:
-                raise HTTPException(status_code=400, detail="לא נמצאו קבצים תקינים")
-
-            from app.api.bbox_lab import _run_ask
-
-            resp = await asyncio.to_thread(
-                _run_ask,
-                question=question,
-                file_entries=file_entries,
-            )
+            if file_entries:
+                from app.api.bbox_lab import _run_ask
+                resp = await asyncio.to_thread(
+                    _run_ask,
+                    question=question,
+                    file_entries=file_entries,
+                )
+            else:
+                # ── General chat — no documents ────────────────────────────
+                resp = await asyncio.to_thread(_run_ask_general, question=question)
 
         # ── Persist messages ────────────────────────────────────────────
         now_iso = _utcnow().isoformat()
@@ -423,6 +420,47 @@ async def ask_in_conversation(
 
 
 # ── Gemini helpers ───────────────────────────────────────────────────────────
+
+def _run_ask_general(*, question: str) -> object:
+    """Call Gemini with a plain text question — no documents."""
+    from google import genai
+    from google.genai import types
+
+    _ensure_genai_env()
+
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
+    config = types.GenerateContentConfig(
+        system_instruction=(
+            "You are D-DONE AI, an expert assistant specialising in real estate finance, "
+            "legal due diligence, and Israeli real estate transactions. "
+            "Answer questions clearly and concisely in the language of the question. "
+            "Respond with a JSON object: {\"answer\": \"<your answer>\", \"citations\": []}."
+        ),
+        temperature=0.4,
+        response_mime_type="application/json",
+        max_output_tokens=4096,
+    )
+    response = client.models.generate_content(
+        model=GEMINI_CHAT_MODEL,
+        contents=[types.Content(role="user", parts=[types.Part.from_text(text=question)])],
+        config=config,
+    )
+    import json as _json
+    raw = (response.text or "").strip()
+    try:
+        data = _json.loads(raw)
+    except _json.JSONDecodeError:
+        data = {"answer": raw, "citations": []}
+    if not isinstance(data, dict):
+        data = {"answer": str(data), "citations": []}
+
+    from app.api.bbox_lab import AskResponse as _AskResp
+    return _AskResp(
+        answer=data.get("answer", ""),
+        citations=[],
+        raw_token_usage=None,
+    )
+
 
 def _run_ask_with_gcs(
     *,

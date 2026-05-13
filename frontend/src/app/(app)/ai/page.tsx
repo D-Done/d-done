@@ -360,7 +360,6 @@ export default function AiPage() {
 
     const hasProjectContext = !!projectId;
     const hasUploadedFiles = files.length > 0;
-    if (!hasProjectContext && !hasUploadedFiles) return;
 
     let convId = currentConvId;
 
@@ -494,7 +493,7 @@ export default function AiPage() {
   const hasUploadedFiles = files.length > 0;
   const hasContext = hasProjectContext || hasUploadedFiles;
   const isEmpty = messages.length === 0 && !loading && !convLoading;
-  const canSend = !!input.trim() && hasContext && !loading;
+  const canSend = !!input.trim() && !loading;
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -925,11 +924,13 @@ export default function AiPage() {
           </div>
 
           {/* Quick replies */}
-          {hasContext && !loading && (
+          {!loading && (
             <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-2 pt-1">
               {(hasProjectContext
                 ? ["סכם את המסמכים", "מה הסיכונים העיקריים?", "פרט את הצדדים בעסקה", "בדוק תאריכים ומועדים חשובים"]
-                : ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
+                : hasUploadedFiles
+                  ? ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
+                  : ["מה בודקים בבדיקת נאותות?", "מה הסיכונים במימון נדל\"ן?", "הסבר על טאבו", "מה זה דוח אפס?"]
               ).map((q) => (
                 <button
                   key={q}
@@ -960,12 +961,8 @@ export default function AiPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={
-                  hasContext
-                    ? "שאל שאלה..."
-                    : "העלה מסמכים או קשר פרויקט כדי להתחיל"
-                }
-                disabled={!hasContext || loading}
+                placeholder="שאל שאלה..."
+                disabled={loading}
                 rows={1}
                 className="flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none disabled:opacity-50"
                 dir="auto"
