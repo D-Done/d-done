@@ -23,6 +23,7 @@ from app.api.admin import router as admin_router
 from app.api.organization import router as organization_router
 from app.api.invites import router as invites_router
 from app.api.vdr import router as vdr_router
+from app.api.groups import router as groups_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -89,6 +90,7 @@ app.include_router(ai_chat_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(organization_router, prefix="/api/v1")
 app.include_router(vdr_router)
+app.include_router(groups_router)
 
 
 # ---- Health ----

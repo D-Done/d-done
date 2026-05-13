@@ -61,6 +61,7 @@ class Organization(Base):
     users = relationship("User", back_populates="organization")
     projects = relationship("Project", back_populates="organization")
     invitations = relationship("Invitation", back_populates="organization")
+    groups = relationship("Group", back_populates="organization")
 
     def __repr__(self) -> str:
         return f"<Organization id={self.id} name={self.name!r}>"
@@ -248,6 +249,46 @@ class ProjectMembership(Base):
 
     def __repr__(self) -> str:
         return f"<ProjectMembership project={self.project_id} user={self.user_id} role={self.role}>"
+
+
+class Group(Base):
+    """A named group of users within an organization, used to bulk-add members to projects."""
+
+    __tablename__ = "groups"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    organization_id = Column(
+        Uuid,
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(200), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+    )
+
+    organization = relationship("Organization", back_populates="groups")
+    memberships = relationship("GroupMembership", back_populates="group", cascade="all, delete-orphan")
+
+
+class GroupMembership(Base):
+    """Links a user to a group."""
+
+    __tablename__ = "group_memberships"
+    __table_args__ = (UniqueConstraint("group_id", "user_id", name="uq_group_memberships_group_user"),)
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    group_id = Column(Uuid, ForeignKey("groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    group = relationship("Group", back_populates="memberships")
+    user = relationship("User")
 
 
 class File(Base):

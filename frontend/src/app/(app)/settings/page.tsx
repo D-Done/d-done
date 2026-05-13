@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getMe, type MeResponse } from "@/lib/api";
+import { GroupsSettings } from "@/components/groups-settings";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<MeResponse | null>(null);
@@ -47,6 +48,16 @@ export default function SettingsPage() {
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>הגדרות נוספות יתווספו בקרוב — התראות, שפה, ועוד.</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>קבוצות</CardTitle>
+          <CardDescription>ניהול קבוצות משתמשים להוספה מהירה לפרויקטים</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <GroupsSettings />
         </CardContent>
       </Card>
 

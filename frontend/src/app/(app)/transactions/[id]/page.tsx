@@ -267,6 +267,10 @@ export default function TransactionPage() {
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [addMemberLoading, setAddMemberLoading] = useState(false);
+  const [showGroupPicker, setShowGroupPicker] = useState(false);
+  const [groups, setGroups] = useState<api.Group[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [addingGroupId, setAddingGroupId] = useState<string | null>(null);
   // True after user approves HITL review — hides the sheet and resumes animation
   const [hitlApproved, setHitlApproved] = useState(false);
   const userChangedTabRef = useRef(false);
@@ -967,56 +971,103 @@ export default function TransactionPage() {
                         )}
                       </ul>
                       {project.current_user_role === "owner" && (
-                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                          <Input
-                            type="email"
-                            placeholder="כתובת מייל"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                            className="max-w-xs rounded-xl"
-                            dir="ltr"
-                            aria-label="מייל להזמנה"
-                          />
-                          <Button
-                            size="sm"
-                            className="rounded-xl gap-1"
-                            disabled={
-                              !inviteEmail.trim() || addMemberLoading
-                            }
-                            onClick={async () => {
-                              const email = inviteEmail.trim();
-                              if (!email) return;
-                              setAddMemberLoading(true);
-                              try {
-                                const added = await api.addProjectMember(
-                                  project.id,
-                                  email,
-                                );
-                                setMembers((prev) =>
-                                  prev ? [...prev, added] : [added],
-                                );
-                                setInviteEmail("");
-                                toast.success(
-                                  `${added.email} צורף לפרויקט כצופה`,
-                                );
-                              } catch (e: unknown) {
-                                const msg =
-                                  e && typeof e === "object" && "message" in e
-                                    ? String((e as { message: unknown }).message)
-                                    : "צירוף נכשל";
-                                toast.error(msg);
-                              } finally {
-                                setAddMemberLoading(false);
-                              }
-                            }}
-                          >
-                            {addMemberLoading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <UserPlus className="h-4 w-4" />
-                            )}
-                            צרף משתמש
-                          </Button>
+                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                          {/* Individual invite */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input
+                              type="email"
+                              placeholder="כתובת מייל"
+                              value={inviteEmail}
+                              onChange={(e) => setInviteEmail(e.target.value)}
+                              className="max-w-xs rounded-xl"
+                              dir="ltr"
+                              aria-label="מייל להזמנה"
+                            />
+                            <Button
+                              size="sm"
+                              className="rounded-xl gap-1"
+                              disabled={!inviteEmail.trim() || addMemberLoading}
+                              onClick={async () => {
+                                const email = inviteEmail.trim();
+                                if (!email) return;
+                                setAddMemberLoading(true);
+                                try {
+                                  const added = await api.addProjectMember(project.id, email);
+                                  setMembers((prev) => prev ? [...prev, added] : [added]);
+                                  setInviteEmail("");
+                                  toast.success(`${added.email} צורף לפרויקט כצופה`);
+                                } catch (e: unknown) {
+                                  const msg = e && typeof e === "object" && "message" in e
+                                    ? String((e as { message: unknown }).message) : "צירוף נכשל";
+                                  toast.error(msg);
+                                } finally {
+                                  setAddMemberLoading(false);
+                                }
+                              }}
+                            >
+                              {addMemberLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                              צרף משתמש
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl gap-1"
+                              onClick={async () => {
+                                setShowGroupPicker((v) => !v);
+                                if (!showGroupPicker && groups.length === 0) {
+                                  setGroupsLoading(true);
+                                  try { setGroups(await api.listGroups()); }
+                                  finally { setGroupsLoading(false); }
+                                }
+                              }}
+                            >
+                              <Users className="h-4 w-4" />
+                              הוסף קבוצה
+                            </Button>
+                          </div>
+
+                          {/* Group picker */}
+                          {showGroupPicker && (
+                            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2">
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">בחר קבוצה להוספה לפרויקט</p>
+                              {groupsLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+                              {!groupsLoading && groups.length === 0 && (
+                                <p className="text-xs text-slate-400">אין קבוצות. צור קבוצות בהגדרות.</p>
+                              )}
+                              {groups.map((g) => (
+                                <div key={g.id} className="flex items-center justify-between gap-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                  <div>
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{g.name}</p>
+                                    <p className="text-xs text-slate-400">{g.member_count} חברים</p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 text-xs rounded-lg"
+                                    disabled={addingGroupId === g.id}
+                                    onClick={async () => {
+                                      setAddingGroupId(g.id);
+                                      try {
+                                        const res = await api.addGroupToProject(g.id, project.id);
+                                        toast.success(`נוספו ${res.added} משתמשים מהקבוצה "${g.name}"${res.skipped ? ` (${res.skipped} כבר חברים)` : ""}`);
+                                        const updated = await api.getProjectMembers(project.id);
+                                        setMembers(updated);
+                                        setShowGroupPicker(false);
+                                      } catch (e: unknown) {
+                                        const msg = e && typeof e === "object" && "message" in e
+                                          ? String((e as { message: unknown }).message) : "שגיאה";
+                                        toast.error(msg);
+                                      } finally {
+                                        setAddingGroupId(null);
+                                      }
+                                    }}
+                                  >
+                                    {addingGroupId === g.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "הוסף"}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

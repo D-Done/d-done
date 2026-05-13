@@ -1037,3 +1037,55 @@ export async function exportReportToWord(
 
   return { blob, filename };
 }
+
+// ── Groups ────────────────────────────────────────────────────────────────────
+
+export interface GroupMember {
+  user_id: string;
+  email: string;
+  name: string | null;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  member_count: number;
+  members: GroupMember[];
+}
+
+export async function listGroups(): Promise<Group[]> {
+  return request<Group[]>("/groups");
+}
+
+export async function createGroup(name: string): Promise<Group> {
+  return request<Group>("/groups", { method: "POST", body: JSON.stringify({ name }) });
+}
+
+export async function renameGroup(groupId: string, name: string): Promise<Group> {
+  return request<Group>(`/groups/${groupId}`, { method: "PATCH", body: JSON.stringify({ name }) });
+}
+
+export async function deleteGroup(groupId: string): Promise<void> {
+  await request<void>(`/groups/${groupId}`, { method: "DELETE" });
+}
+
+export async function addGroupMember(groupId: string, email: string): Promise<GroupMember> {
+  return request<GroupMember>(`/groups/${groupId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function removeGroupMember(groupId: string, userId: string): Promise<void> {
+  await request<void>(`/groups/${groupId}/members/${userId}`, { method: "DELETE" });
+}
+
+export async function addGroupToProject(
+  groupId: string,
+  projectId: string,
+): Promise<{ added: number; skipped: number }> {
+  return request<{ added: number; skipped: number }>(
+    `/groups/${groupId}/add-to-project/${projectId}`,
+    { method: "POST" },
+  );
+}
