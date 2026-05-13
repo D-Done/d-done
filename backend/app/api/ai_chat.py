@@ -338,23 +338,46 @@ async def ask_in_conversation(
                     detail="הפרויקט אינו מכיל מסמכים או דוח מוכן לניתוח",
                 )
 
-            gcs_uris = [
-                (f.gcs_uri, f.content_type or "application/pdf", f.original_name)
-                for f in project_files
-            ]
             file_names = [f.original_name for f in project_files]
 
-            extra_context: str | None = None
+            # Build rich text context from the DD report (preferred: no GCS issues).
+            # Fall back to GCS file URIs only when no report exists yet.
+            extra_context_parts: list[str] = []
+            if file_names:
+                extra_context_parts.append(
+                    "מסמכי הפרויקט:\n" + "\n".join(f"- {n}" for n in file_names)
+                )
             if dd_check and dd_check.report:
                 report_json = json.dumps(dd_check.report, ensure_ascii=False)
-                extra_context = f"דוח DD של הפרויקט:\n{report_json[:60_000]}"
+                extra_context_parts.append(f"דוח DD של הפרויקט:\n{report_json[:80_000]}")
 
-            resp = await asyncio.to_thread(
-                _run_ask_with_gcs,
-                question=question,
-                gcs_uris=gcs_uris,
-                extra_context=extra_context,
-            )
+            if extra_context_parts:
+                # Text-only path: fast, reliable, no GCS permissions needed.
+                extra_context: str = "\n\n".join(extra_context_parts)
+                resp = await asyncio.to_thread(
+                    _run_ask_general,
+                    question=question,
+                    extra_context=extra_context,
+                )
+            else:
+                # No DD report yet — fall back to GCS file reading.
+                gcs_uris = [
+                    (f.gcs_uri, f.content_type or "application/pdf", f.original_name)
+                    for f in project_files
+                ]
+                try:
+                    resp = await asyncio.to_thread(
+                        _run_ask_with_gcs,
+                        question=question,
+                        gcs_uris=gcs_uris,
+                        extra_context=None,
+                    )
+                except Exception as exc:
+                    logger.error("_run_ask_with_gcs failed: %s", exc, exc_info=True)
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"שגיאה בקריאת המסמכים: {exc}",
+                    ) from exc
         else:
             # ── Upload mode or general chat (no files) ────────────────────
             file_entries: list[tuple[bytes, str]] = []
@@ -422,8 +445,8 @@ async def ask_in_conversation(
 
 # ── Gemini helpers ───────────────────────────────────────────────────────────
 
-def _run_ask_general(*, question: str) -> object:
-    """Call Gemini with a plain text question — no documents."""
+def _run_ask_general(*, question: str, extra_context: str | None = None) -> object:
+    """Call Gemini with a plain text question (+ optional project context)."""
     from google import genai
     from google.genai import types
 
@@ -439,11 +462,12 @@ def _run_ask_general(*, question: str) -> object:
         ),
         temperature=0.4,
         response_mime_type="application/json",
-        max_output_tokens=4096,
+        max_output_tokens=8192,
     )
+    content = (extra_context + "\n\n" + question) if extra_context else question
     response = client.models.generate_content(
         model=GEMINI_CHAT_MODEL,
-        contents=[types.Content(role="user", parts=[types.Part.from_text(text=question)])],
+        contents=[types.Content(role="user", parts=[types.Part.from_text(text=content)])],
         config=config,
     )
     import json as _json
