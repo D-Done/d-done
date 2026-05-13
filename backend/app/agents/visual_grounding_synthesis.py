@@ -22,6 +22,7 @@ from google.adk.agents.readonly_context import ReadonlyContext
 from app.agents.constants import (
     STATE_DOCUMENT_NAMES,
     STATE_ENRICHED_REPORT,
+    STATE_REPRESENTING_ROLE,
 )
 from app.agents.schemas import SynthesisMainOutput, SynthesisTenantFindingsOutput
 from app.agents.synthesis.prompt import get_details_prompt, get_main_prompt
@@ -103,12 +104,42 @@ def _build_extraction_blocks(ctx: ReadonlyContext) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _representing_role_block(role: str | None) -> str | None:
+    if not role:
+        return None
+    role_map = {
+        "קרן": "Investment Fund (קרן השקעות)",
+        "בנק": "Bank (בנק)",
+        "חברת ביטוח": "Insurance Company (חברת ביטוח)",
+    }
+    role_label = role_map.get(role, role)
+    return (
+        "# USER-SELECTED REPRESENTING ROLE (MANDATORY)\n\n"
+        f"The user has explicitly indicated that the client represents: **{role_label}**.\n\n"
+        "This is authoritative — use it to:\n"
+        "1. Set `financing.actual_lender` type: if the lender name is found in documents "
+        "(zero report addressee or credit committee), use that name. The lender TYPE is confirmed "
+        f"as **{role_label}**.\n"
+        "2. Compliance check: compare the user-selected role against `lender_definition_clause` "
+        "from the agreement:\n"
+        f"   - If the agreement restricts lending to banks/insurance and the role is **קרן** → "
+        "red flag: `lender_compliance_note` must describe the mismatch.\n"
+        f"   - If the agreement allows the selected role type → "
+        '`lender_compliance_note`: "המממן תואם להגדרות ההסכם".\n'
+        "3. Do NOT override this with document inference — the user's selection takes precedence "
+        "for determining lender type."
+    )
+
+
 async def _build_main_instruction(ctx: ReadonlyContext) -> str:
     doc_names: list[str] = ctx.state.get(STATE_DOCUMENT_NAMES) or []
     parts = [_ROLE_HEADER, CARRY_FORWARD_INSTRUCTION, get_main_prompt()]
     filenames_block = _valid_filenames_block(doc_names)
     if filenames_block:
         parts.append(filenames_block)
+    representing_role_block = _representing_role_block(ctx.state.get(STATE_REPRESENTING_ROLE))
+    if representing_role_block:
+        parts.append(representing_role_block)
     parts.append(
         "# Extraction Data (extractor agent outputs)\n\n"
         + _build_extraction_blocks(ctx)
@@ -131,6 +162,9 @@ async def _build_details_instruction(ctx: ReadonlyContext) -> str:
     filenames_block = _valid_filenames_block(doc_names)
     if filenames_block:
         parts.append(filenames_block)
+    representing_role_block = _representing_role_block(ctx.state.get(STATE_REPRESENTING_ROLE))
+    if representing_role_block:
+        parts.append(representing_role_block)
     parts.append(
         "# Extraction Data (extractor agent outputs)\n\n"
         + _build_extraction_blocks(ctx)

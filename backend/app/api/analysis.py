@@ -275,6 +275,7 @@ async def _run_analysis_task(
                     on_stage_change=on_stage_change,
                     use_visual_grounding=True,
                     phase1_only=True,
+                    transaction_metadata=transaction_metadata,
                 )
 
             if analysis_result.needs_review and analysis_result.hitl_data is not None:
@@ -1007,6 +1008,7 @@ async def _run_analysis(
     on_stage_change: Callable[[str], Awaitable[None]] | None = None,
     use_visual_grounding: bool = False,
     phase1_only: bool = False,
+    transaction_metadata: dict | None = None,
 ) -> _AnalysisResult:
     """Run the DD analysis via the ADK root agent.
 
@@ -1029,6 +1031,7 @@ async def _run_analysis(
         STATE_ENRICHED_REPORT,
         STATE_GCS_URIS,
         STATE_PROJECT_ID,
+        STATE_REPRESENTING_ROLE,
         STATE_TEXT_PARTS,
         SYSTEM_USER_ID,
     )
@@ -1067,12 +1070,14 @@ async def _run_analysis(
     doc_names = [f.original_name for f, _ in gemini_files]
     content_types = [m for _, m in gemini_files]
 
+    representing_role = (transaction_metadata or {}).get("representing_role")
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
         STATE_DOCUMENT_NAMES: doc_names,
         STATE_CONTENT_TYPES: content_types,
         STATE_TEXT_PARTS: text_parts,
+        STATE_REPRESENTING_ROLE: representing_role,
     }
 
     session_service = get_session_service()
