@@ -459,6 +459,7 @@ def _run_ask_general(*, question: str) -> object:
         answer=data.get("answer", ""),
         citations=[],
         raw_token_usage=None,
+        model_used=GEMINI_CHAT_MODEL,
     )
 
 
