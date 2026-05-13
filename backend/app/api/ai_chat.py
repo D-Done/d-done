@@ -38,7 +38,7 @@ from app.db.session import AsyncSessionLocal
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
 logger = logging.getLogger(__name__)
 
-GEMINI_CHAT_MODEL = "gemini-2.5-flash"
+GEMINI_CHAT_MODEL = "gemini-2.0-flash-lite"
 
 
 def _utcnow() -> datetime:

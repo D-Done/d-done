@@ -675,7 +675,7 @@ export default function AiPage() {
               className="gap-1.5 border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm text-xs py-1 px-2.5 shadow-sm shrink-0"
             >
               <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-              Gemini 2.5 Flash
+              Gemini 2.0 Flash Lite
             </Badge>
           </div>
 
