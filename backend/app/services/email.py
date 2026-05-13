@@ -162,6 +162,80 @@ def send_vdr_completion_notification(
         return False
 
 
+def send_report_ready_notification(
+    *,
+    to_email: str,
+    project_name: str,
+    project_url: str,
+    needs_hitl_review: bool = False,
+) -> bool:
+    """Notify the project owner that a DD report is ready (optionally with HITL reminder)."""
+    if not settings.resend_api_key or not settings.email_from:
+        logger.warning("Resend not configured; skipping report-ready email to %s", to_email)
+        return False
+
+    try:
+        import resend  # type: ignore[import-untyped]
+    except ImportError:
+        logger.error("resend package not installed")
+        return False
+
+    resend.api_key = settings.resend_api_key
+    from_addr = _normalize_resend_from(settings.email_from)
+    if not from_addr:
+        return False
+
+    if needs_hitl_review:
+        body_html = (
+            f"<p style='color:#475569;line-height:1.6;margin:0 0 12px'>"
+            f"The due diligence report for <strong>{project_name}</strong> is ready.</p>"
+            f"<p style='color:#475569;line-height:1.6;margin:0 0 24px'>"
+            f"<strong>Action required:</strong> please log in and review the tenant signature table "
+            f"to approve or correct the signing status before the report is finalized.</p>"
+        )
+        subject = f"Action required — review signatures: {project_name}"
+    else:
+        body_html = (
+            f"<p style='color:#475569;line-height:1.6;margin:0 0 24px'>"
+            f"The due diligence report for <strong>{project_name}</strong> is ready. "
+            f"Click below to view it.</p>"
+        )
+        subject = f"Report ready — {project_name}"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f8f9fa;margin:0;padding:20px">
+<div style="max-width:520px;margin:auto;background:#fff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div style="text-align:center;margin-bottom:32px">
+    <span style="font-size:28px;font-weight:700;letter-spacing:-1px;color:#0f172a">D<span style="color:#64748b">-Done</span></span>
+  </div>
+  {body_html}
+  <div style="text-align:center;margin:32px 0">
+    <a href="{project_url}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600">
+      View Report
+    </a>
+  </div>
+</div>
+</body>
+</html>"""
+
+    params: dict = {
+        "from": from_addr,
+        "to": [to_email],
+        "subject": subject,
+        "html": html,
+    }
+
+    try:
+        resend.Emails.send(params)
+        logger.info("Report-ready notification sent to %s (hitl=%s)", to_email, needs_hitl_review)
+        return True
+    except Exception as exc:
+        logger.exception("Failed to send report-ready email: %s", exc)
+        return False
+
+
 def send_invite_email(
     *,
     to_email: str,

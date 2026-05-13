@@ -45,6 +45,7 @@ from app.db.models import DDCheck, File, Project
 
 
 from app.services.failure_logging import log_analysis_failure
+from app.services.email import send_report_ready_notification
 
 logger = logging.getLogger(__name__)
 
@@ -295,6 +296,13 @@ async def _run_analysis_task(
                     "DD analysis Phase 1 complete, awaiting tenant table review: check_id=%s",
                     check_id,
                 )
+                project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
+                send_report_ready_notification(
+                    to_email=user_email,
+                    project_name=project_row.title,
+                    project_url=project_url,
+                    needs_hitl_review=True,
+                )
                 return
 
             result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
@@ -311,6 +319,13 @@ async def _run_analysis_task(
 
             await db.commit()
             logger.info("DD analysis completed: check_id=%s", check_id)
+            project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
+            send_report_ready_notification(
+                to_email=user_email,
+                project_name=project.title,
+                project_url=project_url,
+                needs_hitl_review=False,
+            )
 
         except ExceptionGroup as eg:
             await _handle_analysis_failure(
@@ -600,6 +615,13 @@ async def approve_tenant_table(
     await db.refresh(dd_check)
 
     logger.info("DD Phase 2 completed after tenant table approval: check_id=%s", check_id)
+    project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
+    send_report_ready_notification(
+        to_email=user.email,
+        project_name=project_row.title,
+        project_url=project_url,
+        needs_hitl_review=False,
+    )
 
     return AnalyzeResponse(
         check_id=str(dd_check.id),
