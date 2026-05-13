@@ -22,7 +22,7 @@ You will receive plain text extracted from documents (not raw PDFs).
 - **Profitability**: Report `profit_on_turnover` and `profit_on_cost` as decimal numbers only — no commentary ("high", "low", etc.). Present figures only.
 - **Construction restrictions**: Populate only if explicitly stated in the document. If none mentioned, use empty array `[]`. Do NOT fabricate.
 - **Indexation**: If not mentioned anywhere, set `indexation_details` to exactly: "אין התייחסות למדד בדו\\"ח האפס". Never leave it null. Set `indexation` object to null if no structured data exists.
-- **Citations**: Every field that references a specific part of the document MUST include a source citation where applicable. For `timeline_events`, a citation is **mandatory**.
+- **Citations**: Every field that references a specific part of the document MUST include a source citation where applicable.
   - `source_document_name`: the EXACT file name as it appears in the document header.
   - `page_number`: use the page number from the "--- Page N ---" markers in the text.
   - `verbatim_quote`: a SHORT, VERBATIM Hebrew phrase copied directly from the provided text. MUST be an exact contiguous substring. Do NOT paraphrase, translate, abbreviate with "..." or "…", or use JSON field names as quotes. **Never leave empty** — always copy at least one relevant Hebrew phrase from the document.
@@ -112,17 +112,6 @@ Your response MUST be a valid JSON matching this structure:
   "estimated_permit_date": null,
   "construction_duration_months": null,
   "schedule_summary_he": null,
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim Hebrew phrase"
-      }
-    }
-  ],
   "tenant_benefits": [],
   "developer_entity_change": {
     "original_developer": null,
@@ -176,17 +165,6 @@ Your response MUST be a valid JSON matching this structure:
   "estimated_permit_date": "2025-Q2",
   "construction_duration_months": 36,
   "schedule_summary_he": "תחילת בנייה צפויה ברבעון שני 2025, השלמה בתוך 36 חודשים",
-  "timeline_events": [
-    {
-      "date": "2024-03-15",
-      "event_description": "תאריך הפקת דו\\"ח האפס",
-      "source": {
-        "source_document_name": "zero_report.pdf",
-        "page_number": 1,
-        "verbatim_quote": "דו\\"ח אפס מיום 15.3.2024"
-      }
-    }
-  ],
   "tenant_benefits": ["קבלת דירה חלופית למשך תקופת הבנייה", "תוספת שטח של 12 מ\\"ר לדירה המשודרגת"],
   "developer_entity_change": {
     "original_developer": "חברת א' בע\\"מ",

@@ -12,7 +12,6 @@ You extract structured data from Israeli project agreement addenda, amendments, 
 
 - *No Guessing Rule*: Extract ONLY what is explicitly written. Do not infer or fabricate values.
 - *Hebrew Only*: All text fields must be in Hebrew.
-- *Citations*: Every `timeline_events` entry must have `source` with `source_document_name` (exact filename from header), `page_number` (from "--- Page N ---" markers), and `verbatim_quote` (exact contiguous substring from the text). NEVER use "..." or ellipsis to shorten quotes — copy the full text without omissions. **Never leave `verbatim_quote` empty.**
 
 ---
 
@@ -44,17 +43,6 @@ Your response MUST be a valid JSON matching this structure:
   "summary": "brief summary in Hebrew or null",
   "amended_clauses": ["clause or term in Hebrew"],
   "parties_involved": ["party name in Hebrew"],
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim phrase"
-      }
-    }
-  ],
   "developer_cost_benefits": ["הטבות המהוות עלות ליזם — detail each benefit in Hebrew"],
   "notes": []
 }

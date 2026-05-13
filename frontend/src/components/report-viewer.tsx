@@ -37,7 +37,6 @@ import type {
 } from "@/lib/types";
 import { RISK_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { ProjectTimeline } from "@/components/ProjectTimeline";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -344,17 +343,6 @@ export function ReportViewer({
   );
   const [, forceCitationsRerender] = useState(0);
 
-  const timelineEvents = useMemo(() => {
-    const raw = Array.isArray(report.timeline) ? report.timeline : [];
-    return raw
-      .filter((e) => Boolean(e?.date) && Boolean(e?.event_description))
-      .map((ev, idx) => ({
-        date: ev.date,
-        description: ev.event_description,
-        source: ev.source?.source_document_name ?? "מסמכי הפרויקט",
-        isHighlighted: idx === raw.length - 1,
-      }));
-  }, [report]);
 
   const canOpenCitations =
     !!projectId &&
@@ -789,11 +777,6 @@ export function ReportViewer({
             </p>
           </CardContent>
         </Card>
-
-        {/* ─── Timeline ───────────────────────────────────────────── */}
-        {timelineEvents.length > 0 && (
-          <ProjectTimeline events={timelineEvents} />
-        )}
 
         {/* ─── 2. Compound Details (פרטי המתחם) ──────────────────── */}
         {cd && (

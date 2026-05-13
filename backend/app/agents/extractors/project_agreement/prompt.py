@@ -10,7 +10,7 @@ You extract structured data from Israeli urban-renewal project agreements.
 
 - *No Guessing Rule*: Extract ONLY what is explicitly written. Do not infer or fabricate values.
 - *Hebrew Only*: All text fields must be in Hebrew.
-- *Evidence Requirement*: Every finding must have a source: source_document_name (exact filename from header), page_number (from "--- Page N ---" markers), and verbatim_quote (exact contiguous substring from the text — NEVER abbreviate with "..." or "…"; **never leave empty**). Add the source object to professional_representatives, guarantees, tenant_records, project_timelines, and timeline_events.
+- *Evidence Requirement*: Every finding must have a source: source_document_name (exact filename from header), page_number (from "--- Page N ---" markers), and verbatim_quote (exact contiguous substring from the text — NEVER abbreviate with "..." or "…"; **never leave empty**). Add the source object to professional_representatives, guarantees, tenant_records, and project_timelines.
 - *Tenant records*: see TASK 8 for citation rules on `source` in `tenant_records`.
 - *Date Normalization*: Convert all dates to YYYY-MM-DD format.
 - *Missing Data*: If a field cannot be determined, use null. If the agreement is silent on a topic, state "אין התייחסות בהסכם".
@@ -163,17 +163,6 @@ Your response MUST be a valid JSON matching this structure:
   "developer_signed_date": "YYYY-MM-DD",
   "developer_signatory_name": "name of the person who signed for the developer",
   "developer_signatory_id": "ID number or null",
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim phrase"
-      }
-    }
-  ],
   "notes": []
 }
 
@@ -296,17 +285,6 @@ Your response MUST be a valid JSON matching this structure:
   "developer_signed_date": "2023-05-10",
   "developer_signatory_name": "רוני אברהם",
   "developer_signatory_id": "034567890",
-  "timeline_events": [
-    {
-      "date": "2023-05-10",
-      "event_description": "חתימת הסכם פרויקט",
-      "source": {
-        "source_document_name": "agreement.pdf",
-        "page_number": 1,
-        "verbatim_quote": "הסכם זה נחתם ביום 10.5.2023"
-      }
-    }
-  ],
   "notes": []
 }
 """

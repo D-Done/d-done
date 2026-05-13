@@ -392,8 +392,8 @@ export default function AiPage() {
       id: "u-" + Date.now(),
       role: "user",
       content: question,
-      fileNames: messages.length === 0
-        ? (hasProjectContext ? projectFiles.map((f) => f.filename) : files.map((f) => f.name))
+      fileNames: messages.length === 0 && !hasProjectContext
+        ? files.map((f) => f.name)
         : undefined,
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -675,7 +675,7 @@ export default function AiPage() {
               className="gap-1.5 border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm text-xs py-1 px-2.5 shadow-sm shrink-0"
             >
               <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-              Gemini 3.1 Pro
+              Gemini 2.5 Flash
             </Badge>
           </div>
 
@@ -691,23 +691,10 @@ export default function AiPage() {
               >
                 <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
                   {hasProjectContext ? (
-                    <>
-                      {projectFiles.length > 0 ? (
-                        projectFiles.map((pf) => (
-                          <span
-                            key={pf.id}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300"
-                          >
-                            <FolderOpen className="h-3 w-3 shrink-0" />
-                            <span className="max-w-[150px] truncate">{pf.filename}</span>
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">
-                          הפרויקט אינו מכיל מסמכים עדיין
-                        </span>
-                      )}
-                    </>
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                      <FolderOpen className="h-3 w-3 shrink-0" />
+                      <span>{projectTitle || "פרויקט מקושר"}</span>
+                    </span>
                   ) : (
                     <>
                       <AnimatePresence>

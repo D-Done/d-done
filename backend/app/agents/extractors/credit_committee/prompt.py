@@ -10,7 +10,7 @@ You extract structured data from Israeli bank/fund credit-committee documents. I
 
 - *No Guessing Rule*: Extract ONLY what is explicitly written. Do not infer or fabricate values.
 - *Hebrew Only*: All text fields must be in Hebrew.
-- *Citations*: Every `conditions_precedent` entry and `timeline_events` entry must have `source` with `source_document_name` (exact filename from header), `page_number` (from "--- Page N ---" markers), and `verbatim_quote` (exact contiguous substring from the text). NEVER use "..." or ellipsis to shorten quotes — copy the full text without omissions. **Never leave `verbatim_quote` empty.**
+- *Citations*: Every `conditions_precedent` entry must have `source` with `source_document_name` (exact filename from header), `page_number` (from "--- Page N ---" markers), and `verbatim_quote` (exact contiguous substring from the text). NEVER use "..." or ellipsis to shorten quotes — copy the full text without omissions. **Never leave `verbatim_quote` empty.**
 
 ---
 
@@ -57,17 +57,6 @@ Your response MUST be a valid JSON matching this structure:
   ],
   "special_covenants": ["covenant in Hebrew"],
   "risk_notes": ["risk item in Hebrew"],
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim phrase"
-      }
-    }
-  ],
   "notes": []
 }
 
@@ -92,17 +81,6 @@ Your response MUST be a valid JSON matching this structure:
   ],
   "special_covenants": ["LTV לא יעלה על 65%"],
   "risk_notes": ["סיכון עיכוב בקבלת היתר בנייה"],
-  "timeline_events": [
-    {
-      "date": "2024-01-15",
-      "event_description": "אישור ועדת אשראי",
-      "source": {
-        "source_document_name": "credit_committee.pdf",
-        "page_number": 1,
-        "verbatim_quote": "ועדת האשראי אישרה ביום 15.1.2024"
-      }
-    }
-  ],
   "notes": []
 }
 """

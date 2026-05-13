@@ -310,24 +310,9 @@ Field `summary` must include the **"deal story"**:
 
 ---
 
-## L. Timeline (`timeline`)
-
-**Collect key events only:**
-
-- Incorporation of the developer company (התאגדות).
-- Developer's agreement signing date.
-- Issuance of the דו"ח אפס.
-- Credit committee approval.
-- Other significant statutory/property events.
-
-**Each event**: fields `date` (YYYY-MM-DD), `event_description`, `source` (Evidentiary Reference).
-**Chronological order. No duplicates.**
-
----
-
 ## Evidentiary Reference Rules — CRITICAL
 
-Every timeline event and every finding MUST include a structured evidentiary reference: source document name, page number, and a verbatim quote.
+Every finding MUST include a structured evidentiary reference: source document name, page number, and a verbatim quote.
 
 ### Required fields:
 
@@ -377,7 +362,6 @@ Use this table as the authoritative guide. Every piece of data must land in the 
 | UI Section (Hebrew)                    | Output field(s)                                                        | findings category |
 | -------------------------------------- | ---------------------------------------------------------------------- | ----------------- |
 | תקציר מנהלים                           | `executive_summary`                                                    | —                 |
-| ציר זמן עובדתי                         | `timeline`                                                             | —                 |
 | פרטי המתחם                             | `compound_details`                                                     | —                 |
 | טבלת דיירים                            | `tenant_table`, `signing_percentage`, `tenant_table_signing_sources`, `tenant_table_warning_note_sources` | — |
 | חתימת היזם                             | `developer_signature`                                                  | —                 |
@@ -405,18 +389,6 @@ Below is a representative (abbreviated) example of the expected output structure
     "risk_level": "medium",
     "summary": "פרויקט פינוי-בינוי ברחוב הרצל 12, תל אביב (גוש 6660, חלקה 590). היזם — חברת אלפא השקעות בע\"מ. הממן בפועל — קרן XYZ. נדרש אישור דיירים לשינוי הגדרת המממן בהסכם.",
   },
-  "timeline": [
-    {
-      "date": "2019-03-15",
-      "event_description": "התאגדות חברת אלפא השקעות בע\"מ",
-      "source": { "source_document_name": "company_extract.pdf", "page_number": 1, "verbatim_quote": "תאריך התאגדות: 15.3.2019" }
-    },
-    {
-      "date": "2023-05-10",
-      "event_description": "חתימת הסכם הפרויקט",
-      "source": { "source_document_name": "agreement.pdf", "page_number": 1, "verbatim_quote": "הסכם זה נחתם ביום 10.5.2023" }
-    }
-  ],
   "compound_details": {
     "address": "רחוב הרצל 12, תל אביב",
     "gush": "6660",
@@ -597,7 +569,6 @@ You are generating **Part 1** of a two-pass synthesis.
 
 Generate ONLY these fields (all others are handled in Part 2):
 - `executive_summary`
-- `timeline`
 - `compound_details`
 - `developer_signature`
 - `power_of_attorney`

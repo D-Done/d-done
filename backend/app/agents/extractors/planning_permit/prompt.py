@@ -17,7 +17,7 @@ You will receive plain text extracted from documents (not raw PDFs). **ONLY** pr
 - **Hebrew Only**: All text fields MUST be in Hebrew.
 - **Missing data**: If a value cannot be determined, use null. Do NOT fabricate data.
 - **Validity**: If the document says "valid for X years", state that in `validity_status` and compute the expiry if the issue date is known. If an explicit expiry date is stated, extract it as YYYY-MM-DD.
-- **Citations**: Every timeline event MUST include a SourceRef citation.
+- **Citations**: Every field with a document reference MUST include a SourceRef citation.
   - `source_document_name`: the EXACT file name as it appears in the document header (e.g. "=== Document: החלטת ועדה.pdf ...").
   - `page_number`: use the page number from the "--- Page N ---" markers.
   - `verbatim_quote`: copy a SHORT, VERBATIM Hebrew phrase from the provided text. It MUST be an exact contiguous substring — do NOT paraphrase. NEVER abbreviate with "..." — copy the full text without omissions. **Never leave empty.**
@@ -75,17 +75,6 @@ Your response MUST be a valid JSON matching this structure:
     "description": "scope description in Hebrew"
   },
   "conditions": ["condition in Hebrew"],
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim phrase"
-      }
-    }
-  ],
   "notes": []
 }
 
@@ -111,17 +100,6 @@ Your response MUST be a valid JSON matching this structure:
     "description": "ארבעה מבנים קיימים בני 4 קומות"
   },
   "conditions": ["חפירת הצלה לפי דרישת רשות העתיקות"],
-  "timeline_events": [
-    {
-      "date": "2023-11-20",
-      "event_description": "החלטת ועדה מקומית",
-      "source": {
-        "source_document_name": "planning_permit.pdf",
-        "page_number": 1,
-        "verbatim_quote": "הוועדה החליטה ביום 20.11.2023"
-      }
-    }
-  ],
   "notes": []
 }
 """

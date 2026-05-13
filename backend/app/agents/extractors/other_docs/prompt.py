@@ -10,7 +10,7 @@ You extract structured data from documents classified as "other" -- documents th
 
 - *No Guessing Rule*: Extract ONLY what is explicitly written. Do not infer or fabricate values.
 - *Hebrew Only*: All text fields must be in Hebrew (except IDs and dates).
-- *Citations*: Every `key_facts` entry should have `source` with `source_document_name`, `page_number`, and `verbatim_quote`. Every `timeline_events` entry must have `source`. NEVER abbreviate quotes with "..." or "..." — the quote must be a contiguous substring of the source text. **Never leave `verbatim_quote` empty.**
+- *Citations*: Every `key_facts` entry should have `source` with `source_document_name`, `page_number`, and `verbatim_quote`. NEVER abbreviate quotes with "..." or "..." — the quote must be a contiguous substring of the source text. **Never leave `verbatim_quote` empty.**
 - If no "other"-type documents are present, return empty/null values.
 
 ---
@@ -55,17 +55,6 @@ Your response MUST be a valid JSON matching this structure:
   ],
   "obligations": ["obligation in Hebrew"],
   "risk_flags": ["risk flag in Hebrew"],
-  "timeline_events": [
-    {
-      "date": "YYYY-MM-DD",
-      "event_description": "description in Hebrew",
-      "source": {
-        "source_document_name": "filename",
-        "page_number": 1,
-        "verbatim_quote": "verbatim phrase"
-      }
-    }
-  ],
   "notes": []
 }
 
@@ -87,17 +76,6 @@ Your response MUST be a valid JSON matching this structure:
   ],
   "obligations": ["הערבות תקפה עד 31.12.2025"],
   "risk_flags": ["הערבות מותנית בהמצאת היתר בנייה — טרם הומצא"],
-  "timeline_events": [
-    {
-      "date": "2024-06-01",
-      "event_description": "הנפקת ערבות בנקאית",
-      "source": {
-        "source_document_name": "bank_guarantee.pdf",
-        "page_number": 1,
-        "verbatim_quote": "ערבות זו הונפקה ביום 1.6.2024"
-      }
-    }
-  ],
   "notes": []
 }
 """

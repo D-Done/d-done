@@ -38,7 +38,7 @@ from app.db.session import AsyncSessionLocal
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
 logger = logging.getLogger(__name__)
 
-GEMINI_31_PRO = "gemini-3.1-pro-preview"
+GEMINI_CHAT_MODEL = "gemini-2.5-flash"
 
 
 def _utcnow() -> datetime:
@@ -466,14 +466,14 @@ def _run_ask_with_gcs(
 
     logger.info(
         "Ask-GCS: model=%s files=%d has_context=%s question=%s",
-        GEMINI_31_PRO,
+        GEMINI_CHAT_MODEL,
         len(gcs_uris),
         bool(extra_context),
         question[:100],
     )
 
     response = client.models.generate_content(
-        model=GEMINI_31_PRO,
+        model=GEMINI_CHAT_MODEL,
         contents=[types.Content(role="user", parts=parts)],
         config=config,
     )
@@ -540,6 +540,6 @@ def _run_ask_with_gcs(
     return _AskResp(
         answer=data.get("answer", "") or raw_text,
         citations=citations,
-        model_used=GEMINI_31_PRO,
+        model_used=GEMINI_CHAT_MODEL,
         raw_token_usage=token_usage,
     )

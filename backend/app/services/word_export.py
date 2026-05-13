@@ -152,22 +152,7 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
             run = p.add_run(risk)
             _set_rtl_run(run)
 
-    # ---- 2. Timeline ----
-    if report.timeline:
-        _add_heading(doc, "2. ציר הזמן", level=1)
-        table = doc.add_table(rows=1, cols=2)
-        table.style = "Table Grid"
-        _set_table_rtl(table)
-        hdr = table.rows[0].cells
-        _cell_rtl(hdr[0], "תאריך", bold=True)
-        _cell_rtl(hdr[1], "אירוע", bold=True)
-        for event in report.timeline:
-            row = table.add_row().cells
-            _cell_rtl(row[0], event.date or "")
-            _cell_rtl(row[1], event.event_description or "")
-        doc.add_paragraph()
-
-    # ---- 3. Compound Details ----
+    # ---- 2. Compound Details ----
     if report.compound_details:
         _add_heading(doc, "3. פרטי המתחם", level=1)
         cd = report.compound_details
@@ -351,21 +336,6 @@ def _build_standard_report(doc: Document, report: DDReport, project_title: str) 
             _set_rtl_paragraph(p)
             run = p.add_run(risk)
             _set_rtl_run(run)
-
-    # Timeline
-    if report.timeline:
-        _add_heading(doc, "2. ציר הזמן", level=1)
-        table = doc.add_table(rows=1, cols=2)
-        table.style = "Table Grid"
-        _set_table_rtl(table)
-        hdr = table.rows[0].cells
-        _cell_rtl(hdr[0], "תאריך", bold=True)
-        _cell_rtl(hdr[1], "אירוע", bold=True)
-        for event in report.timeline:
-            row = table.add_row().cells
-            _cell_rtl(row[0], event.date or "")
-            _cell_rtl(row[1], event.event_description or "")
-        doc.add_paragraph()
 
     # Findings
     if report.findings:

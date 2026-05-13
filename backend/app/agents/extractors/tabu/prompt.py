@@ -49,7 +49,6 @@ Each Tabu PDF covers one parcel. Produce one entry in `parcels` per PDF.
 - `notes`: If `restrictive_note_registered` is true, describe the finding in Hebrew (e.g., "צו עיקול לטובת..."). Set to null if nothing to report.
 
 ## Additional fields
-- timeline_events: Record any dated events you encounter (registration dates, transfers, etc.) with date, Hebrew description, and source citation (source_document_name, page_number, verbatim_quote). Leave as empty array if none are notable.
 - notes (parcel-level): Any additional observations in Hebrew (e.g., illegible sections, unusual patterns). Leave as empty array if none.
 
 ---
@@ -106,7 +105,6 @@ Each element in `parcels` corresponds to one Tabu extract PDF:
           "notes_excluded_transfer_to_foreigners": false
         }
       ],
-      "timeline_events": [],
       "notes": []
     }
   ]
@@ -150,7 +148,6 @@ Each element in `parcels` corresponds to one Tabu extract PDF:
           "notes_excluded_transfer_to_foreigners": false
         }
       ],
-      "timeline_events": [],
       "notes": []
     },
     {
@@ -179,7 +176,6 @@ Each element in `parcels` corresponds to one Tabu extract PDF:
           "notes_excluded_transfer_to_foreigners": true
         }
       ],
-      "timeline_events": [],
       "notes": []
     }
   ]

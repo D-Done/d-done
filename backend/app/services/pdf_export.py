@@ -195,20 +195,7 @@ def _build_finance_report(
         for risk in es.key_risks:
             story.append(_rtl_para(f"• {risk}", styles["bullet"]))
 
-    # 2. Timeline
-    if report.timeline:
-        story.append(_hr())
-        story.append(_rtl_para("2. ציר הזמן", styles["h1"]))
-        page_w = A4[0] - 40 * mm
-        col_w = [30 * mm, page_w - 30 * mm]
-        data = [[_cell("תאריך", styles, bold=True), _cell("אירוע", styles, bold=True)]]
-        for ev in report.timeline:
-            data.append([_cell(ev.date or "", styles), _cell(ev.event_description or "", styles)])
-        t = Table(data, colWidths=col_w)
-        t.setStyle(_BASE_TABLE_STYLE)
-        story.append(t)
-
-    # 3. Compound Details
+    # 2. Compound Details
     if report.compound_details:
         story.append(_hr())
         story.append(_rtl_para("3. פרטי המתחם", styles["h1"]))
@@ -379,18 +366,6 @@ def _build_standard_report(
     story.append(_rtl_para(es.recommendation, styles["body"]))
     for risk in es.key_risks:
         story.append(_rtl_para(f"• {risk}", styles["bullet"]))
-
-    if report.timeline:
-        story.append(_hr())
-        story.append(_rtl_para("2. ציר הזמן", styles["h1"]))
-        page_w = A4[0] - 40 * mm
-        col_w = [30 * mm, page_w - 30 * mm]
-        data = [[_cell("תאריך", styles, bold=True), _cell("אירוע", styles, bold=True)]]
-        for ev in report.timeline:
-            data.append([_cell(ev.date or "", styles), _cell(ev.event_description or "", styles)])
-        t = Table(data, colWidths=col_w)
-        t.setStyle(_BASE_TABLE_STYLE)
-        story.append(t)
 
     if report.findings:
         story.append(_hr())
