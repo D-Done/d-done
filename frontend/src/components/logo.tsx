@@ -2,13 +2,13 @@ import Image from "next/image";
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={className} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+    <span className={className} style={{ display: "inline-block" }}>
       <Image
         src="/logo.png"
         alt="D-Done logo"
-        width={44}
-        height={44}
-        className="h-full w-full object-contain drop-shadow-sm"
+        width={48}
+        height={48}
+        className="h-full w-full object-contain invert"
         aria-label="D-Done logo"
         priority
       />
