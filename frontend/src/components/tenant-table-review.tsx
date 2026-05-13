@@ -179,6 +179,7 @@ export function TenantTableReview({
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null);
+  const [originalRows, setOriginalRows] = useState<TenantRecord[]>([]);
 
   const zoom = ZOOM_STEPS[zoomIdx];
   const pdfMaxWidth = Math.round(BASE_PDF_WIDTH * zoom);
@@ -203,14 +204,25 @@ export function TenantTableReview({
   const [rows, setRows] = useState<TenantRecord[]>([]);
   useEffect(() => {
     if (data?.tenant_records) {
-      setRows(
-        data.tenant_records.map((r) => ({
-          ...r,
-          sub_parcel: cleanSubParcel(r.sub_parcel),
-        })),
-      );
+      const cleaned = data.tenant_records.map((r) => ({
+        ...r,
+        sub_parcel: cleanSubParcel(r.sub_parcel),
+      }));
+      setRows(cleaned);
+      setOriginalRows(cleaned);
     }
   }, [data?.tenant_records]);
+
+  const hasChanges = useMemo(
+    () =>
+      rows.some(
+        (r, i) =>
+          r.is_signed !== originalRows[i]?.is_signed ||
+          r.owner_name !== originalRows[i]?.owner_name ||
+          r.sub_parcel !== originalRows[i]?.sub_parcel,
+      ),
+    [rows, originalRows],
+  );
 
   const uploadedFiles = useMemo(
     () => files.filter((f) => f.upload_status === "uploaded"),
@@ -272,10 +284,20 @@ export function TenantTableReview({
     return pagesWithBoxes.length > 0 ? Math.min(...pagesWithBoxes) : null;
   }, [boundingBoxesByPage]);
 
+  // First page from signing_sources (fallback when active group has no boxes)
+  const firstSigningSourcePage = useMemo(() => {
+    if (!data?.signing_sources) return null;
+    const pages = data.signing_sources
+      .filter((s) => s.page_number && s.box_2d && s.box_2d.length === 4)
+      .map((s) => s.page_number);
+    return pages.length > 0 ? Math.min(...pages) : null;
+  }, [data?.signing_sources]);
+
   // Scroll PDF to the first page with citation boxes when doc group or data loads
   useEffect(() => {
-    if (firstCitationPage != null) setScrollToPage(firstCitationPage);
-  }, [firstCitationPage]);
+    const page = firstCitationPage ?? firstSigningSourcePage;
+    if (page != null) setScrollToPage(page);
+  }, [firstCitationPage, firstSigningSourcePage]);
 
   // Clear selected row when switching doc groups
   useEffect(() => {
@@ -706,14 +728,16 @@ export function TenantTableReview({
               type="button"
               disabled={approving}
               onClick={handleApprove}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className={hasChanges
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"}
             >
               {approving ? (
                 <Loader2 className="ml-1.5 h-4 w-4 animate-spin" />
               ) : (
                 <CheckCircle2 className="ml-1.5 h-4 w-4" />
               )}
-              אשר והמשך
+              {hasChanges ? "שמור שינויים ואשר" : "אשר והמשך"}
             </Button>
           )}
         </div>
