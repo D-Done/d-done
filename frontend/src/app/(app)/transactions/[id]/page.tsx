@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/table";
 import { DOC_TYPE_LABELS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
+import { UserSearchInput } from "@/components/user-search-input";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "ממתין",
@@ -265,7 +266,6 @@ export default function TransactionPage() {
   const [activeTab, setActiveTab] = useState<string>("details");
   const [members, setMembers] = useState<ProjectMember[] | null>(null);
   const [membersLoading, setMembersLoading] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
   const [addMemberLoading, setAddMemberLoading] = useState(false);
   const [showGroupPicker, setShowGroupPicker] = useState(false);
   const [groups, setGroups] = useState<api.Group[]>([]);
@@ -974,40 +974,27 @@ export default function TransactionPage() {
                         <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
                           {/* Individual invite */}
                           <div className="flex flex-wrap items-center gap-2">
-                            <Input
-                              type="email"
-                              placeholder="כתובת מייל"
-                              value={inviteEmail}
-                              onChange={(e) => setInviteEmail(e.target.value)}
-                              className="max-w-xs rounded-xl"
-                              dir="ltr"
-                              aria-label="מייל להזמנה"
-                            />
-                            <Button
-                              size="sm"
-                              className="rounded-xl gap-1"
-                              disabled={!inviteEmail.trim() || addMemberLoading}
-                              onClick={async () => {
-                                const email = inviteEmail.trim();
-                                if (!email) return;
-                                setAddMemberLoading(true);
-                                try {
-                                  const added = await api.addProjectMember(project.id, email);
-                                  setMembers((prev) => prev ? [...prev, added] : [added]);
-                                  setInviteEmail("");
-                                  toast.success(`${added.email} צורף לפרויקט כצופה`);
-                                } catch (e: unknown) {
-                                  const msg = e && typeof e === "object" && "message" in e
-                                    ? String((e as { message: unknown }).message) : "צירוף נכשל";
-                                  toast.error(msg);
-                                } finally {
-                                  setAddMemberLoading(false);
-                                }
-                              }}
-                            >
-                              {addMemberLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                              צרף משתמש
-                            </Button>
+                            <div className="w-64">
+                              <UserSearchInput
+                                disabled={addMemberLoading}
+                                placeholder="חפש לפי שם או מייל..."
+                                onSelect={async (u) => {
+                                  setAddMemberLoading(true);
+                                  try {
+                                    const added = await api.addProjectMember(project.id, u.email);
+                                    setMembers((prev) => prev ? [...prev, added] : [added]);
+                                    toast.success(`${u.name ?? u.email} צורף לפרויקט כצופה`);
+                                  } catch (e: unknown) {
+                                    const msg = e && typeof e === "object" && "message" in e
+                                      ? String((e as { message: unknown }).message) : "צירוף נכשל";
+                                    toast.error(msg);
+                                  } finally {
+                                    setAddMemberLoading(false);
+                                  }
+                                }}
+                              />
+                            </div>
+                            {addMemberLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
                             <Button
                               size="sm"
                               variant="outline"

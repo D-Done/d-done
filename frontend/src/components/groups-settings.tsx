@@ -8,6 +8,7 @@ import * as api from "@/lib/api";
 import type { Group } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UserSearchInput } from "@/components/user-search-input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +36,6 @@ export function GroupsSettings() {
 
   // Add member
   const [addingMemberGroupId, setAddingMemberGroupId] = useState<string | null>(null);
-  const [addEmail, setAddEmail] = useState("");
   const [addingMember, setAddingMember] = useState(false);
 
   // Delete group confirm
@@ -93,11 +93,10 @@ export function GroupsSettings() {
     }
   }
 
-  async function handleAddMember(groupId: string) {
-    if (!addEmail.trim()) return;
+  async function handleAddMember(groupId: string, email: string) {
     setAddingMember(true);
     try {
-      const member = await api.addGroupMember(groupId, addEmail.trim().toLowerCase());
+      const member = await api.addGroupMember(groupId, email);
       setGroups((prev) =>
         prev.map((g) =>
           g.id === groupId
@@ -105,7 +104,6 @@ export function GroupsSettings() {
             : g,
         ),
       );
-      setAddEmail("");
       setAddingMemberGroupId(null);
     } catch (err) {
       toast.error("שגיאה בהוספת חבר", { description: err instanceof Error ? err.message : undefined });
@@ -262,40 +260,28 @@ export function GroupsSettings() {
 
                   {/* Add member input */}
                   {isAddingMember ? (
-                    <div className="flex gap-2 mt-1">
-                      <Input
-                        autoFocus
-                        type="email"
-                        dir="ltr"
-                        placeholder="someone@example.com"
-                        value={addEmail}
-                        onChange={(e) => setAddEmail(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddMember(group.id);
-                          if (e.key === "Escape") { setAddingMemberGroupId(null); setAddEmail(""); }
-                        }}
-                        className="h-8 text-sm"
-                      />
-                      <Button
-                        size="sm"
-                        className="h-8 px-3"
-                        disabled={!addEmail.trim() || addingMember}
-                        onClick={() => handleAddMember(group.id)}
-                      >
-                        {addingMember ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "הוסף"}
-                      </Button>
+                    <div className="flex gap-2 mt-1 items-center">
+                      <div className="flex-1">
+                        <UserSearchInput
+                          autoFocus
+                          disabled={addingMember}
+                          placeholder="חפש לפי שם או מייל..."
+                          onSelect={(u) => handleAddMember(group.id, u.email)}
+                        />
+                      </div>
+                      {addingMember && <Loader2 className="h-4 w-4 animate-spin text-slate-400 shrink-0" />}
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-2"
-                        onClick={() => { setAddingMemberGroupId(null); setAddEmail(""); }}
+                        className="h-8 px-2 shrink-0"
+                        onClick={() => setAddingMemberGroupId(null)}
                       >
                         ביטול
                       </Button>
                     </div>
                   ) : (
                     <button
-                      onClick={() => { setAddingMemberGroupId(group.id); setAddEmail(""); }}
+                      onClick={() => setAddingMemberGroupId(group.id)}
                       className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mt-1 transition"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
