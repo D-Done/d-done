@@ -267,23 +267,44 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
     const node = nodeMap.get(nodeId);
     if (!node) return null;
     const children = childrenByToId.get(nodeId) ?? [];
+    const only = children.length === 1;
+
     return (
       <div className="flex flex-col items-center">
-        {/* Owners rendered ABOVE */}
+        {/* Owners rendered ABOVE with tree connectors */}
         {children.length > 0 && (
           <>
-            <div className="flex flex-wrap justify-center gap-4 pb-2">
-              {children.map(({ node: child, share_pct }) => (
-                <TreeNode
-                  key={child.id}
-                  nodeId={child.id}
-                  sharePct={share_pct}
-                />
-              ))}
+            {/* Children row — no gap so horizontal arms connect seamlessly */}
+            <div className="flex justify-center">
+              {children.map(({ node: child, share_pct }, idx) => {
+                const isFirst = idx === 0;
+                const isLast = idx === children.length - 1;
+                return (
+                  <div key={child.id} className="relative flex flex-col items-center px-4">
+                    <TreeNode nodeId={child.id} sharePct={share_pct} />
+                    {/* Connector: vertical stem + horizontal arms */}
+                    <div className="relative w-full" style={{ height: 16 }}>
+                      {/* Left arm to sibling */}
+                      {!only && !isFirst && (
+                        <div className="absolute right-1/2 left-0 bottom-0 h-0.5 bg-slate-300 dark:bg-slate-600" />
+                      )}
+                      {/* Vertical stem down */}
+                      <div className="absolute top-0 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-600"
+                           style={{ left: "calc(50% - 1px)" }} />
+                      {/* Right arm to sibling */}
+                      {!only && !isLast && (
+                        <div className="absolute left-1/2 right-0 bottom-0 h-0.5 bg-slate-300 dark:bg-slate-600" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="w-px h-3 bg-slate-200 dark:bg-slate-600" />
+            {/* Single vertical from horizontal bar to parent */}
+            <div className="w-0.5 h-4 bg-slate-300 dark:bg-slate-600" />
           </>
         )}
+
         {/* This company rendered BELOW its owners */}
         <div
           className={cn(
