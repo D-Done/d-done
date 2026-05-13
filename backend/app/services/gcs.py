@@ -326,6 +326,18 @@ def move_blob(source_gcs_uri: str, dest_gcs_uri: str) -> str:
     return result_uri
 
 
+def delete_blob(gcs_uri: str) -> None:
+    """Delete a single GCS blob by URI. Silently ignores NotFound."""
+    client = _get_client()
+    bucket_name, object_name = _parse_gcs_uri(gcs_uri)
+    bucket = client.bucket(bucket_name)
+    try:
+        bucket.blob(object_name).delete()
+        logger.info("Deleted GCS blob %s", object_name)
+    except gcs_exceptions.NotFound:
+        logger.warning("GCS blob not found (already deleted?): %s", object_name)
+
+
 def delete_project_folder(project_id: str) -> int:
     """Delete all GCS blobs under ``<bucket>/<project_id>/``.
 
@@ -363,6 +375,7 @@ def generate_signed_view_url(
     filename: str | None = None,
     content_type: str = "application/pdf",
     expires_in_seconds: int | None = None,
+    **kwargs,
 ) -> tuple[str, int]:
     """Generate a short-lived signed GET URL for viewing a file in the browser."""
     client = _get_client()
@@ -432,12 +445,17 @@ def generate_signed_view_url(
                 "Set GCS_SIGNING_SERVICE_ACCOUNT_EMAIL and ensure ADC is available."
             )
 
+        disposition = (
+            f'attachment; filename="{safe_name}"'
+            if kwargs.get("as_download")
+            else f'inline; filename="{safe_name}"'
+        )
         url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(seconds=exp),
             method="GET",
             response_type=content_type,
-            response_disposition=f'inline; filename="{safe_name}"',
+            response_disposition=disposition,
             service_account_email=service_account_email,
             access_token=access_token,
         )

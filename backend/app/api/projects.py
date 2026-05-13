@@ -382,6 +382,67 @@ def get_file_view_url(
     return FileViewUrlResponse(url=url, expires_in_seconds=exp)
 
 
+@router.get("/{project_id}/files/{file_id}/download-url", response_model=FileViewUrlResponse)
+def get_file_download_url(
+    project_id: UUID,
+    file_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    """Return a signed URL that triggers a file download (content-disposition: attachment)."""
+    project, _ = require_project_access(db, user.id, project_id)
+    file = (
+        db.query(File)
+        .filter(File.id == file_id, File.project_id == project.id)
+        .first()
+    )
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    if file.upload_status != "uploaded":
+        raise HTTPException(status_code=409, detail="File is not uploaded yet")
+
+    try:
+        url, exp = generate_signed_view_url(
+            gcs_uri=file.gcs_uri,
+            filename=file.original_name,
+            content_type=file.content_type or "application/pdf",
+            as_download=True,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to generate download URL: {exc}")
+
+    return FileViewUrlResponse(url=url, expires_in_seconds=exp)
+
+
+@router.delete("/{project_id}/files/{file_id}", status_code=204)
+def delete_project_file(
+    project_id: UUID,
+    file_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a single file from the project (DB + GCS blob)."""
+    from app.services.gcs import delete_blob
+
+    project, _ = require_project_access(db, user.id, project_id)
+    file = (
+        db.query(File)
+        .filter(File.id == file_id, File.project_id == project.id)
+        .first()
+    )
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    gcs_uri = file.gcs_uri
+    db.delete(file)
+    db.commit()
+
+    try:
+        delete_blob(gcs_uri)
+    except Exception as exc:
+        logger.warning("DB record deleted but GCS blob removal failed: %s", exc)
+
+
 @router.get("/{project_id}/status")
 def get_project_status(
     project_id: UUID,

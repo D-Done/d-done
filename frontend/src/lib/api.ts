@@ -656,6 +656,25 @@ export async function getFileViewUrl(
   );
 }
 
+export async function getFileDownloadUrl(
+  projectId: string,
+  fileId: string,
+): Promise<{ url: string; expires_in_seconds: number }> {
+  return request<{ url: string; expires_in_seconds: number }>(
+    `/projects/${projectId}/files/${fileId}/download-url`,
+    { method: "GET" },
+  );
+}
+
+export async function deleteProjectFile(
+  projectId: string,
+  fileId: string,
+): Promise<void> {
+  await request<void>(`/projects/${projectId}/files/${fileId}`, {
+    method: "DELETE",
+  });
+}
+
 // ============================================================
 // Bbox Lab (Gemini bbox extraction on PDFs)
 // ============================================================

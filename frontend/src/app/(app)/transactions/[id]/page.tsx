@@ -757,11 +757,18 @@ export default function TransactionPage() {
                               variant="ghost"
                               size="icon"
                               className="rounded-xl"
-                              onClick={() =>
-                                toast.message("הורדה", {
-                                  description: "בקרוב: הורדת מסמך",
-                                })
-                              }
+                              title="הורד מסמך"
+                              onClick={async () => {
+                                try {
+                                  const { url } = await api.getFileDownloadUrl(project.id, f.id);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = f.original_name;
+                                  a.click();
+                                } catch {
+                                  toast.error("שגיאה בהורדת המסמך");
+                                }
+                              }}
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -769,20 +776,23 @@ export default function TransactionPage() {
                               variant="ghost"
                               size="icon"
                               className="rounded-xl text-destructive hover:text-destructive"
-                              onClick={() =>
-                                toast.message("מחיקה", {
-                                  description: "בקרוב: מחיקת מסמך",
-                                })
-                              }
+                              title="מחק מסמך"
+                              onClick={async () => {
+                                if (!confirm(`למחוק את "${f.original_name}"?`)) return;
+                                try {
+                                  await api.deleteProjectFile(project.id, f.id);
+                                  setProject((prev) =>
+                                    prev
+                                      ? { ...prev, files: prev.files.filter((x) => x.id !== f.id) }
+                                      : prev,
+                                  );
+                                  toast.success("המסמך נמחק");
+                                } catch {
+                                  toast.error("שגיאה במחיקת המסמך");
+                                }
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-xl"
-                            >
-                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
