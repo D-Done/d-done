@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, BriefcaseBusiness, LineChart, Loader2, Mail, Send } from "lucide-react";
+import { Building2, BriefcaseBusiness, Check, Copy, LineChart, Loader2, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import * as api from "@/lib/api";
@@ -71,6 +71,8 @@ export function VdrExternalUploadDialog({ open, onOpenChange, onSuccess }: Props
 
   // Result
   const [emailSent, setEmailSent] = useState(false);
+  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   function reset() {
     setStep("type");
@@ -82,6 +84,8 @@ export function VdrExternalUploadDialog({ open, onOpenChange, onSuccess }: Props
     setCounterpartyName("");
     setInvitedEmail("");
     setEmailSent(false);
+    setUploadUrl(null);
+    setCopied(false);
   }
 
   function handleClose(val: boolean) {
@@ -107,6 +111,7 @@ export function VdrExternalUploadDialog({ open, onOpenChange, onSuccess }: Props
         counterparty_name: counterpartyName.trim() || null,
       });
       setEmailSent(result.email_sent);
+      setUploadUrl(result.upload_url ?? null);
       setStep("done");
       onSuccess?.();
     } catch (err) {
@@ -291,8 +296,27 @@ export function VdrExternalUploadDialog({ open, onOpenChange, onSuccess }: Props
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {emailSent
                   ? `מייל עם קישור להעלאה נשלח ל-${invitedEmail}.`
-                  : `לא ניתן לשלוח מייל כרגע. הפרויקט נוצר ותוכל לשלוח את הקישור ידנית.`}
+                  : `לא ניתן לשלוח מייל כרגע. הפרויקט נוצר — שלח את הקישור הבא לצד החיצוני ידנית:`}
               </p>
+              {!emailSent && uploadUrl && (
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-left">
+                  <span className="flex-1 truncate text-xs font-mono text-slate-700 dark:text-slate-300 select-all" dir="ltr">
+                    {uploadUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(uploadUrl);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition"
+                    title="העתק קישור"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              )}
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
                 ברגע שהמסמכים יועלו, הניתוח יחל אוטומטית ותקבל התראה.
               </p>

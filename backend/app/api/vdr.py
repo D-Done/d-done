@@ -76,6 +76,7 @@ class VdrCreateResponse(BaseModel):
     status: str
     expires_at: str
     email_sent: bool
+    upload_url: str  # always returned so the owner can share it manually if email fails
 
 
 class VdrPublicInfoResponse(BaseModel):
@@ -221,6 +222,7 @@ def create_vdr_request(
         status="pending",
         expires_at=expires_at.isoformat(),
         email_sent=email_sent,
+        upload_url=upload_url,
     )
 
 

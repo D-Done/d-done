@@ -696,6 +696,7 @@ export interface VdrCreateResponse {
   status: string;
   expires_at: string;
   email_sent: boolean;
+  upload_url: string;
 }
 
 export interface VdrPublicInfo {
