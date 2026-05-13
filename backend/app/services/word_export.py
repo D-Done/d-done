@@ -163,15 +163,16 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
     risk_label = RISK_LABEL_HE.get(es.risk_level, es.risk_level)
     _add_bold_label(doc, "רמת סיכון", risk_label)
     _add_bold_label(doc, "סיכום", es.summary)
-    _add_bold_label(doc, "המלצה", es.recommendation)
+    if rec := getattr(es, "recommendation", None):
+        _add_bold_label(doc, "המלצה", rec)
 
-    if es.key_risks:
+    if getattr(es, "key_risks", None):
         para = doc.add_paragraph()
         _set_rtl_paragraph(para)
         r = para.add_run("סיכונים עיקריים:")
         r.bold = True
         _set_rtl_run(r)
-        for risk in es.key_risks:
+        for risk in getattr(es, "key_risks", []):
             p = doc.add_paragraph(style="List Bullet")
             _set_rtl_paragraph(p)
             run = p.add_run(risk)
@@ -349,14 +350,15 @@ def _build_standard_report(doc: Document, report: DDReport, project_title: str) 
     es = report.executive_summary
     _add_bold_label(doc, "רמת סיכון", RISK_LABEL_HE.get(es.risk_level, es.risk_level))
     _add_bold_label(doc, "סיכום", es.summary)
-    _add_bold_label(doc, "המלצה", es.recommendation)
-    if es.key_risks:
+    if rec := getattr(es, "recommendation", None):
+        _add_bold_label(doc, "המלצה", rec)
+    if getattr(es, "key_risks", None):
         para = doc.add_paragraph()
         _set_rtl_paragraph(para)
         r = para.add_run("סיכונים עיקריים:")
         r.bold = True
         _set_rtl_run(r)
-        for risk in es.key_risks:
+        for risk in getattr(es, "key_risks", []):
             p = doc.add_paragraph(style="List Bullet")
             _set_rtl_paragraph(p)
             run = p.add_run(risk)
