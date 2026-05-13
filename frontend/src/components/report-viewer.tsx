@@ -12,14 +12,18 @@ import {
   Gavel,
   Info,
   Landmark,
+  Loader2,
+  MessageSquare,
   Scale,
   Shield,
   Sparkles,
   TrendingUp,
   Users,
+  X,
   XCircle,
 } from "lucide-react";
 import * as api from "@/lib/api";
+import type { ReportComment } from "@/lib/api";
 import type {
   BoundingBox,
   DDReport,
@@ -143,7 +147,7 @@ function SeverityIcon({ severity }: { severity: FindingSeverity }) {
   }
 }
 
-/* ─── Section wrapper for consistent styling ──────────────────────── */
+/* ─── Section wrapper with inline comment support ─────────────────── */
 
 function ReportSection({
   icon,
@@ -151,24 +155,66 @@ function ReportSection({
   tooltip,
   children,
   className,
+  sectionKey,
+  comments = [],
+  onAddComment,
+  onDeleteComment,
 }: {
   icon: React.ReactNode;
   title: string;
-  /** Optional tooltip shown on hover over the section title */
   tooltip?: string;
   children: React.ReactNode;
   className?: string;
+  sectionKey?: string;
+  comments?: ReportComment[];
+  onAddComment?: (sectionKey: string, content: string) => Promise<void>;
+  onDeleteComment?: (commentId: string) => Promise<void>;
 }) {
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (!newComment.trim() || !sectionKey || !onAddComment) return;
+    setSubmitting(true);
+    try {
+      await onAddComment(sectionKey, newComment.trim());
+      setNewComment("");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const titleEl = (
-    <CardTitle className="flex items-center gap-2.5 text-xl font-bold">
-      <div className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2">{icon}</div>
-      {title}
-    </CardTitle>
+    <div className="flex items-center gap-2.5 w-full">
+      <CardTitle className="flex items-center gap-2.5 text-xl font-bold flex-1 min-w-0">
+        <div className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2 shrink-0">{icon}</div>
+        {title}
+      </CardTitle>
+      {sectionKey && (
+        <button
+          onClick={() => setShowComments((v) => !v)}
+          className={cn(
+            "shrink-0 flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors",
+            showComments || comments.length > 0
+              ? "text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800"
+              : "text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 opacity-0 group-hover:opacity-100",
+          )}
+          title="הערות"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {comments.length > 0 && (
+            <span className="font-semibold">{comments.length}</span>
+          )}
+        </button>
+      )}
+    </div>
   );
+
   return (
     <Card
       className={cn(
-        "rounded-3xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden",
+        "rounded-3xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden group",
         className,
       )}
     >
@@ -176,9 +222,7 @@ function ReportSection({
         {tooltip ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="cursor-help inline-flex items-center gap-2.5">
-                {titleEl}
-              </span>
+              <span className="cursor-help w-full">{titleEl}</span>
             </TooltipTrigger>
             <TooltipContent side="left" className="max-w-[280px]">
               {tooltip}
@@ -186,6 +230,68 @@ function ReportSection({
           </Tooltip>
         ) : (
           titleEl
+        )}
+
+        {/* ── Comment thread (expands below title) ───────────────── */}
+        {showComments && sectionKey && (
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            {comments.length === 0 && (
+              <p className="text-xs text-slate-400 dark:text-slate-500">אין הערות עדיין</p>
+            )}
+            {comments.map((c) => (
+              <div key={c.id} className="flex gap-2.5 group/cmt">
+                <div className="h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 mt-0.5">
+                  {(c.author_name ?? c.author_email ?? "?")[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {c.author_name ?? c.author_email ?? "משתמש"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {new Date(c.created_at).toLocaleDateString("he-IL", {
+                        day: "2-digit", month: "2-digit", year: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">{c.content}</p>
+                </div>
+                {onDeleteComment && (
+                  <button
+                    onClick={() => onDeleteComment(c.id)}
+                    className="opacity-0 group-hover/cmt:opacity-100 transition p-1 text-slate-300 hover:text-red-400 rounded shrink-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* New comment input */}
+            {onAddComment && (
+              <div className="flex gap-2 pt-1" dir="rtl">
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && newComment.trim()) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                  placeholder="הוסף הערה..."
+                  className="flex-1 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 placeholder:text-slate-400 dark:text-slate-200"
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={!newComment.trim() || submitting}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-40 transition shrink-0"
+                >
+                  {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "שלח"}
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -368,6 +474,34 @@ export function ReportViewer({
     new Map(),
   );
   const [, forceCitationsRerender] = useState(0);
+
+  // ── Comments ─────────────────────────────────────────────────────────────
+  const [comments, setComments] = useState<ReportComment[]>([]);
+  useEffect(() => {
+    if (!projectId) return;
+    api.listReportComments(projectId).then(setComments).catch(() => {});
+  }, [projectId]);
+
+  const commentsBySection = useMemo(() => {
+    const map: Record<string, ReportComment[]> = {};
+    for (const c of comments) {
+      if (!map[c.section_key]) map[c.section_key] = [];
+      map[c.section_key].push(c);
+    }
+    return map;
+  }, [comments]);
+
+  const handleAddComment = useCallback(async (sectionKey: string, content: string) => {
+    if (!projectId) return;
+    const c = await api.addReportComment(projectId, sectionKey, content);
+    setComments((prev) => [...prev, c]);
+  }, [projectId]);
+
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    if (!projectId) return;
+    await api.deleteReportComment(projectId, commentId);
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  }, [projectId]);
 
 
   const canOpenCitations =
@@ -809,6 +943,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Building2 className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="פרטי המתחם"
+            sectionKey="compound_details"
+            comments={commentsBySection["compound_details"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="זיהוי ותיאור המקרקעין, תוך ביצוע הצלבה והשוואה בין מסמכי המקור השונים"
           >
             <div className="space-y-5">
@@ -879,6 +1017,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Users className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="טבלת דיירים"
+            sectionKey="tenant_table"
+            comments={commentsBySection["tenant_table"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="ריכוז בעלי הזכויות לפי נסח הטאבו, פירוט הערות אזהרה/מניעה ובדיקת סטטוס החתימות על הסכם הפרויקט"
           >
             <div className="space-y-5">
@@ -971,6 +1113,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Gavel className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="חתימת היזם"
+            sectionKey="developer_signature"
+            comments={commentsBySection["developer_signature"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="התקשרות וייצוג משפטי — פרטי הגורמים המייצגים, מועד חתימת היזם וזיהוי מורשי החתימה בפרויקט"
           >
             <div className="space-y-0">
@@ -1005,6 +1151,10 @@ export function ReportViewer({
           <ReportSection
             icon={<FileText className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="תוספות להסכם"
+            sectionKey="agreement_addenda"
+            comments={commentsBySection["agreement_addenda"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="ממצאים הנוגעים לתוספות ומכתבי הטבה — בדיקת תיאום מול דו״ח האפס"
           >
             <FindingsGroup items={addendumFindings} />
@@ -1016,6 +1166,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Scale className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="באי כוח"
+            sectionKey="legal_representation"
+            comments={commentsBySection["legal_representation"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="התקשרות וייצוג משפטי — פרטי הגורמים המייצגים, מועד חתימת היזם וזיהוי מורשי החתימה בפרויקט"
           >
             <div className="space-y-0">
@@ -1030,6 +1184,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Landmark className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="הגוף המממן"
+            sectionKey="financing_body"
+            comments={commentsBySection["financing_body"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="בחינת הגוף המממן — סקירה וניתוח אופי הגוף המלווה (בנקאי/חוץ-בנקאי)"
           >
             <div className="space-y-0">
@@ -1076,6 +1234,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Shield className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="ערבויות וביטחונות"
+            sectionKey="guarantees"
+            comments={commentsBySection["guarantees"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="ערבויות — פירוט סוגי הערבויות בהסכם הפרויקט"
           >
             <div>
@@ -1136,6 +1298,10 @@ export function ReportViewer({
             <ReportSection
               icon={<ArrowUpDown className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
               title="שדרוג ושנמוך דירת התמורה"
+            sectionKey="upgrade_downgrade"
+            comments={commentsBySection["upgrade_downgrade"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
               tooltip="זכאות הדיירים לשדרג או להוריד את מפרט דירת התמורה שלהם לפי ההסכם"
             >
               <div className="space-y-0">
@@ -1161,6 +1327,10 @@ export function ReportViewer({
           <ReportSection
             icon={<FileText className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="לוחות זמנים וסטטוס תכנוני"
+            sectionKey="timelines"
+            comments={commentsBySection["timelines"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip={
               'ניתוח צפי הביצוע והשוואת אבני הדרך בין התחייבויות ההסכם לתחזית בדו"ח האפס'
             }
@@ -1213,6 +1383,10 @@ export function ReportViewer({
           <ReportSection
             icon={<Users className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
             title="ממשל תאגידי ושעבודים"
+            sectionKey="corporate_governance"
+            comments={commentsBySection["corporate_governance"] ?? []}
+            onAddComment={projectId ? handleAddComment : undefined}
+            onDeleteComment={projectId ? handleDeleteComment : undefined}
             tooltip="סקירת מבנה הבעלות (שרשרת אחזקות) ובדיקת שעבודים קיימים על החברות ובעלי השליטה"
           >
             <div className="space-y-4">

@@ -1089,3 +1089,36 @@ export async function addGroupToProject(
     { method: "POST" },
   );
 }
+
+// ── Report Comments ──────────────────────────────────────────────────────────
+
+export interface ReportComment {
+  id: string;
+  section_key: string;
+  content: string;
+  author_name: string | null;
+  author_email: string | null;
+  created_at: string;
+}
+
+export async function listReportComments(projectId: string): Promise<ReportComment[]> {
+  return request<ReportComment[]>(`/projects/${projectId}/comments`);
+}
+
+export async function addReportComment(
+  projectId: string,
+  sectionKey: string,
+  content: string,
+): Promise<ReportComment> {
+  return request<ReportComment>(`/projects/${projectId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ section_key: sectionKey, content }),
+  });
+}
+
+export async function deleteReportComment(
+  projectId: string,
+  commentId: string,
+): Promise<void> {
+  await request<void>(`/projects/${projectId}/comments/${commentId}`, { method: "DELETE" });
+}

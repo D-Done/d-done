@@ -2,17 +2,20 @@
 
 Generates a Hebrew RTL .docx file from a RealEstateFinanceDDReport or DDReport.
 Uses python-docx with manual XML tweaks for right-to-left paragraph support.
+In-app comments are injected as proper Word margin comments via ZIP post-processing.
 """
 
 from __future__ import annotations
 
 import io
-from datetime import date
+import zipfile
+from datetime import date, datetime, timezone
 from typing import Any
 
 from docx import Document
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from lxml import etree
 
 from app.agents.schemas import (
     DDReport,
@@ -20,6 +23,28 @@ from app.agents.schemas import (
     Finding,
     TenantRow,
 )
+
+# ── XML namespaces ────────────────────────────────────────────────────────────
+
+_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
+_CT = "http://schemas.openxmlformats.org/package/2006/content-types"
+
+# Maps section_key → heading text that appears verbatim in the DOCX
+SECTION_HEADING_TEXTS: dict[str, str] = {
+    "executive_summary": "1. סיכום מנהלים",
+    "compound_details": "3. פרטי המתחם",
+    "tenant_table": "4. טבלת דיירים",
+    "developer_signature": "5. חתימת היזם",
+    "legal_representation": "6. באי כוח",
+    "financing_body": "7. גוף המימון",
+    "zero_report": '8. דו"ח אפס',
+    "corporate_governance": "10. שרשרת בעלות (UBO)",
+    "findings": "12. ממצאים",
+    # Standard report
+    "findings_std": "3. ממצאים",
+}
 
 # ---------------------------------------------------------------------------
 # RTL helpers
@@ -476,8 +501,13 @@ def _configure_document_rtl(doc: Document) -> None:
 def generate_word_report(
     report: DDReport | RealEstateFinanceDDReport,
     project_title: str,
+    comments_by_section: dict[str, list[dict]] | None = None,
 ) -> bytes:
-    """Generate a .docx file from a DD report and return its bytes."""
+    """Generate a .docx file from a DD report and return its bytes.
+
+    comments_by_section: {section_key: [{content, author_name, author_email, created_at}, ...]}
+    If provided, comments are injected as proper Word margin comments.
+    """
     doc = Document()
     _configure_document_rtl(doc)
 
@@ -488,5 +518,114 @@ def generate_word_report(
 
     buffer = io.BytesIO()
     doc.save(buffer)
-    buffer.seek(0)
-    return buffer.read()
+    docx_bytes = buffer.getvalue()
+
+    if comments_by_section:
+        docx_bytes = _inject_word_comments(docx_bytes, comments_by_section)
+
+    return docx_bytes
+
+
+# ── Word comment injection (ZIP post-processing) ──────────────────────────────
+
+def _inject_word_comments(
+    docx_bytes: bytes,
+    comments_by_section: dict[str, list[dict]],
+) -> bytes:
+    """
+    Post-process the DOCX ZIP to embed proper Word comment XML.
+    Each comment appears as a margin annotation on the matching section heading.
+    """
+    # Build text→comments map using known heading labels
+    label_to_comments: dict[str, list[dict]] = {}
+    for section_key, cmts in comments_by_section.items():
+        label = SECTION_HEADING_TEXTS.get(section_key)
+        if label and cmts:
+            label_to_comments[label] = cmts
+
+    if not label_to_comments:
+        return docx_bytes
+
+    with zipfile.ZipFile(io.BytesIO(docx_bytes), "r") as zin:
+        all_files = {info.filename: zin.read(info.filename) for info in zin.infolist()}
+
+    doc_tree = etree.fromstring(all_files["word/document.xml"])
+
+    comments_list: list[tuple[int, str, str, str]] = []
+    comment_id = 0
+
+    for para in doc_tree.iter(f"{{{_W}}}p"):
+        para_text = "".join(t.text or "" for t in para.iter(f"{{{_W}}}t"))
+        if para_text not in label_to_comments:
+            continue
+        for cmt in label_to_comments[para_text]:
+            cid = comment_id
+            comment_id += 1
+
+            cs = etree.Element(f"{{{_W}}}commentRangeStart")
+            cs.set(f"{{{_W}}}id", str(cid))
+            para.insert(0, cs)
+
+            ce = etree.Element(f"{{{_W}}}commentRangeEnd")
+            ce.set(f"{{{_W}}}id", str(cid))
+            para.append(ce)
+
+            ref_run = etree.Element(f"{{{_W}}}r")
+            rpr = etree.SubElement(ref_run, f"{{{_W}}}rPr")
+            rs = etree.SubElement(rpr, f"{{{_W}}}rStyle")
+            rs.set(f"{{{_W}}}val", "CommentReference")
+            etree.SubElement(ref_run, f"{{{_W}}}annotationRef")
+            para.append(ref_run)
+
+            author = cmt.get("author_name") or cmt.get("author_email") or "Reviewer"
+            ca = cmt.get("created_at")
+            if isinstance(ca, datetime):
+                date_str = ca.strftime("%Y-%m-%dT%H:%M:%SZ")
+            elif ca:
+                date_str = str(ca)
+            else:
+                date_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            comments_list.append((cid, author, date_str, cmt["content"]))
+
+    # Build comments.xml
+    croot = etree.Element(f"{{{_W}}}comments", nsmap={"w": _W, "r": _R})
+    for cid, author, date_str, text in comments_list:
+        ce = etree.SubElement(croot, f"{{{_W}}}comment")
+        ce.set(f"{{{_W}}}id", str(cid))
+        ce.set(f"{{{_W}}}author", author)
+        ce.set(f"{{{_W}}}date", date_str)
+        cp = etree.SubElement(ce, f"{{{_W}}}p")
+        cr = etree.SubElement(cp, f"{{{_W}}}r")
+        ct_elem = etree.SubElement(cr, f"{{{_W}}}t")
+        ct_elem.text = text
+
+    all_files["word/document.xml"] = etree.tostring(
+        doc_tree, xml_declaration=True, encoding="UTF-8", standalone=True
+    )
+    all_files["word/comments.xml"] = etree.tostring(
+        croot, xml_declaration=True, encoding="UTF-8", standalone=True
+    )
+
+    # Add comments relationship
+    rels_raw = all_files.get("word/_rels/document.xml.rels", b"<Relationships/>")
+    rels_tree = etree.fromstring(rels_raw)
+    rel = etree.SubElement(rels_tree, f"{{{_REL}}}Relationship")
+    rel.set("Id", "rIdComments")
+    rel.set("Type", f"{_R}/comments")
+    rel.set("Target", "comments.xml")
+    all_files["word/_rels/document.xml.rels"] = etree.tostring(rels_tree)
+
+    # Add content type override
+    ct_tree = etree.fromstring(all_files["[Content_Types].xml"])
+    ov = etree.SubElement(ct_tree, f"{{{_CT}}}Override")
+    ov.set("PartName", "/word/comments.xml")
+    ov.set("ContentType",
+           "application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml")
+    all_files["[Content_Types].xml"] = etree.tostring(ct_tree)
+
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for filename, data in all_files.items():
+            zout.writestr(filename, data)
+    return out.getvalue()

@@ -841,7 +841,28 @@ def export_check_word(
         report = DDReport.model_validate(report_dict)
 
     project_title = project.title or "report"
-    docx_bytes = generate_word_report(report, project_title)
+
+    # Attach in-app comments as Word margin annotations
+    from app.db.models import ReportComment
+    raw_comments = (
+        db.query(ReportComment)
+        .filter(ReportComment.project_id == project_id)
+        .order_by(ReportComment.created_at.asc())
+        .all()
+    )
+    comments_by_section: dict[str, list[dict]] = {}
+    for c in raw_comments:
+        key = c.section_key
+        if key not in comments_by_section:
+            comments_by_section[key] = []
+        comments_by_section[key].append({
+            "content": c.content,
+            "author_name": c.author_name,
+            "author_email": c.author_email,
+            "created_at": c.created_at,
+        })
+
+    docx_bytes = generate_word_report(report, project_title, comments_by_section or None)
 
     safe_title = (
         "".join(c for c in project_title if c.isalnum() or c in " -_")

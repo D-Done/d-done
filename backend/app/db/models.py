@@ -211,6 +211,7 @@ class Project(Base):
     )
     files = relationship("File", back_populates="project", cascade="all, delete-orphan")
     dd_checks = relationship("DDCheck", back_populates="project", cascade="all, delete-orphan")
+    report_comments = relationship("ReportComment", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Project id={self.id} title={self.title!r} status={self.status}>"
@@ -534,3 +535,27 @@ class AuditLog(Base):
 
     def __repr__(self) -> str:
         return f"<AuditLog id={self.id} action={self.action!r} entity={self.entity_type}>"
+
+
+class ReportComment(Base):
+    """An in-app comment on a specific section of a DD report."""
+
+    __tablename__ = "report_comments"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id = Column(
+        Uuid,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    section_key = Column(String(100), nullable=False)
+    content = Column(Text, nullable=False)
+    author_name = Column(String(200), nullable=True)
+    author_email = Column(String(200), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    project = relationship("Project", back_populates="report_comments")
+
+    def __repr__(self) -> str:
+        return f"<ReportComment id={self.id} section={self.section_key!r}>"
