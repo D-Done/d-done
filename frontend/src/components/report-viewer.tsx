@@ -234,24 +234,27 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
     return m;
   }, [graph.nodes]);
 
-  const childrenByToId = useMemo(() => {
+  // Individuals (UBOs) at top → owned companies below.
+  // Edge semantics: from_id owns share_pct of to_id.
+  // Roots = nodes not owned by anyone (not in to_id) = ultimate owners (individuals).
+  const childrenByFromId = useMemo(() => {
     const m = new Map<
       string,
       Array<{ node: UboNode; share_pct: string | null }>
     >();
     graph.edges.forEach((e: UboEdge) => {
-      const node = nodeMap.get(e.from_id);
+      const node = nodeMap.get(e.to_id);
       if (!node) return;
-      const list = m.get(e.to_id) ?? [];
+      const list = m.get(e.from_id) ?? [];
       list.push({ node, share_pct: e.share_pct ?? null });
-      m.set(e.to_id, list);
+      m.set(e.from_id, list);
     });
     return m;
   }, [graph.edges, nodeMap]);
 
   const rootIds = useMemo(() => {
-    const fromIds = new Set(graph.edges.map((e) => e.from_id));
-    return graph.nodes.filter((n) => !fromIds.has(n.id)).map((n) => n.id);
+    const toIds = new Set(graph.edges.map((e) => e.to_id));
+    return graph.nodes.filter((n) => !toIds.has(n.id)).map((n) => n.id);
   }, [graph.nodes, graph.edges]);
 
   function TreeNode({
@@ -263,7 +266,7 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
   }) {
     const node = nodeMap.get(nodeId);
     if (!node) return null;
-    const children = childrenByToId.get(nodeId) ?? [];
+    const children = childrenByFromId.get(nodeId) ?? [];
     return (
       <div className="flex flex-col items-center">
         <div
