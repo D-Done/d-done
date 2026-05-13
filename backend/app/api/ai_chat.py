@@ -38,8 +38,10 @@ from app.db.session import AsyncSessionLocal
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
 logger = logging.getLogger(__name__)
 
-GEMINI_CHAT_MODEL = "gemini-2.0-flash-lite"   # text-only, no file support needed
-GEMINI_FILES_MODEL = "gemini-2.0-flash"          # GCS file references (lite not available on Vertex)
+# Use the same flash model as bbox_lab (known to work on this Vertex AI project)
+from app.api.bbox_lab import GEMINI_MODELS as _BBOX_MODELS
+GEMINI_CHAT_MODEL = _BBOX_MODELS["flash"]    # "gemini-3-flash-preview"
+GEMINI_FILES_MODEL = _BBOX_MODELS["flash"]   # same for GCS path
 
 
 def _utcnow() -> datetime:

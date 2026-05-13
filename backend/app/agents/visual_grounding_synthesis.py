@@ -20,7 +20,6 @@ from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.readonly_context import ReadonlyContext
 
 from app.agents.constants import (
-    FLASH_MODEL,
     STATE_DOCUMENT_NAMES,
     STATE_ENRICHED_REPORT,
     STATE_REPRESENTING_ROLE,
@@ -30,14 +29,16 @@ from app.agents.synthesis.prompt import get_details_prompt, get_main_prompt
 from app.agents.synthesis.schema import RealEstateFinanceDDReport
 from app.agents.utils import make_generate_config
 from app.agents.visual_grounding_pipeline_agent import (
+    GEMINI_31_PRO,
     _repair_truncated_json,
 )
 from app.agents.synthesis.agent import EXTRACTOR_OUTPUTS
 
 # Synthesis is text-only JSON audit (box_2d already in extractor output).
-# Flash is significantly faster than 3.1 Pro and handles structured output well.
-SYNTHESIS_MODEL = FLASH_MODEL
-SYNTHESIS_MAX_OUTPUT_TOKENS = 32_768
+# Use the same pro model as extractors — confirmed available on this Vertex AI project.
+# (gemini-2.5-flash from settings is not guaranteed to be deployed in this environment.)
+SYNTHESIS_MODEL = GEMINI_31_PRO
+SYNTHESIS_MAX_OUTPUT_TOKENS = 40_960
 
 logger = logging.getLogger(__name__)
 
