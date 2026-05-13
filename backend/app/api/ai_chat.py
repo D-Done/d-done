@@ -38,7 +38,8 @@ from app.db.session import AsyncSessionLocal
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
 logger = logging.getLogger(__name__)
 
-GEMINI_CHAT_MODEL = "gemini-2.0-flash-lite"
+GEMINI_CHAT_MODEL = "gemini-2.0-flash-lite"   # text-only, no file support needed
+GEMINI_FILES_MODEL = "gemini-2.0-flash"          # GCS file references (lite not available on Vertex)
 
 
 def _utcnow() -> datetime:
@@ -505,14 +506,14 @@ def _run_ask_with_gcs(
 
     logger.info(
         "Ask-GCS: model=%s files=%d has_context=%s question=%s",
-        GEMINI_CHAT_MODEL,
+        GEMINI_FILES_MODEL,
         len(gcs_uris),
         bool(extra_context),
         question[:100],
     )
 
     response = client.models.generate_content(
-        model=GEMINI_CHAT_MODEL,
+        model=GEMINI_FILES_MODEL,
         contents=[types.Content(role="user", parts=parts)],
         config=config,
     )
@@ -579,6 +580,6 @@ def _run_ask_with_gcs(
     return _AskResp(
         answer=data.get("answer", "") or raw_text,
         citations=citations,
-        model_used=GEMINI_CHAT_MODEL,
+        model_used=GEMINI_FILES_MODEL,
         raw_token_usage=token_usage,
     )
