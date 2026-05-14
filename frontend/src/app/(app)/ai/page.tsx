@@ -53,15 +53,13 @@ import {
   Plus,
   Send,
   Sparkles,
+  ShieldCheck,
+  BarChart2,
+  FileSearch,
   Trash2,
   User,
   X,
 } from "lucide-react";
-
-const ParticleField = dynamic(
-  () => import("@/components/particle-field").then((m) => m.ParticleField),
-  { ssr: false },
-);
 
 const PdfCitationViewer = dynamic(
   () =>
@@ -574,41 +572,55 @@ export default function AiPage() {
                     {t("ai_no_convs", lang)}
                   </p>
                 )}
-                {conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => selectConversation(conv.id)}
-                    className={`group w-full text-right rounded-xl px-3 py-2.5 transition-all duration-150 flex flex-col gap-1 ${
-                      currentConvId === conv.id
-                        ? "bg-zinc-100 dark:bg-zinc-900/10 text-zinc-900 dark:text-zinc-100 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40"
-                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60 text-zinc-700 dark:text-zinc-200"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-60" />
-                      <span className="flex-1 text-xs font-medium leading-snug line-clamp-2 text-right">
-                        {conv.title || t("ai_new_conv", lang)}
-                      </span>
-                      <button
-                        onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        className="opacity-0 group-hover:opacity-100 shrink-0 rounded-md p-0.5 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-500 transition-all"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                {(() => {
+                  const now = new Date();
+                  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const startOfYesterday = new Date(startOfToday); startOfYesterday.setDate(startOfToday.getDate() - 1);
+                  const startOfWeek = new Date(startOfToday); startOfWeek.setDate(startOfToday.getDate() - 7);
+                  const groups: { label: string; items: typeof conversations }[] = [
+                    { label: lang === "en" ? "Today" : "היום", items: conversations.filter(c => new Date(c.updated_at) >= startOfToday) },
+                    { label: lang === "en" ? "Yesterday" : "אתמול", items: conversations.filter(c => new Date(c.updated_at) >= startOfYesterday && new Date(c.updated_at) < startOfToday) },
+                    { label: lang === "en" ? "Past 7 days" : "7 ימים אחרונים", items: conversations.filter(c => new Date(c.updated_at) >= startOfWeek && new Date(c.updated_at) < startOfYesterday) },
+                    { label: lang === "en" ? "Earlier" : "קודם לכן", items: conversations.filter(c => new Date(c.updated_at) < startOfWeek) },
+                  ];
+                  return groups.map(({ label, items }) => items.length === 0 ? null : (
+                    <div key={label}>
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
+                      {items.map((conv) => (
+                        <button
+                          key={conv.id}
+                          onClick={() => selectConversation(conv.id)}
+                          className={`group w-full text-right rounded-xl px-3 py-2.5 transition-all duration-150 flex flex-col gap-0.5 ${
+                            currentConvId === conv.id
+                              ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40"
+                              : "hover:bg-zinc-100/70 dark:hover:bg-zinc-800/40 text-zinc-700 dark:text-zinc-200"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-zinc-400" />
+                            <span className="flex-1 text-xs font-medium leading-snug line-clamp-1 text-right">
+                              {conv.title || t("ai_new_conv", lang)}
+                            </span>
+                            <button
+                              onClick={(e) => handleDeleteConversation(conv.id, e)}
+                              className="opacity-0 group-hover:opacity-100 shrink-0 rounded-md p-0.5 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-500 transition-all"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                          {conv.project_title && (
+                            <div className="flex items-center gap-1 pr-5">
+                              <FolderOpen className="h-3 w-3 text-zinc-400 shrink-0" />
+                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {conv.project_title}
+                              </span>
+                            </div>
+                          )}
+                        </button>
+                      ))}
                     </div>
-                    {conv.project_title && (
-                      <div className="flex items-center gap-1 pr-5">
-                        <FolderOpen className="h-3 w-3 text-zinc-400 shrink-0" />
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-300 truncate font-medium">
-                          {conv.project_title}
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pr-5">
-                      {new Date(conv.updated_at).toLocaleDateString(locale)}
-                    </p>
-                  </button>
-                ))}
+                  ));
+                })()}
               </div>
             </motion.div>
           )}
@@ -624,9 +636,10 @@ export default function AiPage() {
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
         >
-          {/* Background particles */}
-          <div className="absolute inset-0 overflow-hidden opacity-60">
-            <ParticleField />
+          {/* Subtle gradient background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-violet-100/40 dark:bg-violet-900/10 blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-sky-100/40 dark:bg-sky-900/10 blur-3xl" />
           </div>
 
           {/* Drag overlay */}
@@ -778,36 +791,61 @@ export default function AiPage() {
 
           {/* Messages */}
           <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-6 space-y-6 scroll-smooth">
-            {/* No conversation selected */}
+            {/* No conversation selected — welcome screen */}
             {!currentConvId && !loading && (
               <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="flex h-full flex-col items-center justify-center gap-4"
+                className="flex h-full flex-col items-center justify-center gap-6 px-4"
               >
-                <motion.div
-                  variants={itemVariants}
-                  className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/60 dark:bg-zinc-800/60 backdrop-blur-xl shadow-lg ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40"
-                >
-                  <Bot className="h-10 w-10 text-zinc-500" />
+                {/* Icon */}
+                <motion.div variants={itemVariants} className="relative">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-xl shadow-violet-500/25">
+                    <Sparkles className="h-9 w-9 text-white" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-900 shadow-sm">
+                    <div className="h-2 w-2 rounded-full bg-white" />
+                  </div>
                 </motion.div>
-                <motion.h2
-                  variants={itemVariants}
-                  className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight"
-                >
-                  {t("ai_welcome_title", lang)}
-                </motion.h2>
-                <motion.p
-                  variants={itemVariants}
-                  className="max-w-sm text-center text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed"
-                >
-                  {t("ai_welcome_body", lang)}
-                </motion.p>
-                <motion.div variants={itemVariants} className="flex gap-3 mt-2">
+
+                {/* Title + subtitle */}
+                <motion.div variants={itemVariants} className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    {t("ai_welcome_title", lang)}
+                  </h2>
+                  <p className="max-w-xs text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    {t("ai_welcome_body", lang)}
+                  </p>
+                </motion.div>
+
+                {/* Starter question cards */}
+                <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 w-full max-w-xl mt-1">
+                  {[
+                    { icon: FileSearch, label: lang === "en" ? "What is a Zero Report?" : "מה זה דוח אפס?", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40" },
+                    { icon: ShieldCheck, label: lang === "en" ? "What's checked in due diligence?" : "מה בודקים בבדיקת נאותות?", color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/40" },
+                    { icon: BarChart2, label: lang === "en" ? "RE financing risks?" : "סיכונים במימון נדל\"ן?", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+                  ].map(({ icon: Icon, label, color, bg }) => (
+                    <button
+                      key={label}
+                      onClick={() => { setInput(label); inputRef.current?.focus(); }}
+                      className="group flex flex-col items-center gap-2.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/60 bg-white/70 dark:bg-zinc-800/50 p-4 text-center backdrop-blur-sm hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md transition-all duration-200"
+                    >
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>
+                        <Icon className={`h-4.5 w-4.5 ${color}`} strokeWidth={1.75} />
+                      </div>
+                      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 leading-snug">
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </motion.div>
+
+                {/* Action buttons */}
+                <motion.div variants={itemVariants} className="flex gap-3">
                   <Button
                     onClick={handleNewConversation}
-                    className="rounded-xl bg-zinc-900 text-white shadow-lg hover:bg-zinc-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-10 px-5 font-medium gap-2"
+                    className="rounded-xl bg-zinc-900 text-white shadow-lg hover:bg-zinc-700 transition-all duration-200 h-10 px-5 font-medium gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     {t("ai_new_conv", lang)}
