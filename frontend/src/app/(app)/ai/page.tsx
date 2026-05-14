@@ -804,53 +804,54 @@ export default function AiPage() {
                 </motion.div>
 
                 {/* Title + subtitle */}
-                <motion.div variants={itemVariants} className="text-center space-y-2">
-                  <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                <motion.div variants={itemVariants} className="text-center space-y-3">
+                  <h2 className="text-[2rem] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
                     What are you working on?
                   </h2>
-                  <p className="max-w-xs text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    {t("ai_welcome_body", lang)}
+                  <p className="max-w-sm text-sm text-zinc-400 dark:text-zinc-500 leading-relaxed">
+                    Connect a project, upload documents, or ask anything — D-DONE AI will answer with full context and citations.
                   </p>
                 </motion.div>
 
                 {/* Starter question cards */}
-                <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 w-full max-w-xl mt-1">
+                <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 w-full max-w-lg mt-1">
                   {[
-                    { icon: Sparkles, label: lang === "en" ? "What can D-DONE AI do?" : "מה D-DONE AI יכול לעשות?" },
-                    { icon: Link2, label: lang === "en" ? "How do I link a project?" : "איך מקשרים פרויקט?" },
-                    { icon: MessageSquare, label: lang === "en" ? "How do conversations work?" : "איך עובדות השיחות?" },
-                  ].map(({ icon: Icon, label }) => (
+                    { icon: Sparkles, label: "What can D-DONE AI do?", sub: "Capabilities & features" },
+                    { icon: Link2, label: "How do I link a project?", sub: "Connect your deal" },
+                    { icon: MessageSquare, label: "How do conversations work?", sub: "Memory & context" },
+                  ].map(({ icon: Icon, label, sub }) => (
                     <button
                       key={label}
                       onClick={() => { setInput(label); inputRef.current?.focus(); }}
-                      className="group flex flex-col items-center gap-2.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/60 bg-white/70 dark:bg-zinc-800/50 p-4 text-center backdrop-blur-sm hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md transition-all duration-200"
+                      className="group flex flex-col items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/60 p-4 text-left hover:border-zinc-900 dark:hover:border-zinc-500 hover:shadow-sm transition-all duration-200"
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-700/60">
-                        <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-300" strokeWidth={1.75} />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-700/60 group-hover:bg-zinc-900 group-hover:text-white dark:group-hover:bg-zinc-100 dark:group-hover:text-zinc-900 transition-colors duration-200">
+                        <Icon className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-300 group-hover:text-white dark:group-hover:text-zinc-900 transition-colors duration-200" strokeWidth={1.75} />
                       </div>
-                      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 leading-snug">
-                        {label}
-                      </span>
+                      <div>
+                        <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">{label}</p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">{sub}</p>
+                      </div>
                     </button>
                   ))}
                 </motion.div>
 
                 {/* Action buttons */}
-                <motion.div variants={itemVariants} className="flex gap-3">
+                <motion.div variants={itemVariants} className="flex gap-2.5">
                   <Button
                     onClick={handleNewConversation}
-                    className="rounded-xl bg-zinc-900 text-white shadow-lg hover:bg-zinc-700 transition-all duration-200 h-10 px-5 font-medium gap-2"
+                    className="rounded-xl bg-zinc-900 text-white hover:bg-zinc-700 transition-all duration-200 h-9 px-5 text-sm font-medium gap-2"
                   >
-                    <Plus className="h-4 w-4" />
-                    {t("ai_new_conv", lang)}
+                    <Plus className="h-3.5 w-3.5" />
+                    New conversation
                   </Button>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     variant="outline"
-                    className="rounded-xl h-10 px-5 font-medium gap-2"
+                    className="rounded-xl h-9 px-5 text-sm font-medium gap-2 border-zinc-200 dark:border-zinc-700"
                   >
-                    <FileUp className="h-4 w-4" />
-                    {t("ai_upload_docs", lang)}
+                    <FileUp className="h-3.5 w-3.5" />
+                    Upload documents
                   </Button>
                 </motion.div>
               </motion.div>
@@ -997,16 +998,10 @@ export default function AiPage() {
           {!loading && (
             <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-2 pt-1">
               {(hasProjectContext
-                ? lang === "en"
-                  ? ["Summarize the documents", "What are the main risks?", "List the deal parties", "Check key dates and deadlines"]
-                  : ["סכם את המסמכים", "מה הסיכונים העיקריים?", "פרט את הצדדים בעסקה", "בדוק תאריכים ומועדים חשובים"]
+                ? ["Summarize the documents", "What are the main risks?", "List the deal parties", "Check key dates and deadlines"]
                 : hasUploadedFiles
-                  ? lang === "en"
-                    ? ["Summarize the document", "What are the key points?", "What risks exist?", "What are the important dates?"]
-                    : ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
-                  : lang === "en"
-                    ? ["What can D-DONE AI do?", "How do I link a project?", "How do conversations work?"]
-                    : ["מה D-DONE AI יכול לעשות?", "איך מקשרים פרויקט?", "איך עובדות השיחות?"]
+                  ? ["Summarize the document", "What are the key points?", "What risks exist?", "What are the important dates?"]
+                  : ["What can D-DONE AI do?", "How do I link a project?", "How do conversations work?"]
               ).map((q) => (
                 <button
                   key={q}
