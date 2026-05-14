@@ -112,12 +112,24 @@ All tenant-table observations (unsigned owners, name mismatches, missing warning
 
 *Signing date and authorized signatory:*
 
-- Extract from agreement: developer signing date (developer_signed_date) + signatory name (authorized_signatory_name).
-- Cross-reference against the authorizing protocol: is the signatory authorized for this transaction type?
-  - Place result in developer_signature.signing_protocol_authorized (bool):
-        - true = protocol matches the signatory's identity and authority.
-        - false = mismatch found — add to high_risk_flags.
-        - null = protocol was not provided.
+Identify who actually signed the agreement on behalf of the developer using **two sources** from `agreement_extraction`:
+
+1. **Signature block** — `developer_signatory_name` (the name extracted from the signature block / execution page).
+2. **Attorney authentication line** — `attorney_authenticated_signatories` (names explicitly stated in the attorney's "אני הח"מ ... מאשר כי [name] חתם בפניי" line, if present).
+
+Use the following priority rule:
+- If `attorney_authenticated_signatories` is non-empty → use those names as the authoritative list of actual signatories (the authentication line is more reliable than a signature block that may carry only a stamp).
+- Otherwise fall back to `developer_signatory_name`.
+- Place the resolved name(s) in `authorized_signatory_name` (comma-separated if multiple).
+
+*Cross-reference against the authorizing protocol:*
+
+Compare the resolved signatory name(s) against `signing_protocol_extraction.authorized_signatories`:
+- Check both that the **name matches** an authorized signatory in the protocol AND that their **authority scope** covers this type of transaction (financing agreement / הסכם מימון).
+- Place result in `developer_signature.signing_protocol_authorized` (bool):
+  - `true` = protocol confirms the signatory is authorized for this transaction type.
+  - `false` = name not found in protocol, or found but scope does not cover this transaction → add to `high_risk_flags`: "החותם על ההסכם אינו מורשה חתימה על פי הפרוטוקול או שהסמכות אינה מכסה עסקאות מסוג זה."
+  - `null` = protocol was not provided.
 
 *Attorneys (filtering rule):*
 

@@ -82,6 +82,14 @@ Extract any clause that gives an **owner/tenant (דייר)** the ability to chan
 - If multiple agreements exist, use the earliest signing date found.
 - If the signatory is not identified (e.g. only a company stamp appears), set all three to null.
 
+**Attorney authentication line (שורת אימות):**
+- Many Israeli agreements include an attorney authentication block near the developer's signature, e.g.:
+  _"אני הח"מ [attorney name], עורך דין, מאשר בזאת כי [signer name(s)] אשר הזדהו בפני, חתמו בפניי על המסמך הנ"ל."_
+- If such a block exists, extract:
+  - `attorney_authenticated_signatories`: list of all person names explicitly mentioned as having signed in the authentication text (these are the actual signatories, not the authenticating attorney).
+  - `attorney_authentication_verbatim`: copy the full authentication sentence/paragraph verbatim.
+- If no authentication line exists, leave both fields empty/null.
+
 ---
 
 # Output format
@@ -163,6 +171,8 @@ Your response MUST be a valid JSON matching this structure:
   "developer_signed_date": "YYYY-MM-DD",
   "developer_signatory_name": "name of the person who signed for the developer",
   "developer_signatory_id": "ID number or null",
+  "attorney_authenticated_signatories": ["name as stated in attorney authentication line"],
+  "attorney_authentication_verbatim": "verbatim authentication text or null",
   "notes": []
 }
 
@@ -285,6 +295,8 @@ Your response MUST be a valid JSON matching this structure:
   "developer_signed_date": "2023-05-10",
   "developer_signatory_name": "רוני אברהם",
   "developer_signatory_id": "034567890",
+  "attorney_authenticated_signatories": ["רוני אברהם"],
+  "attorney_authentication_verbatim": "אני הח\"מ ד\"ר אורן שפירא, עו\"ד, מאשר בזאת כי רוני אברהם, אשר הזדהה בפניי, חתם בפניי על המסמך הנ\"ל.",
   "notes": []
 }
 """

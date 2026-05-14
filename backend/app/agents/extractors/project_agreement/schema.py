@@ -189,6 +189,19 @@ class AgreementExtraction(BaseModel):
         default=None,
         description="ID number of the developer signatory, if stated",
     )
+    attorney_authenticated_signatories: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Names of signatories as explicitly stated in the attorney authentication line "
+            "(שורת אימות ע\"י עורך דין / אישור חתימות) in the agreement. "
+            "E.g. 'אני הח\"מ ... מאשר כי [name] חתם/ו בפניי'. "
+            "Empty list if no authentication line exists."
+        ),
+    )
+    attorney_authentication_verbatim: str | None = Field(
+        default=None,
+        description="The verbatim text of the attorney authentication line, if present",
+    )
 
     # Standard
     timeline_events: list[ExtractorTimelineEvent] = Field(default_factory=list)
