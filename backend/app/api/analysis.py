@@ -1112,6 +1112,44 @@ def _ensure_genai_env() -> None:
         os.environ["GEMINI_API_KEY"] = gemini_key
 
 
+def _postprocess_report_dict(report_dict: dict) -> dict:
+    """Deterministic fixes applied to every report dict before saving.
+
+    Runs in Python — no AI involved — so it is reliable across all projects.
+    """
+    zrm = report_dict.get("zero_report_metrics")
+    if not isinstance(zrm, dict):
+        return report_dict
+
+    pot = zrm.get("profit_on_turnover")
+    poc = zrm.get("profit_on_cost")
+
+    # If either profit field is missing, try to calculate from raw revenue/cost.
+    # These may have been extracted by the zero-report extractor even when the
+    # synthesis agent failed to carry the calculation through.
+    if pot is None or poc is None:
+        revenue = zrm.get("_revenue") or report_dict.get("_zero_report_revenue")
+        cost = zrm.get("_cost") or report_dict.get("_zero_report_cost")
+
+        # Also try top-level extraction fields that the zero-report agent stores
+        # before the synthesis stage merges them.
+        if revenue is None or cost is None:
+            zre = report_dict.get("zero_report_extraction") or {}
+            if isinstance(zre, dict):
+                revenue = revenue or zre.get("total_projected_revenue_ils")
+                cost = cost or zre.get("total_project_cost_ils")
+
+        if revenue and cost and revenue > 0 and cost > 0:
+            profit = revenue - cost
+            if pot is None:
+                zrm["profit_on_turnover"] = round(profit / revenue, 4)
+            if poc is None:
+                zrm["profit_on_cost"] = round(profit / cost, 4)
+
+    report_dict["zero_report_metrics"] = zrm
+    return report_dict
+
+
 class _AnalysisResult:
     """Internal container for the DD report or HITL intermediate state."""
 
@@ -1313,6 +1351,7 @@ async def _run_analysis(
         raise RuntimeError("Pipeline produced no report in session state")
 
     report_dict["agent_session_id"] = session_id
+    report_dict = _postprocess_report_dict(report_dict)
 
     return _AnalysisResult(
         report_dict=report_dict,
@@ -1400,6 +1439,7 @@ async def _run_analysis_phase2(
         raise RuntimeError("Phase 2 produced no report in session state")
 
     report_dict["agent_session_id"] = session_id
+    report_dict = _postprocess_report_dict(report_dict)
 
     return _AnalysisResult(
         report_dict=report_dict,
