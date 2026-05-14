@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { getMe, setOrgLanguage, type MeResponse } from "@/lib/api";
 import { GroupsSettings } from "@/components/groups-settings";
 import { useLanguage } from "@/lib/language-context";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<MeResponse | null>(null);
@@ -32,8 +33,11 @@ export default function SettingsPage() {
     try {
       await setOrgLanguage(newLang);
       setLang(newLang);
+      toast.success(newLang === "en" ? "Language set to English" : "השפה הוגדרה לעברית");
       setLangSaved(true);
       setTimeout(() => setLangSaved(false), 2500);
+    } catch (err) {
+      toast.error(`שגיאה בשמירת השפה: ${err instanceof Error ? err.message : err}`);
     } finally {
       setLangSaving(false);
     }
