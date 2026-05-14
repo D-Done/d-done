@@ -31,8 +31,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, get_approved_user
-from app.core.authorization import require_project_access
-from app.db.models import ChecklistItem, ChecklistShare, DDCheck, File as FileModel, Project
+from app.core.authorization import DEFAULT_ORGANIZATION_ID, require_project_access
+from app.db.models import ChecklistItem, ChecklistShare, DDCheck, File as FileModel, Organization, Project
 from app.db.session import get_db
 
 logger = logging.getLogger(__name__)
@@ -172,13 +172,17 @@ def generate_checklist(
     from app.agents.schemas import RealEstateFinanceDDReport
     from app.services.checklist_generator import generate_checklist_items
 
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    language = (org.language if org else None) or "he"
+
     try:
         report = RealEstateFinanceDDReport.model_validate(report_dict)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"שגיאה בקריאת הדוח: {exc}") from exc
 
     try:
-        new_items_list = generate_checklist_items(report)
+        new_items_list = generate_checklist_items(report, language=language)
     except Exception as exc:
         logger.error("checklist generation failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"שגיאה ביצירת הרשימה: {exc}") from exc
@@ -315,13 +319,18 @@ def export_checklist_word(
         .all()
     )
 
-    docx_bytes = generate_checklist_docx(items, project.title or "")
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org_cl = db.query(Organization).filter(Organization.id == org_id).first()
+    checklist_language = (org_cl.language if org_cl else None) or "he"
+
+    docx_bytes = generate_checklist_docx(items, project.title or "", language=checklist_language)
     safe_title = (
         "".join(c for c in (project.title or "project") if c.isalnum() or c in " -_")
         .strip()[:60]
         or "checklist"
     )
-    filename = f"{safe_title}_רשימת_השלמות.docx"
+    filename_suffix = "completeness_checklist" if checklist_language == "en" else "רשימת_השלמות"
+    filename = f"{safe_title}_{filename_suffix}.docx"
     encoded = quote(filename, safe="")
     return FastAPIResponse(
         content=docx_bytes,

@@ -12,15 +12,32 @@ import { PastelAvatar } from "@/components/pastel-avatar";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getMe, type MeResponse } from "@/lib/api";
+import { getMe, setOrgLanguage, type MeResponse } from "@/lib/api";
 import { GroupsSettings } from "@/components/groups-settings";
+import { useLanguage } from "@/lib/language-context";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<MeResponse | null>(null);
+  const { lang, setLang } = useLanguage();
+  const [langSaving, setLangSaving] = useState(false);
+  const [langSaved, setLangSaved] = useState(false);
 
   useEffect(() => {
     getMe().then(setUser);
   }, []);
+
+  async function handleLanguageChange(newLang: "he" | "en") {
+    if (newLang === lang) return;
+    setLangSaving(true);
+    try {
+      await setOrgLanguage(newLang);
+      setLang(newLang);
+      setLangSaved(true);
+      setTimeout(() => setLangSaved(false), 2500);
+    } finally {
+      setLangSaving(false);
+    }
+  }
 
   return (
     <>
@@ -58,6 +75,41 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <GroupsSettings />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>שפה / Language</CardTitle>
+          <CardDescription>
+            שפת הדוחות, הצ׳קליסט וייצוא Word — לכל המשתמשים בחשבון
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Button
+              variant={lang === "he" ? "default" : "outline"}
+              className="rounded-2xl min-w-[100px]"
+              disabled={langSaving}
+              onClick={() => handleLanguageChange("he")}
+            >
+              עברית
+            </Button>
+            <Button
+              variant={lang === "en" ? "default" : "outline"}
+              className="rounded-2xl min-w-[100px]"
+              disabled={langSaving}
+              onClick={() => handleLanguageChange("en")}
+            >
+              English
+            </Button>
+            {langSaved && (
+              <span className="text-sm text-green-600">✓ נשמר</span>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            שינוי השפה ישפיע על דוחות חדשים. דוחות קיימים לא ישתנו.
+          </p>
         </CardContent>
       </Card>
 

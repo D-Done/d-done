@@ -54,6 +54,93 @@ RISK_LABEL_HE = {"high": "גבוה", "medium": "בינוני", "low": "נמוך"
 SEVERITY_LABEL_HE = {"critical": "קריטי", "warning": "אזהרה", "info": "מידע"}
 BOOL_HE = {True: "כן", False: "לא", None: "—"}
 
+RISK_LABEL_EN = {"high": "High", "medium": "Medium", "low": "Low"}
+SEVERITY_LABEL_EN = {"critical": "Critical", "warning": "Warning", "info": "Info"}
+BOOL_EN = {True: "Yes", False: "No", None: "—"}
+
+# Section headings and field labels for English
+_EN_LABELS: dict[str, str] = {
+    # Cover
+    "דוח בדיקת נאותות": "Due Diligence Report",
+    "תאריך הפקה": "Date",
+    "לקוח": "Client",
+    "סטטוס": "Status",
+    "מסמכים שנותחו": "Documents Analyzed",
+    # Sections
+    "1. סיכום מנהלים": "1. Executive Summary",
+    "3. פרטי המתחם": "3. Compound Details",
+    "4. טבלת דיירים": "4. Tenant Table",
+    "5. חתימת היזם": "5. Developer Signature",
+    "6. באי כוח": "6. Legal Representatives",
+    "7. גוף המימון": "7. Financing Body",
+    '8. דו"ח אפס': "8. Zero Report",
+    "9. ניתוח פיננסי": "9. Financial Analysis",
+    "10. שרשרת בעלות (UBO)": "10. Ownership Chain (UBO)",
+    "קשרי בעלות": "Ownership Relations",
+    "11. דגלים אדומים": "11. Red Flags",
+    "12. ממצאים": "12. Findings",
+    "2. סיכום מנהלים": "2. Executive Summary",
+    "3. ממצאים": "3. Findings",
+    # Finance fields
+    "רמת סיכון": "Risk Level",
+    "סיכום": "Summary",
+    "המלצה": "Recommendation",
+    "סיכונים עיקריים": "Key Risks",
+    "כתובת": "Address",
+    "גוש": "Block",
+    "חלקה": "Parcel",
+    "מצב לפני הריסה": "Pre-demolition State",
+    "מצב לאחר בנייה": "Post-construction State",
+    "פערים": "Discrepancies",
+    "בניינים": "buildings",
+    "דירות": "apartments",
+    "אחוז חתימות": "Signing Rate",
+    "תת-חלקה": "Sub-parcel",
+    "שם בעלים": "Owner Name",
+    "חתם": "Signed",
+    "תאריך חתימה": "Date Signed",
+    "הערת אזהרה": "Caveat",
+    "משכנתא": "Mortgage",
+    "הערות": "Notes",
+    "תאריך חתימת יזם": "Developer Signing Date",
+    "שם מורשה חתימה": "Authorized Signatory Name",
+    "ת.ז. מורשה חתימה": "Authorized Signatory ID",
+    "אישור פרוטוקול חתימה": "Signing Protocol Approval",
+    "מאושר": "Approved",
+    "אי-התאמה": "Mismatch",
+    "בא כוח היזם": "Developer's Attorney",
+    "בא כוח הבעלים": "Owners' Attorney",
+    "הגדרת מממן בהסכם": "Lender Definition in Agreement",
+    "מממן בפועל": "Actual Lender",
+    "עמידה בתנאים": "Compliance Note",
+    "הלוואת מזנין": "Mezzanine Loan",
+    "פרטי מזנין": "Mezzanine Details",
+    "נמען הדוח": "Report Addressee",
+    "רווח למחזור": "Profit on Turnover",
+    "רווח לעלות": "Profit on Cost",
+    "הצמדה למדד": "Indexation",
+    "מגבלות בנייה": "Construction Restrictions",
+    "התאמת הגדרת מממן": "Lender Definition Match",
+    "פרטי אי-התאמה": "Discrepancy Details",
+    "אישור הון עצמי": "Equity Confirmation",
+    "תואם": "Compliant",
+    "בעלים": "Owner",
+    "חברה": "Company",
+    "אחוז החזקה": "Stake %",
+    # Standard report
+    "ממצאים": "Findings",
+    "מידע כללי": "General Information",
+    "שדה": "Field",
+    "ערך": "Value",
+}
+
+
+def _lbl(text: str, language: str) -> str:
+    """Return English label if language=='en', else return Hebrew as-is."""
+    if language == "en":
+        return _EN_LABELS.get(text, text)
+    return text
+
 
 
 def _set_rtl_paragraph(para: Any) -> None:
@@ -135,41 +222,44 @@ def _cell_rtl(cell: Any, text: str, bold: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, project_title: str) -> None:
+def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, project_title: str, language: str = "he") -> None:
+    bool_map = BOOL_EN if language == "en" else BOOL_HE
+    risk_map = RISK_LABEL_EN if language == "en" else RISK_LABEL_HE
+
     # ---- Cover ----
     title_para = doc.add_heading(level=0)
     title_para.clear()
     _set_rtl_paragraph(title_para)
-    run = title_para.add_run(f"דוח בדיקת נאותות — {project_title}")
+    run = title_para.add_run(f"{_lbl('דוח בדיקת נאותות', language)} — {project_title}")
     _set_rtl_run(run)
 
     date_str = date.today().strftime("%d/%m/%Y")
-    _add_rtl_paragraph(doc, f"תאריך הפקה: {date_str}")
+    _add_rtl_paragraph(doc, f"{_lbl('תאריך הפקה', language)}: {date_str}")
 
     if report.project_header:
         h = report.project_header
         if h.client_name:
-            _add_rtl_paragraph(doc, f"לקוח: {h.client_name}")
+            _add_rtl_paragraph(doc, f"{_lbl('לקוח', language)}: {h.client_name}")
         if h.status:
-            _add_rtl_paragraph(doc, f"סטטוס: {h.status}")
+            _add_rtl_paragraph(doc, f"{_lbl('סטטוס', language)}: {h.status}")
         if h.doc_count is not None:
-            _add_rtl_paragraph(doc, f"מסמכים שנותחו: {h.doc_count}")
+            _add_rtl_paragraph(doc, f"{_lbl('מסמכים שנותחו', language)}: {h.doc_count}")
 
     doc.add_page_break()
 
     # ---- 1. Executive Summary ----
-    _add_heading(doc, "1. סיכום מנהלים", level=1)
+    _add_heading(doc, _lbl("1. סיכום מנהלים", language), level=1)
     es = report.executive_summary
-    risk_label = RISK_LABEL_HE.get(es.risk_level, es.risk_level)
-    _add_bold_label(doc, "רמת סיכון", risk_label)
-    _add_bold_label(doc, "סיכום", es.summary)
+    risk_label = risk_map.get(es.risk_level, es.risk_level)
+    _add_bold_label(doc, _lbl("רמת סיכון", language), risk_label)
+    _add_bold_label(doc, _lbl("סיכום", language), es.summary)
     if rec := getattr(es, "recommendation", None):
-        _add_bold_label(doc, "המלצה", rec)
+        _add_bold_label(doc, _lbl("המלצה", language), rec)
 
     if getattr(es, "key_risks", None):
         para = doc.add_paragraph()
         _set_rtl_paragraph(para)
-        r = para.add_run("סיכונים עיקריים:")
+        r = para.add_run(f"{_lbl('סיכונים עיקריים', language)}:")
         r.bold = True
         _set_rtl_run(r)
         for risk in getattr(es, "key_risks", []):
@@ -180,33 +270,39 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
 
     # ---- 2. Compound Details ----
     if report.compound_details:
-        _add_heading(doc, "3. פרטי המתחם", level=1)
+        _add_heading(doc, _lbl("3. פרטי המתחם", language), level=1)
         cd = report.compound_details
-        _add_bold_label(doc, "כתובת", cd.address)
-        _add_bold_label(doc, "גוש", cd.gush)
-        _add_bold_label(doc, "חלקה", cd.helka)
+        _add_bold_label(doc, _lbl("כתובת", language), cd.address)
+        _add_bold_label(doc, _lbl("גוש", language), cd.gush)
+        _add_bold_label(doc, _lbl("חלקה", language), cd.helka)
+        bldg = _lbl("בניינים", language)
+        apts = _lbl("דירות", language)
         if cd.incoming_state:
             s = cd.incoming_state
-            _add_bold_label(doc, "מצב לפני הריסה",
-                            f"{s.building_count or '—'} בניינים, {s.apartment_count or '—'} דירות")
+            _add_bold_label(doc, _lbl("מצב לפני הריסה", language),
+                            f"{s.building_count or '—'} {bldg}, {s.apartment_count or '—'} {apts}")
         if cd.outgoing_state:
             s = cd.outgoing_state
-            _add_bold_label(doc, "מצב לאחר בנייה",
-                            f"{s.building_count or '—'} בניינים, {s.apartment_count or '—'} דירות")
-        _add_bold_label(doc, "פערים", cd.discrepancy_note)
+            _add_bold_label(doc, _lbl("מצב לאחר בנייה", language),
+                            f"{s.building_count or '—'} {bldg}, {s.apartment_count or '—'} {apts}")
+        _add_bold_label(doc, _lbl("פערים", language), cd.discrepancy_note)
 
     # ---- 4. Tenant Table ----
     if report.tenant_table:
-        _add_heading(doc, "4. טבלת דיירים", level=1)
+        _add_heading(doc, _lbl("4. טבלת דיירים", language), level=1)
 
         signing_pct = report.signing_percentage or 0
         if signing_pct <= 1:
             signing_pct = round(signing_pct * 100)
         else:
             signing_pct = round(signing_pct)
-        _add_rtl_paragraph(doc, f"אחוז חתימות: {signing_pct}%")
+        _add_rtl_paragraph(doc, f"{_lbl('אחוז חתימות', language)}: {signing_pct}%")
 
-        cols = ["תת-חלקה", "שם בעלים", "חתם", "תאריך חתימה", "הערת אזהרה", "משכנתא", "הערות"]
+        cols = [
+            _lbl("תת-חלקה", language), _lbl("שם בעלים", language), _lbl("חתם", language),
+            _lbl("תאריך חתימה", language), _lbl("הערת אזהרה", language),
+            _lbl("משכנתא", language), _lbl("הערות", language),
+        ]
         table = doc.add_table(rows=1, cols=len(cols))
         table.style = "Table Grid"
         _set_table_rtl(table)
@@ -218,56 +314,56 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
             row = table.add_row().cells
             _cell_rtl(row[0], row_data.sub_parcel or row_data.helka or "")
             _cell_rtl(row[1], row_data.owner_name or "")
-            _cell_rtl(row[2], BOOL_HE[row_data.is_signed])
+            _cell_rtl(row[2], bool_map[row_data.is_signed])
             _cell_rtl(row[3], row_data.date_signed or "")
-            _cell_rtl(row[4], BOOL_HE[row_data.is_warning_note_registered])
-            _cell_rtl(row[5], BOOL_HE[row_data.is_mortgage_registered])
+            _cell_rtl(row[4], bool_map[row_data.is_warning_note_registered])
+            _cell_rtl(row[5], bool_map[row_data.is_mortgage_registered])
             _cell_rtl(row[6], row_data.notes or "")
         doc.add_paragraph()
 
     # ---- 5. Developer Signature ----
     if report.developer_signature:
-        _add_heading(doc, "5. חתימת היזם", level=1)
+        _add_heading(doc, _lbl("5. חתימת היזם", language), level=1)
         ds = report.developer_signature
-        _add_bold_label(doc, "תאריך חתימת יזם", ds.developer_signed_date)
-        _add_bold_label(doc, "שם מורשה חתימה", ds.authorized_signatory_name)
-        _add_bold_label(doc, "ת.ז. מורשה חתימה", ds.authorized_signatory_id)
+        _add_bold_label(doc, _lbl("תאריך חתימת יזם", language), ds.developer_signed_date)
+        _add_bold_label(doc, _lbl("שם מורשה חתימה", language), ds.authorized_signatory_name)
+        _add_bold_label(doc, _lbl("ת.ז. מורשה חתימה", language), ds.authorized_signatory_id)
         if ds.signing_protocol_authorized is not None:
-            _add_bold_label(doc, "אישור פרוטוקול חתימה",
-                            "מאושר" if ds.signing_protocol_authorized else "אי-התאמה")
+            _add_bold_label(doc, _lbl("אישור פרוטוקול חתימה", language),
+                            _lbl("מאושר", language) if ds.signing_protocol_authorized else _lbl("אי-התאמה", language))
 
     # ---- 6. Power of Attorney ----
     if report.power_of_attorney:
-        _add_heading(doc, "6. באי כוח", level=1)
+        _add_heading(doc, _lbl("6. באי כוח", language), level=1)
         poa = report.power_of_attorney
-        _add_bold_label(doc, "בא כוח היזם", poa.developer_attorney)
-        _add_bold_label(doc, "בא כוח הבעלים", poa.owners_attorney)
+        _add_bold_label(doc, _lbl("בא כוח היזם", language), poa.developer_attorney)
+        _add_bold_label(doc, _lbl("בא כוח הבעלים", language), poa.owners_attorney)
 
     # ---- 7. Financing Body ----
     if report.financing:
-        _add_heading(doc, "7. גוף המימון", level=1)
+        _add_heading(doc, _lbl("7. גוף המימון", language), level=1)
         fin = report.financing
-        _add_bold_label(doc, "הגדרת מממן בהסכם", fin.lender_definition_clause)
-        _add_bold_label(doc, "מממן בפועל", fin.actual_lender)
-        _add_bold_label(doc, "עמידה בתנאים", fin.lender_compliance_note)
+        _add_bold_label(doc, _lbl("הגדרת מממן בהסכם", language), fin.lender_definition_clause)
+        _add_bold_label(doc, _lbl("מממן בפועל", language), fin.actual_lender)
+        _add_bold_label(doc, _lbl("עמידה בתנאים", language), fin.lender_compliance_note)
         if fin.mezzanine_loan_exists is not None:
-            _add_bold_label(doc, "הלוואת מזנין", BOOL_HE[fin.mezzanine_loan_exists])
-        _add_bold_label(doc, "פרטי מזנין", fin.mezzanine_loan_details)
+            _add_bold_label(doc, _lbl("הלוואת מזנין", language), bool_map[fin.mezzanine_loan_exists])
+        _add_bold_label(doc, _lbl("פרטי מזנין", language), fin.mezzanine_loan_details)
 
     # ---- 8. Zero Report Metrics ----
     if report.zero_report_metrics:
-        _add_heading(doc, "8. דו\"ח אפס", level=1)
+        _add_heading(doc, _lbl('8. דו"ח אפס', language), level=1)
         zr = report.zero_report_metrics
-        _add_bold_label(doc, "נמען הדוח", zr.addressee)
+        _add_bold_label(doc, _lbl("נמען הדוח", language), zr.addressee)
         if zr.profit_on_turnover is not None:
-            _add_bold_label(doc, "רווח למחזור", f"{zr.profit_on_turnover:.1%}")
+            _add_bold_label(doc, _lbl("רווח למחזור", language), f"{zr.profit_on_turnover:.1%}")
         if zr.profit_on_cost is not None:
-            _add_bold_label(doc, "רווח לעלות", f"{zr.profit_on_cost:.1%}")
-        _add_bold_label(doc, "הצמדה למדד", zr.indexation_details)
+            _add_bold_label(doc, _lbl("רווח לעלות", language), f"{zr.profit_on_cost:.1%}")
+        _add_bold_label(doc, _lbl("הצמדה למדד", language), zr.indexation_details)
         if zr.construction_restrictions:
             para = doc.add_paragraph()
             _set_rtl_paragraph(para)
-            r = para.add_run("מגבלות בנייה:")
+            r = para.add_run(f"{_lbl('מגבלות בנייה', language)}:")
             r.bold = True
             _set_rtl_run(r)
             for restriction in zr.construction_restrictions:
@@ -278,18 +374,18 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
 
     # ---- 9. Finance Analysis ----
     if getattr(report, "finance_analysis", None):
-        _add_heading(doc, "9. ניתוח פיננסי", level=1)
+        _add_heading(doc, _lbl("9. ניתוח פיננסי", language), level=1)
         fa = report.finance_analysis
         if fa.lender_definition_match is not None:
-            _add_bold_label(doc, "התאמת הגדרת מממן",
-                            "תואם" if fa.lender_definition_match else "אי-התאמה")
-        _add_bold_label(doc, "פרטי אי-התאמה", fa.discrepancy_note)
+            _add_bold_label(doc, _lbl("התאמת הגדרת מממן", language),
+                            _lbl("תואם", language) if fa.lender_definition_match else _lbl("אי-התאמה", language))
+        _add_bold_label(doc, _lbl("פרטי אי-התאמה", language), fa.discrepancy_note)
         if fa.equity_confirmed is not None:
-            _add_bold_label(doc, "אישור הון עצמי", BOOL_HE[fa.equity_confirmed])
+            _add_bold_label(doc, _lbl("אישור הון עצמי", language), bool_map[fa.equity_confirmed])
 
     # ---- 10. Corporate Governance / UBO ----
     if report.developer_ubo_chain:
-        _add_heading(doc, "10. שרשרת בעלות (UBO)", level=1)
+        _add_heading(doc, _lbl("10. שרשרת בעלות (UBO)", language), level=1)
         for item in report.developer_ubo_chain:
             p = doc.add_paragraph(style="List Bullet")
             _set_rtl_paragraph(p)
@@ -297,16 +393,16 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
             _set_rtl_run(run)
 
     if report.developer_ubo_graph and report.developer_ubo_graph.edges:
-        _add_heading(doc, "קשרי בעלות", level=2)
+        _add_heading(doc, _lbl("קשרי בעלות", language), level=2)
         graph = report.developer_ubo_graph
         node_map = {n.id: n.name for n in graph.nodes}
         table = doc.add_table(rows=1, cols=3)
         table.style = "Table Grid"
         _set_table_rtl(table)
         hdr = table.rows[0].cells
-        _cell_rtl(hdr[0], "בעלים", bold=True)
-        _cell_rtl(hdr[1], "חברה", bold=True)
-        _cell_rtl(hdr[2], "אחוז החזקה", bold=True)
+        _cell_rtl(hdr[0], _lbl("בעלים", language), bold=True)
+        _cell_rtl(hdr[1], _lbl("חברה", language), bold=True)
+        _cell_rtl(hdr[2], _lbl("אחוז החזקה", language), bold=True)
         for edge in graph.edges:
             row = table.add_row().cells
             _cell_rtl(row[0], node_map.get(edge.from_id, edge.from_id))
@@ -316,7 +412,7 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
 
     # ---- 11. High Risk Flags ----
     if report.high_risk_flags:
-        _add_heading(doc, "11. דגלים אדומים", level=1)
+        _add_heading(doc, _lbl("11. דגלים אדומים", language), level=1)
         for flag in report.high_risk_flags:
             p = doc.add_paragraph(style="List Bullet")
             _set_rtl_paragraph(p)
@@ -325,8 +421,8 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
 
     # ---- 12. Findings ----
     if report.findings:
-        _add_heading(doc, "12. ממצאים", level=1)
-        _build_findings(doc, report.findings)
+        _add_heading(doc, _lbl("12. ממצאים", language), level=1)
+        _build_findings(doc, report.findings, language=language)
 
 
 # ---------------------------------------------------------------------------
@@ -334,28 +430,30 @@ def _build_finance_report(doc: Document, report: RealEstateFinanceDDReport, proj
 # ---------------------------------------------------------------------------
 
 
-def _build_standard_report(doc: Document, report: DDReport, project_title: str) -> None:
+def _build_standard_report(doc: Document, report: DDReport, project_title: str, language: str = "he") -> None:
+    risk_map = RISK_LABEL_EN if language == "en" else RISK_LABEL_HE
+
     title_para = doc.add_heading(level=0)
     title_para.clear()
     _set_rtl_paragraph(title_para)
-    run = title_para.add_run(f"דוח בדיקת נאותות — {project_title}")
+    run = title_para.add_run(f"{_lbl('דוח בדיקת נאותות', language)} — {project_title}")
     _set_rtl_run(run)
 
     date_str = date.today().strftime("%d/%m/%Y")
-    _add_rtl_paragraph(doc, f"תאריך הפקה: {date_str}")
+    _add_rtl_paragraph(doc, f"{_lbl('תאריך הפקה', language)}: {date_str}")
     doc.add_page_break()
 
     # Executive Summary
-    _add_heading(doc, "1. סיכום מנהלים", level=1)
+    _add_heading(doc, _lbl("1. סיכום מנהלים", language), level=1)
     es = report.executive_summary
-    _add_bold_label(doc, "רמת סיכון", RISK_LABEL_HE.get(es.risk_level, es.risk_level))
-    _add_bold_label(doc, "סיכום", es.summary)
+    _add_bold_label(doc, _lbl("רמת סיכון", language), risk_map.get(es.risk_level, es.risk_level))
+    _add_bold_label(doc, _lbl("סיכום", language), es.summary)
     if rec := getattr(es, "recommendation", None):
-        _add_bold_label(doc, "המלצה", rec)
+        _add_bold_label(doc, _lbl("המלצה", language), rec)
     if getattr(es, "key_risks", None):
         para = doc.add_paragraph()
         _set_rtl_paragraph(para)
-        r = para.add_run("סיכונים עיקריים:")
+        r = para.add_run(f"{_lbl('סיכונים עיקריים', language)}:")
         r.bold = True
         _set_rtl_run(r)
         for risk in getattr(es, "key_risks", []):
@@ -366,14 +464,15 @@ def _build_standard_report(doc: Document, report: DDReport, project_title: str) 
 
     # Findings
     if report.findings:
-        _add_heading(doc, "3. ממצאים", level=1)
-        _build_findings(doc, report.findings)
+        _add_heading(doc, _lbl("3. ממצאים", language), level=1)
+        _build_findings(doc, report.findings, language=language)
 
     # Documents Analyzed
     if report.documents_analyzed:
-        _add_heading(doc, "4. מסמכים שנותחו", level=1)
+        pages_word = "pages" if language == "en" else "עמודים"
+        _add_heading(doc, _lbl("מסמכים שנותחו", language), level=1)
         for doc_item in report.documents_analyzed:
-            _add_bold_label(doc, doc_item.name, f"{doc_item.page_count} עמודים")
+            _add_bold_label(doc, doc_item.name, f"{doc_item.page_count} {pages_word}")
 
 
 # ---------------------------------------------------------------------------
@@ -381,10 +480,13 @@ def _build_standard_report(doc: Document, report: DDReport, project_title: str) 
 # ---------------------------------------------------------------------------
 
 
-def _build_findings(doc: Document, findings: list[Finding]) -> None:
+def _build_findings(doc: Document, findings: list[Finding], language: str = "he") -> None:
+    sev_map = SEVERITY_LABEL_EN if language == "en" else SEVERITY_LABEL_HE
+    sources_lbl = "Sources: " if language == "en" else "מקורות: "
+    page_abbr = "p." if language == "en" else "עמ'"
+
     for f in findings:
-        severity_label = SEVERITY_LABEL_HE.get(f.severity, f.severity)
-        # Title paragraph
+        severity_label = sev_map.get(f.severity, f.severity)
         para = doc.add_heading(level=3)
         para.clear()
         _set_rtl_paragraph(para)
@@ -399,7 +501,7 @@ def _build_findings(doc: Document, findings: list[Finding]) -> None:
         if f.sources:
             src_para = doc.add_paragraph()
             _set_rtl_paragraph(src_para)
-            label_run = src_para.add_run("מקורות: ")
+            label_run = src_para.add_run(sources_lbl)
             label_run.bold = True
             _set_rtl_run(label_run)
             for i, src in enumerate(f.sources):
@@ -407,7 +509,7 @@ def _build_findings(doc: Document, findings: list[Finding]) -> None:
                     sep_run = src_para.add_run(" | ")
                     _set_rtl_run(sep_run)
                 src_run = src_para.add_run(
-                    f"{src.source_document_name} עמ' {src.page_number}"
+                    f"{src.source_document_name} {page_abbr} {src.page_number}"
                 )
                 _set_rtl_run(src_run)
 
@@ -504,6 +606,7 @@ def generate_word_report(
     report: DDReport | RealEstateFinanceDDReport,
     project_title: str,
     comments_by_section: dict[str, list[dict]] | None = None,
+    language: str = "he",
 ) -> bytes:
     """Generate a .docx file from a DD report and return its bytes.
 
@@ -514,9 +617,9 @@ def generate_word_report(
     _configure_document_rtl(doc)
 
     if isinstance(report, RealEstateFinanceDDReport):
-        _build_finance_report(doc, report, project_title)
+        _build_finance_report(doc, report, project_title, language=language)
     else:
-        _build_standard_report(doc, report, project_title)
+        _build_standard_report(doc, report, project_title, language=language)
 
     buffer = io.BytesIO()
     doc.save(buffer)

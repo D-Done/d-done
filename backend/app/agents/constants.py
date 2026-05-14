@@ -23,6 +23,7 @@ STATE_DOCAI_OUTPUT_URIS = "docai_output_uris"
 STATE_ENRICHED_REPORT = "enriched_report"
 STATE_DOC_CLASSIFICATION = "doc_classification"
 STATE_REPRESENTING_ROLE = "representing_role"
+STATE_LANGUAGE = "language"
 
 EXTRACTOR_DOC_TYPES: dict[str, list[str]] = {
     "tabu_extractor": ["tabu"],

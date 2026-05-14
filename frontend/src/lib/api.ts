@@ -1229,3 +1229,16 @@ export async function deleteReportComment(
 ): Promise<void> {
   await request<void>(`/projects/${projectId}/comments/${commentId}`, { method: "DELETE" });
 }
+
+// ── Organization language ──────────────────────────────────────────────────
+
+export async function getOrgLanguage(): Promise<{ language: string }> {
+  return request<{ language: string }>("/organization/language");
+}
+
+export async function setOrgLanguage(language: "he" | "en"): Promise<{ language: string }> {
+  return request<{ language: string }>("/organization/language", {
+    method: "PATCH",
+    body: JSON.stringify({ language }),
+  });
+}

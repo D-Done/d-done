@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import * as api from "@/lib/api";
 import type { ReportComment } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { toast } from "sonner";
 import type {
   BoundingBox,
@@ -456,8 +458,9 @@ export function ReportViewer({
   projectFiles,
   checkId,
 }: ReportViewerProps) {
+  const { lang } = useLanguage();
   const yn = (v: boolean | null | undefined) =>
-    v === null || typeof v === "undefined" ? "—" : v ? "כן" : "לא";
+    v === null || typeof v === "undefined" ? "—" : v ? t("yes", lang) : t("no", lang);
 
   const [citationOpen, setCitationOpen] = useState(false);
   const [citationLoading, setCitationLoading] = useState(false);
@@ -910,7 +913,7 @@ export function ReportViewer({
                     <TooltipTrigger asChild>
                       <span className="cursor-help inline-block">
                         <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                          תקציר מנהלים
+                          {t("executive_summary", lang)}
                         </CardTitle>
                       </span>
                     </TooltipTrigger>
@@ -930,7 +933,7 @@ export function ReportViewer({
                       : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60",
                 )}
               >
-                {RISK_LABELS[riskLevel]}
+                {lang === "en" ? t(`risk_${riskLevel}`, lang) : RISK_LABELS[riskLevel]}
               </Badge>
             </div>
           </CardHeader>
@@ -945,7 +948,7 @@ export function ReportViewer({
         {cd && (
           <ReportSection
             icon={<Building2 className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="פרטי המתחם"
+            title={t("compound_details", lang)}
             sectionKey="compound_details"
             comments={commentsBySection["compound_details"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1019,7 +1022,7 @@ export function ReportViewer({
         {totalTenants > 0 && (
           <ReportSection
             icon={<Users className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="טבלת דיירים"
+            title={t("tenant_table", lang)}
             sectionKey="tenant_table"
             comments={commentsBySection["tenant_table"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1057,15 +1060,15 @@ export function ReportViewer({
                 <Table className="min-w-[1100px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>חלקה</TableHead>
-                      <TableHead>תת חלקה</TableHead>
-                      <TableHead>שם בעלים</TableHead>
-                      <TableHead>חתימה</TableHead>
-                      <TableHead>מועד חתימה</TableHead>
-                      <TableHead>הערת אזהרה ליזם</TableHead>
-                      <TableHead>הערה מגבילה</TableHead>
-                      <TableHead>משכנתא</TableHead>
-                      <TableHead className="min-w-[200px]">הערות</TableHead>
+                      <TableHead>{t("sub_parcel", lang)}</TableHead>
+                      <TableHead>{t("sub_parcel", lang)}</TableHead>
+                      <TableHead>{t("owner_name", lang)}</TableHead>
+                      <TableHead>{t("signed", lang)}</TableHead>
+                      <TableHead>{t("date_signed", lang)}</TableHead>
+                      <TableHead>{t("warning_note", lang)}</TableHead>
+                      <TableHead>{t("warning_note", lang)}</TableHead>
+                      <TableHead>{t("mortgage", lang)}</TableHead>
+                      <TableHead className="min-w-[200px]">{t("notes", lang)}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1115,7 +1118,7 @@ export function ReportViewer({
         {ds && (
           <ReportSection
             icon={<Gavel className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="חתימת היזם"
+            title={t("developer_signature", lang)}
             sectionKey="developer_signature"
             comments={commentsBySection["developer_signature"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1153,12 +1156,12 @@ export function ReportViewer({
         {addendumFindings.length > 0 && (
           <ReportSection
             icon={<FileText className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="תוספות להסכם"
+            title={t("agreement_addenda", lang)}
             sectionKey="agreement_addenda"
             comments={commentsBySection["agreement_addenda"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
             onDeleteComment={projectId ? handleDeleteComment : undefined}
-            tooltip="ממצאים הנוגעים לתוספות ומכתבי הטבה — בדיקת תיאום מול דו״ח האפס"
+            tooltip={t("addenda_tooltip", lang)}
           >
             <FindingsGroup items={addendumFindings} />
           </ReportSection>
@@ -1168,7 +1171,7 @@ export function ReportViewer({
         {poa && (
           <ReportSection
             icon={<Scale className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="באי כוח"
+            title={t("legal_representation", lang)}
             sectionKey="legal_representation"
             comments={commentsBySection["legal_representation"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1186,7 +1189,7 @@ export function ReportViewer({
         {fin && (
           <ReportSection
             icon={<Landmark className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="הגוף המממן"
+            title={t("financing_body", lang)}
             sectionKey="financing_body"
             comments={commentsBySection["financing_body"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1236,7 +1239,7 @@ export function ReportViewer({
         {guaranteeFindings.length > 0 && (
           <ReportSection
             icon={<Shield className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="ערבויות וביטחונות"
+            title={t("guarantees", lang)}
             sectionKey="guarantees"
             comments={commentsBySection["guarantees"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1300,7 +1303,7 @@ export function ReportViewer({
           return (
             <ReportSection
               icon={<ArrowUpDown className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-              title="שדרוג ושנמוך דירת התמורה"
+              title={t("apartment_upgrade", lang)}
             sectionKey="upgrade_downgrade"
             comments={commentsBySection["upgrade_downgrade"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1329,7 +1332,7 @@ export function ReportViewer({
           legalFindings.length > 0) && (
           <ReportSection
             icon={<FileText className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="לוחות זמנים וסטטוס תכנוני"
+            title={t("planning_legal", lang)}
             sectionKey="timelines"
             comments={commentsBySection["timelines"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}
@@ -1385,7 +1388,7 @@ export function ReportViewer({
           corporateFindings.length > 0) && (
           <ReportSection
             icon={<Users className="h-5 w-5 text-slate-700 dark:text-slate-300" />}
-            title="ממשל תאגידי ושעבודים"
+            title={t("corporate_governance", lang)}
             sectionKey="corporate_governance"
             comments={commentsBySection["corporate_governance"] ?? []}
             onAddComment={projectId ? handleAddComment : undefined}

@@ -86,6 +86,49 @@ Rules:
 - Output ONLY valid JSON, no markdown fences.
 """
 
+_SYSTEM_PROMPT_EN = """\
+You are an expert Israeli real estate finance attorney and analyst.
+You receive a completed DD report JSON and generate a completeness checklist —
+a list of action items the project team must complete before the deal closes.
+
+## PRIORITY FOCUS — Credit Committee cross-reference
+This is the most important analysis step. Read every finding, high_risk_flag,
+and the financing/lender sections and identify:
+a) Documents or agreements that the credit committee REFERENCED or REQUIRED but are
+   NOT present in the uploaded files.
+b) Addendums, side letters, or supplementary agreements mentioned anywhere in the report but not uploaded.
+c) Beneficial documents — letters granting additional rights or exemptions that are referenced but missing.
+d) Rights-transfer agreements — if the report mentions a change of developer / rights transfer between
+   entities, the actual transfer agreement must be uploaded.
+e) Any gap between what the credit committee approved and what was actually provided.
+
+## Additional focus areas
+1. Documents referenced anywhere in the report that were mentioned but not uploaded.
+2. Warning notes (liens, caveats) that need to be registered in the Land Registry for the developer.
+3. Third-party interests (warning notes, liens) that need to be removed.
+4. Mortgages registered on parcels that must be released.
+5. Tenants who have not yet signed the agreement.
+6. Lender compliance issues (actual lender ≠ lender in agreement).
+7. Missing corporate documents — company extract, incorporation certificate.
+8. Planning permits, zoning decisions, or committee approvals mentioned but not uploaded.
+9. Any other actionable gap surfaced in findings or high_risk_flags.
+
+## Output format
+Respond with a JSON object: {"items": [...]}
+Each item:
+  - category: "missing_doc" | "warning_note" | "mortgage" | "lender" | "signing" | "corporate" | "other"
+  - title: short English action title (max 120 chars), be specific — name the document/party
+  - description: detailed English explanation referencing where it was mentioned (max 400 chars)
+  - priority: "high" | "medium" | "low"
+
+Rules:
+- Be specific — name the exact document, tenant, parcel, or counterparty.
+- Do NOT include items already completed/resolved.
+- Do NOT repeat the same item twice.
+- Return between 3 and 40 items.
+- Output ONLY valid JSON, no markdown fences.
+"""
+
 
 def _ensure_genai_env() -> None:
     from app.core.config import settings
@@ -101,7 +144,7 @@ def _ensure_genai_env() -> None:
             os.environ["GOOGLE_CLOUD_LOCATION"] = settings.vertex_ai_location
 
 
-def generate_checklist_items(report: RealEstateFinanceDDReport) -> list[dict]:
+def generate_checklist_items(report: RealEstateFinanceDDReport, language: str = "he") -> list[dict]:
     """Generate checklist items for a RealEstateFinanceDDReport.
 
     Returns a list of dicts with keys: category, title, description, priority, sort_order.
@@ -116,13 +159,13 @@ def generate_checklist_items(report: RealEstateFinanceDDReport) -> list[dict]:
         report_json = report_json[:80_000] + "\n... [truncated]"
 
     try:
-        items = _call_gemini(report_json)
+        items = _call_gemini(report_json, language=language)
     except Exception as exc:
         logger.error("Checklist generation via Gemini failed: %s", exc, exc_info=True)
         items = []
 
     # Augment with guaranteed rule-based items that Gemini might miss
-    rule_items = _rule_based_items(report)
+    rule_items = _rule_based_items(report, language=language)
     items = _merge_items(rule_items, items)
 
     # Assign sort_order: by priority then category
@@ -148,16 +191,17 @@ def generate_checklist_items(report: RealEstateFinanceDDReport) -> list[dict]:
     return items
 
 
-def _call_gemini(report_json: str) -> list[dict]:
+def _call_gemini(report_json: str, language: str = "he") -> list[dict]:
     import json as _json
     from google import genai
     from google.genai import types
 
     _ensure_genai_env()
 
+    system_prompt = _SYSTEM_PROMPT_EN if language == "en" else _SYSTEM_PROMPT
     client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
     config = types.GenerateContentConfig(
-        system_instruction=_SYSTEM_PROMPT,
+        system_instruction=system_prompt,
         temperature=0.2,
         response_mime_type="application/json",
         max_output_tokens=4096,
@@ -177,94 +221,94 @@ def _call_gemini(report_json: str) -> list[dict]:
     return [i for i in data if isinstance(i, dict) and "title" in i and "category" in i]
 
 
-def _rule_based_items(report: RealEstateFinanceDDReport) -> list[dict]:
+def _rule_based_items(report: RealEstateFinanceDDReport, language: str = "he") -> list[dict]:
     """Generate guaranteed items from structured fields in the report."""
     items: list[dict] = []
+    en = language == "en"
 
     tenant_table = report.tenant_table or []
     for row in tenant_table:
         name = row.owner_name or "—"
         parcel = row.sub_parcel or row.helka or "—"
 
-        # Unsigned tenant
         if row.is_signed is False:
             items.append({
                 "category": CAT_SIGNING,
-                "title": f"קבלת חתימה — {name} (תת-חלקה {parcel})",
-                "description": f"בעל הדירה {name} טרם חתם על הסכם הפינוי-בינוי.",
+                "title": f"Obtain signature — {name} (sub-parcel {parcel})" if en else f"קבלת חתימה — {name} (תת-חלקה {parcel})",
+                "description": f"Apartment owner {name} has not yet signed the agreement." if en else f"בעל הדירה {name} טרם חתם על הסכם הפינוי-בינוי.",
                 "priority": "high",
             })
 
-        # Warning note not registered
         if row.is_warning_note_registered is False:
             items.append({
                 "category": CAT_WARNING_NOTE,
-                "title": f"רישום הערת אזהרה ליזם — {name} (תת-חלקה {parcel})",
-                "description": (
-                    f"הערת אזהרה לטובת היזם טרם נרשמה בטאבו עבור {name}, תת-חלקה {parcel}."
-                ),
+                "title": f"Register caveat for developer — {name} (sub-parcel {parcel})" if en else f"רישום הערת אזהרה ליזם — {name} (תת-חלקה {parcel})",
+                "description": f"Caveat in favor of the developer has not been registered in Land Registry for {name}, sub-parcel {parcel}." if en else f"הערת אזהרה לטובת היזם טרם נרשמה בטאבו עבור {name}, תת-חלקה {parcel}.",
                 "priority": "high",
             })
 
-        # Mortgage registered — needs release
         if row.is_mortgage_registered is True:
             items.append({
                 "category": CAT_MORTGAGE,
-                "title": f"מחיקת משכנתא — {name} (תת-חלקה {parcel})",
-                "description": (
-                    f"משכנתא רשומה על תת-חלקה {parcel} של {name}. יש לטפל במחיקה לפני סגירת העסקה."
-                ),
+                "title": f"Release mortgage — {name} (sub-parcel {parcel})" if en else f"מחיקת משכנתא — {name} (תת-חלקה {parcel})",
+                "description": f"Mortgage registered on sub-parcel {parcel} of {name}. Must be released before closing." if en else f"משכנתא רשומה על תת-חלקה {parcel} של {name}. יש לטפל במחיקה לפני סגירת העסקה.",
                 "priority": "high",
             })
 
-        # Restrictive note for third party
         if row.restrictive_note_registered is True:
             items.append({
                 "category": CAT_WARNING_NOTE,
-                "title": f"הסרת הערה מגבילה — {name} (תת-חלקה {parcel})",
-                "description": (
-                    f"קיימת הערה מגבילה בנסח הטאבו לגבי תת-חלקה {parcel}. יש לבחון ולהסיר."
-                ),
+                "title": f"Remove restrictive notation — {name} (sub-parcel {parcel})" if en else f"הסרת הערה מגבילה — {name} (תת-חלקה {parcel})",
+                "description": f"A restrictive notation exists in the Land Registry for sub-parcel {parcel}. Must be reviewed and removed." if en else f"קיימת הערה מגבילה בנסח הטאבו לגבי תת-חלקה {parcel}. יש לבחון ולהסיר.",
                 "priority": "medium",
             })
 
-    # Lender non-compliance
     fin = report.financing
     if fin and fin.lender_compliance_note:
         note_lower = fin.lender_compliance_note.lower()
         if any(kw in note_lower for kw in ["לא תואם", "non-compliant", "נדרש", "אישור הדיירים"]):
             items.append({
                 "category": CAT_LENDER,
-                "title": "הסדרת זהות הגוף המממן מול הדיירים",
+                "title": "Resolve lender identity compliance with tenants" if en else "הסדרת זהות הגוף המממן מול הדיירים",
                 "description": fin.lender_compliance_note[:300],
                 "priority": "high",
             })
 
-    # Missing corporate chain
     if not report.developer_ubo_chain:
         items.append({
             "category": CAT_CORPORATE,
-            "title": "צירוף נסח חברה ושרשרת בעלות (UBO)",
-            "description": "לא צורפו מסמכי חברה המאמתים את שרשרת הבעלות של היזם.",
+            "title": "Submit company extract and UBO ownership chain" if en else "צירוף נסח חברה ושרשרת בעלות (UBO)",
+            "description": "Corporate documents confirming the developer ownership chain were not provided." if en else "לא צורפו מסמכי חברה המאמתים את שרשרת הבעלות של היזם.",
             "priority": "medium",
         })
 
-    # Rights transfer agreement — when developer changed hands
     zr = report.zero_report_metrics
     if zr and zr.developer_entity_change:
         ec = zr.developer_entity_change
-        orig = ec.original_developer or "הגורם המקורי"
-        curr = ec.current_developer or "הגורם הנוכחי"
-        items.append({
-            "category": CAT_MISSING_DOC,
-            "title": f"הסכם העברת זכויות — {orig} ל-{curr}",
-            "description": (
-                f"הדוח מזהה שינוי יזם מ-{orig} ל-{curr}. "
-                f"יש להמציא הסכם העברת זכויות חתום המאשר את המעבר. "
-                + (ec.change_details or "")
-            )[:400],
-            "priority": "high",
-        })
+        orig = ec.original_developer or ("original entity" if en else "הגורם המקורי")
+        curr = ec.current_developer or ("current entity" if en else "הגורם הנוכחי")
+        if en:
+            items.append({
+                "category": CAT_MISSING_DOC,
+                "title": f"Rights transfer agreement — {orig} to {curr}",
+                "description": (
+                    f"Report identifies a developer change from {orig} to {curr}. "
+                    f"A signed rights transfer agreement must be provided. "
+                    + (ec.change_details or "")
+                )[:400],
+                "priority": "high",
+            })
+        else:
+            items.append({
+                "category": CAT_MISSING_DOC,
+                "title": f"הסכם העברת זכויות — {orig} ל-{curr}",
+                "description": (
+                    f"הדוח מזהה שינוי יזם מ-{orig} ל-{curr}. "
+                    f"יש להמציא הסכם העברת זכויות חתום המאשר את המעבר. "
+                    + (ec.change_details or "")
+                )[:400],
+                "priority": "high",
+            })
 
     return items
 

@@ -22,6 +22,7 @@ from google.adk.agents.readonly_context import ReadonlyContext
 from app.agents.constants import (
     STATE_DOCUMENT_NAMES,
     STATE_ENRICHED_REPORT,
+    STATE_LANGUAGE,
     STATE_REPRESENTING_ROLE,
 )
 from app.agents.schemas import SynthesisMainOutput, SynthesisTenantFindingsOutput
@@ -162,6 +163,17 @@ def _representing_role_block(role: str | None) -> str | None:
     )
 
 
+def _language_block(language: str | None) -> str | None:
+    if language == "en":
+        return (
+            "# OUTPUT LANGUAGE\n\n"
+            "All text field values in the JSON output MUST be written in English. "
+            "Do NOT use Hebrew for any string field values. "
+            "Field names (keys) remain as defined in the schema."
+        )
+    return None
+
+
 async def _build_main_instruction(ctx: ReadonlyContext) -> str:
     doc_names: list[str] = ctx.state.get(STATE_DOCUMENT_NAMES) or []
     parts = [_ROLE_HEADER, CARRY_FORWARD_INSTRUCTION, get_main_prompt()]
@@ -171,6 +183,9 @@ async def _build_main_instruction(ctx: ReadonlyContext) -> str:
     representing_role_block = _representing_role_block(ctx.state.get(STATE_REPRESENTING_ROLE))
     if representing_role_block:
         parts.append(representing_role_block)
+    lang_block = _language_block(ctx.state.get(STATE_LANGUAGE))
+    if lang_block:
+        parts.append(lang_block)
     parts.append(
         "# Extraction Data (extractor agent outputs)\n\n"
         + _build_extraction_blocks(ctx)
@@ -196,6 +211,9 @@ async def _build_details_instruction(ctx: ReadonlyContext) -> str:
     representing_role_block = _representing_role_block(ctx.state.get(STATE_REPRESENTING_ROLE))
     if representing_role_block:
         parts.append(representing_role_block)
+    lang_block = _language_block(ctx.state.get(STATE_LANGUAGE))
+    if lang_block:
+        parts.append(lang_block)
     parts.append(
         "# Extraction Data (extractor agent outputs)\n\n"
         + _build_extraction_blocks(ctx)

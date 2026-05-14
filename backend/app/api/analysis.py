@@ -41,7 +41,7 @@ from app.core.authorization import (
 )
 from app.core.config import settings
 from app.db.session import get_async_db, get_db
-from app.db.models import DDCheck, File, Project
+from app.db.models import DDCheck, File, Organization, Project
 
 
 from app.services.failure_logging import log_analysis_failure
@@ -245,6 +245,7 @@ async def _auto_generate_checklist(
     project_id: UUID,
     check_id: UUID,
     report_dict: dict,
+    language: str = "he",
 ) -> None:
     """Generate and persist checklist items right after a finance DD report completes."""
     try:
@@ -256,7 +257,7 @@ async def _auto_generate_checklist(
 
         # Run blocking Gemini call in a thread
         import asyncio
-        new_items_list = await asyncio.to_thread(generate_checklist_items, report)
+        new_items_list = await asyncio.to_thread(generate_checklist_items, report, language)
 
         # Delete any uncompleted items from a previous run
         from sqlalchemy import delete as sa_delete
@@ -294,6 +295,7 @@ async def _run_analysis_task(
     transaction_type: str,
     transaction_metadata: dict,
     user_email: str,
+    language: str = "he",
 ) -> None:
     """Background coroutine that runs the full pipeline with its own DB session.
 
@@ -323,6 +325,7 @@ async def _run_analysis_task(
                     use_visual_grounding=True,
                     phase1_only=True,
                     transaction_metadata=transaction_metadata,
+                    language=language,
                 )
 
             if analysis_result.needs_review and analysis_result.hitl_data is not None:
@@ -368,7 +371,7 @@ async def _run_analysis_task(
 
             # Auto-generate completeness checklist for finance projects
             if "tenant_table" in (analysis_result.report_dict or {}):
-                await _auto_generate_checklist(db, project_id, check_id, analysis_result.report_dict)
+                await _auto_generate_checklist(db, project_id, check_id, analysis_result.report_dict, language=language)
 
             project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
             send_report_ready_notification(
@@ -446,12 +449,19 @@ async def start_analysis(
     transaction_type = project.transaction_type or "real_estate_finance"
     transaction_metadata = project.transaction_metadata or {}
 
+    from app.core.authorization import DEFAULT_ORGANIZATION_ID
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org_result = await db.execute(select(Organization).where(Organization.id == org_id))
+    org = org_result.scalar_one_or_none()
+    language = (org.language if org else None) or "he"
+
     logger.info(
-        "Starting DD analysis (async): check_id=%s, project=%s, files=%d, user=%s",
+        "Starting DD analysis (async): check_id=%s, project=%s, files=%d, user=%s, language=%s",
         check_id,
         project_id,
         len(uploaded_files),
         user.email,
+        language,
     )
 
     asyncio.create_task(
@@ -462,6 +472,7 @@ async def start_analysis(
             transaction_type=transaction_type,
             transaction_metadata=transaction_metadata,
             user_email=user.email,
+            language=language,
         )
     )
 
@@ -893,6 +904,12 @@ def export_check_word(
 
     project_title = project.title or "report"
 
+    # Fetch org language for export
+    from app.core.authorization import DEFAULT_ORGANIZATION_ID
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org_for_lang = db.query(Organization).filter(Organization.id == org_id).first()
+    export_language = (org_for_lang.language if org_for_lang else None) or "he"
+
     # Attach in-app comments as Word margin annotations
     comments_by_section: dict[str, list[dict]] = {}
     try:
@@ -917,7 +934,7 @@ def export_check_word(
         logger.warning("Word export: could not load comments (table may not exist yet): %s", exc)
 
     try:
-        docx_bytes = generate_word_report(report, project_title, comments_by_section or None)
+        docx_bytes = generate_word_report(report, project_title, comments_by_section or None, language=export_language)
     except Exception as exc:
         logger.error("Word export: generate_word_report failed: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"שגיאה בייצוא הדוח: {exc}") from exc
@@ -1110,6 +1127,7 @@ async def _run_analysis(
     use_visual_grounding: bool = False,
     phase1_only: bool = False,
     transaction_metadata: dict | None = None,
+    language: str = "he",
 ) -> _AnalysisResult:
     """Run the DD analysis via the ADK root agent.
 
@@ -1131,6 +1149,7 @@ async def _run_analysis(
         STATE_DOCUMENT_NAMES,
         STATE_ENRICHED_REPORT,
         STATE_GCS_URIS,
+        STATE_LANGUAGE,
         STATE_PROJECT_ID,
         STATE_REPRESENTING_ROLE,
         STATE_TEXT_PARTS,
@@ -1179,6 +1198,7 @@ async def _run_analysis(
         STATE_CONTENT_TYPES: content_types,
         STATE_TEXT_PARTS: text_parts,
         STATE_REPRESENTING_ROLE: representing_role,
+        STATE_LANGUAGE: language,
     }
 
     session_service = get_session_service()

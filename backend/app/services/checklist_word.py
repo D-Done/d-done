@@ -14,6 +14,16 @@ from docx.shared import Pt, RGBColor
 from app.db.models import ChecklistItem
 from app.services.checklist_generator import CATEGORY_LABELS
 
+CATEGORY_LABELS_EN = {
+    "missing_doc": "Missing Documents",
+    "warning_note": "Caveats / Warning Notes",
+    "mortgage": "Mortgages",
+    "lender": "Financing Body",
+    "signing": "Missing Signatures",
+    "corporate": "Corporate",
+    "other": "Other",
+}
+
 CATEGORY_ICONS = {
     "missing_doc": "📄",
     "warning_note": "⚠️",
@@ -61,8 +71,14 @@ def _checkbox(completed: bool) -> str:
     return "☑" if completed else "☐"
 
 
-def generate_checklist_docx(items: list[ChecklistItem], project_title: str) -> bytes:
+def generate_checklist_docx(items: list[ChecklistItem], project_title: str, language: str = "he") -> bytes:
     doc = Document()
+    cat_labels = CATEGORY_LABELS_EN if language == "en" else CATEGORY_LABELS
+    title_he = "Completeness Checklist" if language == "en" else "רשימת השלמות"
+    date_prefix = "Date" if language == "en" else "תאריך"
+    stats_tmpl = "Total: {t} | Completed: {d} | Pending: {p}" if language == "en" else "סה״כ פריטים: {t} | הושלמו: {d} | ממתינים: {p}"
+    col_headers = (["Status", "Action Required", "Details"] if language == "en"
+                   else ["סטטוס", "פעולה נדרשת", "פירוט"])
 
     # RTL defaults
     styles_el = doc.styles.element
@@ -85,17 +101,17 @@ def generate_checklist_docx(items: list[ChecklistItem], project_title: str) -> b
     pPr = title_p._p.get_or_add_pPr()
     bidi = OxmlElement("w:bidi")
     pPr.insert(0, bidi)
-    run = title_p.add_run(f"רשימת השלמות — {project_title}")
+    run = title_p.add_run(f"{title_he} — {project_title}")
     rPr = run._r.get_or_add_rPr()
     rPr.append(OxmlElement("w:rtl"))
 
     date_str = date.today().strftime("%d/%m/%Y")
-    _rtl_para(doc, f"תאריך: {date_str}")
+    _rtl_para(doc, f"{date_prefix}: {date_str}")
 
     # Stats
     total = len(items)
     done = sum(1 for i in items if i.is_completed)
-    _rtl_para(doc, f"סה״כ פריטים: {total} | הושלמו: {done} | ממתינים: {total - done}")
+    _rtl_para(doc, stats_tmpl.format(t=total, d=done, p=total - done))
     doc.add_paragraph()
 
     # Group by category
@@ -110,7 +126,7 @@ def generate_checklist_docx(items: list[ChecklistItem], project_title: str) -> b
         if not cat_items:
             continue
 
-        label = CATEGORY_LABELS.get(cat, cat)
+        label = cat_labels.get(cat, cat)
         icon = CATEGORY_ICONS.get(cat, "•")
         _add_heading(doc, f"{icon}  {label}", level=1)
 
@@ -136,7 +152,7 @@ def generate_checklist_docx(items: list[ChecklistItem], project_title: str) -> b
 
         # Header row
         hdr = table.rows[0].cells
-        for idx, txt in enumerate(["סטטוס", "פעולה נדרשת", "פירוט"]):
+        for idx, txt in enumerate(col_headers):
             hdr[idx].text = ""
             p = hdr[idx].paragraphs[0]
             pPr = p._p.get_or_add_pPr()

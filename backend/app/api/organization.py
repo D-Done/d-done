@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
+from typing import Literal
 
 from app.core.auth import CurrentUser, get_approved_user
 from app.core.authorization import DEFAULT_ORGANIZATION_ID
 from app.db.session import get_db
-from app.db.models import User
+from app.db.models import Organization, User
 
 router = APIRouter(prefix="/organization", tags=["organization"])
 
@@ -42,3 +43,36 @@ def list_organization_users(
         OrganizationUser(id=str(u.id), email=u.email, name=u.name)
         for u in users
     ]
+
+
+class OrgLanguageResponse(BaseModel):
+    language: str
+
+
+class OrgLanguageUpdate(BaseModel):
+    language: Literal["he", "en"]
+
+
+@router.get("/language", response_model=OrgLanguageResponse)
+def get_org_language(
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    return OrgLanguageResponse(language=org.language if org else "he")
+
+
+@router.patch("/language", response_model=OrgLanguageResponse)
+def set_org_language(
+    body: OrgLanguageUpdate,
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    org.language = body.language
+    db.commit()
+    return OrgLanguageResponse(language=org.language)

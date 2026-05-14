@@ -50,6 +50,7 @@ class Organization(Base):
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
     name = Column(String(500), nullable=False)
     domain = Column(String(255), nullable=True)
+    language = Column(String(10), nullable=False, default="he")
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(
         DateTime(timezone=True),

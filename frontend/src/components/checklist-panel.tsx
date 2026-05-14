@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import * as api from "@/lib/api";
 import type { ChecklistItem } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,39 +31,46 @@ import { Badge } from "@/components/ui/badge";
 
 // ── Category config ───────────────────────────────────────────────────────────
 
-const CATEGORIES: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+const CATEGORIES: Record<string, { label: string; labelEn: string; icon: React.ReactNode; color: string }> = {
   signing: {
     label: "חתימות חסרות",
+    labelEn: "Missing Signatures",
     icon: <PenLine className="h-4 w-4" />,
     color: "text-red-600 bg-red-50 border-red-200",
   },
   warning_note: {
     label: "הערות אזהרה",
+    labelEn: "Caveats / Warning Notes",
     icon: <AlertTriangle className="h-4 w-4" />,
     color: "text-orange-600 bg-orange-50 border-orange-200",
   },
   mortgage: {
     label: "משכנתאות",
+    labelEn: "Mortgages",
     icon: <Landmark className="h-4 w-4" />,
     color: "text-purple-600 bg-purple-50 border-purple-200",
   },
   missing_doc: {
     label: "מסמכים חסרים",
+    labelEn: "Missing Documents",
     icon: <FileText className="h-4 w-4" />,
     color: "text-blue-600 bg-blue-50 border-blue-200",
   },
   lender: {
     label: "גוף המממן",
+    labelEn: "Financing Body",
     icon: <Building2 className="h-4 w-4" />,
     color: "text-yellow-700 bg-yellow-50 border-yellow-200",
   },
   corporate: {
     label: "תאגידי",
+    labelEn: "Corporate",
     icon: <MapPin className="h-4 w-4" />,
     color: "text-slate-600 bg-slate-50 border-slate-200",
   },
   other: {
     label: "אחר",
+    labelEn: "Other",
     icon: <CheckSquare className="h-4 w-4" />,
     color: "text-slate-500 bg-slate-50 border-slate-200",
   },
@@ -207,6 +216,7 @@ function AddItemForm({
   onAdded: (item: ChecklistItem) => void;
   onCancel: () => void;
 }) {
+  const { lang: formLang } = useLanguage();
   const [category, setCategory] = useState("other");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -239,7 +249,7 @@ function AddItemForm({
       >
         {CATEGORY_ORDER.map((cat) => (
           <option key={cat} value={cat}>
-            {CATEGORIES[cat]?.label ?? cat}
+            {(formLang === "en" ? CATEGORIES[cat]?.labelEn : CATEGORIES[cat]?.label) ?? cat}
           </option>
         ))}
       </select>
@@ -373,15 +383,18 @@ function CategorySection({
   projectId,
   onUpdate,
   onDelete,
+  lang: catLang,
 }: {
   category: string;
   items: ChecklistItem[];
   projectId: string;
   onUpdate: (updated: ChecklistItem) => void;
   onDelete: (id: string) => void;
+  lang: import("@/lib/i18n").Lang;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const cfg = CATEGORIES[category] ?? CATEGORIES.other;
+  const catLabel = catLang === "en" ? cfg.labelEn : cfg.label;
   const done = items.filter((i) => i.is_completed).length;
 
   return (
@@ -394,13 +407,13 @@ function CategorySection({
         <div className="flex items-center gap-2.5">
           <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${cfg.color}`}>
             {cfg.icon}
-            {cfg.label}
+            {catLabel}
           </span>
           <span className="text-xs text-slate-400">
             {done}/{items.length}
           </span>
           {done === items.length && items.length > 0 && (
-            <span className="text-xs text-emerald-600 font-medium">✓ הושלם</span>
+            <span className="text-xs text-emerald-600 font-medium">✓ {t("completed", catLang)}</span>
           )}
         </div>
         {collapsed ? (
@@ -430,6 +443,7 @@ function CategorySection({
 // ── Main panel ────────────────────────────────────────────────────────────────
 
 export function ChecklistPanel({ projectId }: { projectId: string }) {
+  const { lang } = useLanguage();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -535,7 +549,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
             ) : (
               <RefreshCw className="h-3.5 w-3.5" />
             )}
-            {generating ? "" : "רענן מהדוח"}
+            {generating ? "" : t("checklist_refresh", lang)}
           </Button>
           {items.length > 0 && (
             <>
@@ -546,7 +560,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
                 className="gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" />
-                הוסף ידנית
+                {t("checklist_add", lang)}
               </Button>
               <Button
                 size="sm"
@@ -560,11 +574,11 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
                 ) : (
                   <FileDown className="h-3.5 w-3.5" />
                 )}
-                ייצוא Word
+                {t("checklist_export", lang)}
               </Button>
               <Button size="sm" onClick={() => setShowShare(true)} className="gap-1.5">
                 <Send className="h-3.5 w-3.5" />
-                שלח לצד שני
+                {t("checklist_share", lang)}
               </Button>
             </>
           )}
@@ -581,8 +595,8 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
             />
           </div>
           <div className="flex justify-between text-xs text-slate-400">
-            <span>{pct}% הושלם</span>
-            <span>{totalItems - totalDone} ממתינים</span>
+            <span>{pct}% {t("completed", lang)}</span>
+            <span>{totalItems - totalDone} {t("pending", lang)}</span>
           </div>
         </div>
       )}
@@ -605,9 +619,9 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center">
           <CheckSquare className="h-10 w-10 text-slate-300" />
           <div>
-            <p className="font-medium text-slate-600">רשימת ההשלמות ריקה</p>
+            <p className="font-medium text-slate-600">{t("checklist_title", lang)}</p>
             <p className="mt-1 text-sm text-slate-400">
-              הרשימה נוצרת אוטומטית לאחר השלמת הדוח. אם הרשימה ריקה — לחץ לרענון.
+              {t("checklist_empty", lang)}
             </p>
           </div>
           <Button onClick={handleGenerate} disabled={generating} className="gap-2">
@@ -616,7 +630,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
-            רענן מהדוח
+            {t("checklist_refresh", lang)}
           </Button>
         </div>
       ) : (
@@ -629,6 +643,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
               projectId={projectId}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
+              lang={lang}
             />
           ))}
         </div>
