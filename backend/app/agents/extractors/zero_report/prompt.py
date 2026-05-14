@@ -40,7 +40,11 @@ You will receive plain text extracted from documents (not raw PDFs).
 
 ## 2. Budget & profitability (תקציב ורווחיות)
 - **Budget**: `total_project_cost_ils`, `total_projected_revenue_ils`, `budget_lines` (category in Hebrew + amount in ILS).
-- **Profitability**: `profit_on_turnover` = (Revenue − Cost) / Revenue and `profit_on_cost` = (Revenue − Cost) / Cost. Use figures from the report verbatim (as decimals) or calculate if not stated. Report figures only — no commentary.
+- **Profitability**: `profit_on_turnover` = (Revenue − Cost) / Revenue and `profit_on_cost` = (Revenue − Cost) / Cost.
+  - First, look for explicit percentage figures in the report (e.g., "רווח למחזור 13.7%", "רווח יזמי 15.9%"). Convert to decimal (13.7% → 0.137).
+  - If not stated explicitly, **calculate from the budget table**: use `total_projected_revenue_ils` and `total_project_cost_ils` that you extract in the same task. Perform the arithmetic yourself and populate both fields.
+  - Only leave null if the report contains **no revenue figure and no cost figure** whatsoever, making calculation impossible.
+  - Report figures only — no commentary.
 
 ## 3. Equity (הון עצמי)
 - `equity_amount_ils`, `equity_confirmed` (true only if CPA certificate or Supervisor confirmation is explicitly present), `equity_confirmation_details` in Hebrew.

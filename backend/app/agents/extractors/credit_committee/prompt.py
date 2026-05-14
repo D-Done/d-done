@@ -32,13 +32,16 @@ Extract the following project details as they appear in the credit committee doc
 - `planned_apartments_count`: number of planned apartments after construction, integer or null.
 - Leave any field null if not stated in the document.
 
-## TASK 3 -- Collateral Requirements
+## TASK 3 -- Indexation (הצמדה למדד)
+- `indexation_details`: search the entire document for any mention of indexation, CPI linkage, or base-index date (מדד המחירים לצרכן, מדד תשומות הבנייה, מדד בסיס, הצמדה למדד, תאריך בסיס וכו'). Write a concise Hebrew summary: index name + base date + mechanism. Set to null only if the document contains no mention of indexation whatsoever.
+
+## TASK 4 -- Collateral Requirements
 - What security the committee requires (first-rank mortgage, personal guarantees, etc.).
 
-## TASK 4 -- Conditions Precedent
+## TASK 5 -- Conditions Precedent
 - Each condition, whether it appears met (true/false/null), and the evidentiary source.
 
-## TASK 5 -- Covenants & Risk
+## TASK 6 -- Covenants & Risk
 - Special covenants: financial covenants, LTV limits, drawdown restrictions.
 - Risk items or concerns flagged by the committee.
 
@@ -61,6 +64,7 @@ Your response MUST be a valid JSON matching this structure:
   "existing_apartments_count": null,
   "planned_buildings_count": null,
   "planned_apartments_count": null,
+  "indexation_details": "Hebrew summary of indexation or null",
   "collateral_requirements": ["collateral requirement in Hebrew"],
   "conditions_precedent": [
     {
@@ -92,6 +96,7 @@ Your response MUST be a valid JSON matching this structure:
   "existing_apartments_count": 24,
   "planned_buildings_count": 1,
   "planned_apartments_count": 60,
+  "indexation_details": "הלוואה צמודה למדד המחירים לצרכן, בסיס 06/2025",
   "collateral_requirements": ["משכנתא מדרגה ראשונה על המקרקעין", "ערבות אישית של בעלי השליטה"],
   "conditions_precedent": [
     {

@@ -303,13 +303,16 @@ Do **not** emit a `findings` entry for this section.
 | `report_date`                  | `zero_report_date_formatted` ← format as: `"תאריך הוצאת דו\"ח האפס הוא ביום DD/MM/YY"` |
 | `developer_entity_change`      | `developer_entity_change` ← direct copy (null if none) |
 
-**Profitability rule:** present `profit_on_turnover` and `profit_on_cost` as numbers only — **do not interpret** as "high", "low", "reasonable", etc.
+**Profitability rule:**
+- Copy `profit_on_turnover` and `profit_on_cost` directly from `zero_report_extraction`.
+- If either field is null but `zero_report_extraction.total_projected_revenue_ils` and `zero_report_extraction.total_project_cost_ils` are both non-null, **calculate yourself**: `profit_on_turnover = (revenue - cost) / revenue`, `profit_on_cost = (revenue - cost) / cost`. Populate both fields.
+- Present as decimal numbers only — **do not interpret** as "high", "low", "reasonable", etc.
 
 **`indexation_details` — always populate:**
-1. Check `zero_report_extraction.indexation_details` first.
-2. If null or absent, check `credit_committee_extraction` for any mention of indexation (מדד), CPI linkage, or base-index date.
-3. Combine findings from both sources into a single summary string.
-4. Only set to `"אין התייחסות למדד"` after confirming **both** sources contain no mention of indexation.
+1. Check `zero_report_extraction.indexation_details` — if it contains actual indexation data (not "אין התייחסות למדד"), use it as the base.
+2. Check `credit_committee_extraction.indexation_details` — this is now a dedicated extracted field. If it is non-null, incorporate it.
+3. Combine findings from both sources into a single summary string (e.g., "מדד תשומות הבניה ומדד המחירים לצרכן, בסיס 06/2025").
+4. Only set to `"אין התייחסות למדד"` after confirming **both** fields are null or contain the "not found" phrase.
 
 **`construction_restrictions` — always populate:**
 1. Start with all items in `zero_report_extraction.construction_restrictions`.

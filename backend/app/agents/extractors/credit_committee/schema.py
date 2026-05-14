@@ -51,6 +51,14 @@ class CreditCommitteeExtraction(BaseModel):
     planned_apartments_count: int | None = Field(
         default=None, description="Number of planned apartments after construction"
     )
+    indexation_details: str | None = Field(
+        default=None,
+        description=(
+            "Free-text Hebrew summary of any indexation (הצמדה למדד) mentioned in the "
+            "committee document: index name, base date, mechanism. "
+            "Null if the document contains no mention of indexation."
+        ),
+    )
     collateral_requirements: list[str] = Field(
         default_factory=list,
         description="Required collateral / security as listed by the committee",
