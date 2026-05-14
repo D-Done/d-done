@@ -19,7 +19,6 @@ import * as api from "@/lib/api";
 import type { ProjectListItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
-import { getProjectDealType } from "@/lib/deal-type-store";
 import AvatarGroup from "@/components/ui/avatar-group";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,13 +57,11 @@ function statusPillClass(status: string): string {
   }
 }
 
-function projectTypeLabel(projectId: string): { group: string; label: string } {
-  const deal = getProjectDealType(projectId);
-  if (!deal?.dealType) return { group: "unassigned", label: "לא משויך" };
-  if (deal.dealType === "real_estate")
+function projectTypeLabel(transactionType: string): { group: string; label: string } {
+  if (transactionType === "real_estate_finance" || transactionType === "real_estate")
     return { group: "real_estate", label: 'נדל"ן' };
-  if (deal.dealType === "ma") return { group: "ma", label: "M&A" };
-  if (deal.dealType === "company_investment")
+  if (transactionType === "ma") return { group: "ma", label: "M&A" };
+  if (transactionType === "company_investment")
     return { group: "company_investment", label: "השקעה בחברה" };
   return { group: "unassigned", label: "לא משויך" };
 }
@@ -95,6 +92,12 @@ function TransactionsList() {
 
   useEffect(() => {
     fetchProjects();
+  }, [fetchProjects]);
+
+  useEffect(() => {
+    const onFocus = () => fetchProjects();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [fetchProjects]);
 
   const handleDeleteConfirm = async () => {
@@ -156,7 +159,7 @@ function TransactionsList() {
           { key: "unassigned", title: t("group_unassigned", lang) },
         ].map((group) => {
           const items = projects.filter(
-            (p) => projectTypeLabel(p.id).group === group.key,
+            (p) => projectTypeLabel(p.transaction_type).group === group.key,
           );
           if (items.length === 0) return null;
 

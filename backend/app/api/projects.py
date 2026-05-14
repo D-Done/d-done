@@ -140,6 +140,7 @@ class ProjectListItem(BaseModel):
     status: str
     created_at: str
     file_count: int
+    transaction_type: str = "real_estate_finance"
     members: list[ProjectMemberBrief] = []
     block: str | None = None
     parcel: str | None = None
@@ -312,6 +313,7 @@ def list_projects(
             status=p.status,
             created_at=p.created_at.isoformat(),
             file_count=len(p.files),
+            transaction_type=p.transaction_type or "real_estate_finance",
             members=members,
             block=block,
             parcel=parcel,

@@ -748,6 +748,7 @@ export interface ProjectListItem {
   status: string;
   created_at: string;
   file_count: number;
+  transaction_type: string;
   members: ProjectListMember[];
   block?: string | null;
   parcel?: string | null;
