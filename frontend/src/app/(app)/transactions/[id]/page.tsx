@@ -860,6 +860,7 @@ export default function TransactionPage() {
                         <TableHead>מסמך</TableHead>
                         <TableHead>גודל</TableHead>
                         <TableHead>תאריך</TableHead>
+                        <TableHead>הועלה על ידי</TableHead>
                         <TableHead>פעולות</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -887,6 +888,9 @@ export default function TransactionPage() {
                           <TableCell className="text-slate-600 dark:text-slate-300">
                             {new Date(f.created_at).toLocaleDateString("he-IL")}
                           </TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-300">
+                            {f.uploaded_by_name || f.uploaded_by_email || "צד חיצוני"}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button
@@ -896,7 +900,7 @@ export default function TransactionPage() {
                                 title="תצוגה מקדימה"
                                 onClick={async () => {
                                   try {
-                                    const { url } = await api.getFileViewUrl(project.id, f.id);
+                                    const url = await api.getFileBlobUrl(project.id, f.id);
                                     setPreviewFile({ name: f.original_name, url });
                                   } catch {
                                     toast.error("שגיאה בטעינת התצוגה המקדימה");
@@ -912,8 +916,12 @@ export default function TransactionPage() {
                                 title="הורד מסמך"
                                 onClick={async () => {
                                   try {
-                                    const { url } = await api.getFileDownloadUrl(project.id, f.id);
-                                    window.open(url, "_blank");
+                                    const url = await api.getFileBlobUrl(project.id, f.id, true);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = f.original_name;
+                                    a.click();
+                                    setTimeout(() => URL.revokeObjectURL(url), 10_000);
                                   } catch {
                                     toast.error("שגיאה בהורדת המסמך");
                                   }
