@@ -36,6 +36,8 @@ import type {
   ProjectFileOut,
 } from "@/lib/api";
 import type { BoundingBox, ProjectListItem } from "@/lib/types";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import {
   Bot,
   FileUp,
@@ -151,6 +153,8 @@ const itemVariants = {
 // ── Page component ────────────────────────────────────────────────────────
 
 export default function AiPage() {
+  const { lang, dir } = useLanguage();
+  const locale = lang === "en" ? "en-US" : "he-IL";
   // Conversations sidebar
   const [conversations, setConversations] = useState<ConversationOut[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -567,7 +571,7 @@ export default function AiPage() {
                 )}
                 {!convsLoading && conversations.length === 0 && (
                   <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-8 px-3">
-                    אין שיחות עדיין. התחל שיחה חדשה!
+                    {t("ai_no_convs", lang)}
                   </p>
                 )}
                 {conversations.map((conv) => (
@@ -583,7 +587,7 @@ export default function AiPage() {
                     <div className="flex items-start gap-2">
                       <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-60" />
                       <span className="flex-1 text-xs font-medium leading-snug line-clamp-2 text-right">
-                        {conv.title || "שיחה חדשה"}
+                        {conv.title || t("ai_new_conv", lang)}
                       </span>
                       <button
                         onClick={(e) => handleDeleteConversation(conv.id, e)}
@@ -601,7 +605,7 @@ export default function AiPage() {
                       </div>
                     )}
                     <p className="text-[10px] text-zinc-400 dark:text-zinc-500 pr-5">
-                      {new Date(conv.updated_at).toLocaleDateString("he-IL")}
+                      {new Date(conv.updated_at).toLocaleDateString(locale)}
                     </p>
                   </button>
                 ))}
@@ -642,7 +646,7 @@ export default function AiPage() {
                 >
                   <FileUp className="mx-auto h-12 w-12 text-zinc-500 mb-3" />
                   <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                    שחרר כדי להעלות
+                    {t("ai_drop_to_upload", lang)}
                   </p>
                 </motion.div>
               </motion.div>
@@ -677,7 +681,7 @@ export default function AiPage() {
                 </p>
               ) : (
                 <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                  ניתוח מסמכים עם ביסוס חזותי
+                  {t("ai_subtitle", lang)}
                 </p>
               )}
             </div>
@@ -687,11 +691,11 @@ export default function AiPage() {
               projectTitle ? (
                 <button
                   onClick={handleUnlinkProject}
-                  title="נתק מפרויקט"
+                  title={t("ai_unlink_title", lang)}
                   className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 bg-white/60 dark:bg-zinc-800/60"
                 >
                   <Link2Off className="h-3.5 w-3.5" />
-                  נתק
+                  {t("ai_unlink", lang)}
                 </button>
               ) : (
                 <button
@@ -699,7 +703,7 @@ export default function AiPage() {
                   className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-all ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40 bg-white/60 dark:bg-zinc-800/60"
                 >
                   <Link2 className="h-3.5 w-3.5" />
-                  קשר פרויקט
+                  {t("ai_link_project", lang)}
                 </button>
               )
             )}
@@ -727,7 +731,7 @@ export default function AiPage() {
                   {hasProjectContext ? (
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900/10 border border-zinc-200 dark:border-zinc-700/50 px-2.5 py-1 text-xs font-medium text-zinc-900 dark:text-zinc-100">
                       <FolderOpen className="h-3 w-3 shrink-0" />
-                      <span>{projectTitle || "פרויקט מקושר"}</span>
+                      <span>{projectTitle || t("ai_linked_project", lang)}</span>
                     </span>
                   ) : (
                     <>
@@ -762,7 +766,7 @@ export default function AiPage() {
                           className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors"
                         >
                           <FileUp className="h-3 w-3" />
-                          הוסף
+                          {t("ai_add", lang)}
                         </motion.button>
                       )}
                     </>
@@ -792,14 +796,13 @@ export default function AiPage() {
                   variants={itemVariants}
                   className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight"
                 >
-                  שלום, אני D-DONE AI
+                  {t("ai_welcome_title", lang)}
                 </motion.h2>
                 <motion.p
                   variants={itemVariants}
                   className="max-w-sm text-center text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed"
                 >
-                  התחל שיחה חדשה, קשר אותה לפרויקט קיים, ושאל שאלות על
-                  המסמכים והדוח. אמצא תשובות עם ציטוטים ויזואליים מדויקים.
+                  {t("ai_welcome_body", lang)}
                 </motion.p>
                 <motion.div variants={itemVariants} className="flex gap-3 mt-2">
                   <Button
@@ -807,7 +810,7 @@ export default function AiPage() {
                     className="rounded-xl bg-zinc-900 text-white shadow-lg hover:bg-zinc-700 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-10 px-5 font-medium gap-2"
                   >
                     <Plus className="h-4 w-4" />
-                    שיחה חדשה
+                    {t("ai_new_conv", lang)}
                   </Button>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
@@ -815,7 +818,7 @@ export default function AiPage() {
                     className="rounded-xl h-10 px-5 font-medium gap-2"
                   >
                     <FileUp className="h-4 w-4" />
-                    העלה מסמכים
+                    {t("ai_upload_docs", lang)}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -838,8 +841,8 @@ export default function AiPage() {
                 <Bot className="h-10 w-10 opacity-50" />
                 <p className="text-sm font-medium">
                   {projectTitle
-                    ? "מוכן לשאלות על הפרויקט"
-                    : "העלה מסמכים או קשר פרויקט כדי להתחיל"}
+                    ? t("ai_ready_project", lang)
+                    : t("ai_ready_no_context", lang)}
                 </p>
               </motion.div>
             )}
@@ -852,7 +855,7 @@ export default function AiPage() {
               >
                 <Bot className="h-10 w-10 opacity-50" />
                 <p className="text-sm font-medium">
-                  {projectTitle ? `${projectTitle} מוכן. שאל אותי עליו.` : "המסמכים מוכנים. שאל אותי עליהם."}
+                  {projectTitle ? `${projectTitle} ${t("ai_project_ready", lang)}` : t("ai_docs_ready", lang)}
                 </p>
               </motion.div>
             )}
@@ -950,7 +953,7 @@ export default function AiPage() {
                   </div>
                   <div className="rounded-3xl rounded-tl-sm bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40 px-5 py-3.5 text-[14px] text-zinc-500 dark:text-zinc-400 flex items-center gap-2.5 shadow-sm">
                     <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
-                    <span className="animate-pulse">מנתח את המסמכים...</span>
+                    <span className="animate-pulse">{t("ai_analyzing", lang)}</span>
                   </div>
                 </motion.div>
               )}
@@ -962,10 +965,16 @@ export default function AiPage() {
           {!loading && (
             <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-2 pt-1">
               {(hasProjectContext
-                ? ["סכם את המסמכים", "מה הסיכונים העיקריים?", "פרט את הצדדים בעסקה", "בדוק תאריכים ומועדים חשובים"]
+                ? lang === "en"
+                  ? ["Summarize the documents", "What are the main risks?", "List the deal parties", "Check key dates and deadlines"]
+                  : ["סכם את המסמכים", "מה הסיכונים העיקריים?", "פרט את הצדדים בעסקה", "בדוק תאריכים ומועדים חשובים"]
                 : hasUploadedFiles
-                  ? ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
-                  : ["מה בודקים בבדיקת נאותות?", "מה הסיכונים במימון נדל\"ן?", "מה זה דוח אפס?"]
+                  ? lang === "en"
+                    ? ["Summarize the document", "What are the key points?", "What risks exist?", "What are the important dates?"]
+                    : ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
+                  : lang === "en"
+                    ? ["What's checked in due diligence?", "What are RE financing risks?", "What is a Zero Report?"]
+                    : ["מה בודקים בבדיקת נאותות?", "מה הסיכונים במימון נדל\"ן?", "מה זה דוח אפס?"]
               ).map((q) => (
                 <button
                   key={q}
@@ -986,7 +995,7 @@ export default function AiPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors duration-150"
-                  title="צרף מסמכים"
+                  title={t("ai_attach", lang)}
                 >
                   <Paperclip className="h-5 w-5" />
                 </button>
@@ -996,7 +1005,7 @@ export default function AiPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="שאל שאלה..."
+                placeholder={t("ai_placeholder", lang)}
                 disabled={loading}
                 rows={1}
                 className="flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none disabled:opacity-50"
@@ -1035,9 +1044,9 @@ export default function AiPage() {
 
       {/* ── Project picker dialog ──────────────────────────────────────── */}
       <Dialog open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
-        <DialogContent className="max-w-md" dir="rtl">
+        <DialogContent className="max-w-md" dir={dir}>
           <DialogHeader>
-            <DialogTitle className="text-right">קשר פרויקט לשיחה</DialogTitle>
+            <DialogTitle className="text-right">{t("ai_link_dialog_title", lang)}</DialogTitle>
           </DialogHeader>
           {projectsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -1045,7 +1054,7 @@ export default function AiPage() {
             </div>
           ) : projects.length === 0 ? (
             <p className="text-center text-sm text-zinc-400 py-8">
-              לא נמצאו פרויקטים
+              {t("ai_no_projects", lang)}
             </p>
           ) : (
             <div className="space-y-1.5 max-h-80 overflow-y-auto">
@@ -1061,8 +1070,8 @@ export default function AiPage() {
                       {p.title}
                     </p>
                     <p className="text-xs text-zinc-400">
-                      {p.file_count} קבצים ·{" "}
-                      {new Date(p.created_at).toLocaleDateString("he-IL")}
+                      {p.file_count} {t("ai_files_count", lang)} ·{" "}
+                      {new Date(p.created_at).toLocaleDateString(locale)}
                     </p>
                   </div>
                 </button>
@@ -1080,12 +1089,13 @@ export default function AiPage() {
         >
           <SheetHeader className="px-6 pt-6 pb-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
             <SheetTitle className="text-xl font-semibold tracking-tight">
-              ציטוט ממסמך
+              {t("ai_citation_title", lang)}
             </SheetTitle>
             <SheetDescription className="text-sm font-medium">
-              {drawerCitations.length} אזור
-              {drawerCitations.length !== 1 ? "ים" : ""} מסומנ
-              {drawerCitations.length !== 1 ? "ים" : ""}
+              {drawerCitations.length}{" "}
+              {drawerCitations.length !== 1
+                ? t("ai_citation_regions", lang)
+                : t("ai_citation_region", lang)}
             </SheetDescription>
           </SheetHeader>
 
@@ -1101,7 +1111,7 @@ export default function AiPage() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-800 shadow-sm ring-1 ring-inset ring-zinc-200 dark:ring-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <MapPin className="h-3.5 w-3.5" />
-                  {`עמ׳ ${cit.page}`}
+                  {`${t("ai_page_prefix", lang)} ${cit.page}`}
                   {cit.label ? ` — ${cit.label}` : ""}
                 </button>
               ))}
