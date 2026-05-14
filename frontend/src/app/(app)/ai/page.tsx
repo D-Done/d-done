@@ -797,12 +797,9 @@ export default function AiPage() {
                 className="flex h-full flex-col items-center justify-center gap-6 px-4"
               >
                 {/* Icon */}
-                <motion.div variants={itemVariants} className="relative">
+                <motion.div variants={itemVariants}>
                   <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-zinc-900 dark:bg-zinc-800 shadow-2xl shadow-zinc-900/40 ring-1 ring-zinc-700/50">
                     <Sparkles className="h-9 w-9 text-white" strokeWidth={1.5} />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-900 shadow-sm">
-                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
                   </div>
                 </motion.div>
 
