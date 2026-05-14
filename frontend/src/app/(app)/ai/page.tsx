@@ -836,24 +836,6 @@ export default function AiPage() {
                   ))}
                 </motion.div>
 
-                {/* Action buttons */}
-                <motion.div variants={itemVariants} className="flex gap-2.5">
-                  <Button
-                    onClick={handleNewConversation}
-                    className="rounded-xl bg-zinc-900 text-white hover:bg-zinc-700 transition-all duration-200 h-9 px-5 text-sm font-medium gap-2"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    New conversation
-                  </Button>
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="rounded-xl h-9 px-5 text-sm font-medium gap-2 border-zinc-200 dark:border-zinc-700"
-                  >
-                    <FileUp className="h-3.5 w-3.5" />
-                    Upload documents
-                  </Button>
-                </motion.div>
               </motion.div>
             )}
 
@@ -994,25 +976,6 @@ export default function AiPage() {
             <div ref={chatEndRef} className="h-2" />
           </div>
 
-          {/* Quick replies */}
-          {!loading && (
-            <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-2 pt-1">
-              {(hasProjectContext
-                ? ["Summarize the documents", "What are the main risks?", "List the deal parties", "Check key dates and deadlines"]
-                : hasUploadedFiles
-                  ? ["Summarize the document", "What are the key points?", "What risks exist?", "What are the important dates?"]
-                  : ["What can D-DONE AI do?", "How do I link a project?", "How do conversations work?"]
-              ).map((q) => (
-                <button
-                  key={q}
-                  onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                  className="rounded-full text-xs px-3 py-1.5 bg-white/70 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-300 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-colors shadow-sm backdrop-blur-sm"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Input area */}
           <div className="relative z-10 p-4 sm:p-5 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border-t border-zinc-200/50 dark:border-zinc-700/40">
