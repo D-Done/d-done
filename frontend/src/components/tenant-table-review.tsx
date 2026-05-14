@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getFileViewUrl, getHitlReviewData, approveTenantTable } from "@/lib/api";
+import { getFileBlobUrl, getHitlReviewData, approveTenantTable } from "@/lib/api";
 import type { HitlTenantData } from "@/lib/api";
 import type { BoundingBox } from "@/lib/types";
 import type { ProjectFile } from "@/lib/types";
@@ -274,7 +274,7 @@ export function TenantTableReview({
       setPdfUrl(null);
       setPdfError(null);
       try {
-        const { url } = await getFileViewUrl(projectId, fileId);
+        const url = await getFileBlobUrl(projectId, fileId);
         setPdfUrl(url);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "שגיאה בטעינת המסמך";
@@ -298,7 +298,7 @@ export function TenantTableReview({
     setPdfError(null);
     (async () => {
       try {
-        const { url } = await getFileViewUrl(projectId, selectedFileId);
+        const url = await getFileBlobUrl(projectId, selectedFileId);
         if (!cancelled) setPdfUrl(url);
       } catch (err) {
         if (!cancelled) {

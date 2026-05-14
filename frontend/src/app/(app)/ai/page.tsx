@@ -23,7 +23,7 @@ import {
   createConversation,
   deleteConversation,
   getConversation,
-  getFileViewUrl,
+  getFileBlobUrl,
   listConversations,
   listProjects,
   updateConversation,
@@ -231,7 +231,7 @@ export default function AiPage() {
       await Promise.all(
         projectFiles.map(async (pf) => {
           try {
-            const { url } = await getFileViewUrl(projectId, pf.id);
+            const url = await getFileBlobUrl(projectId, pf.id);
             if (!cancelled) urls.set(pf.id, url);
           } catch {
             // skip files that can't be fetched

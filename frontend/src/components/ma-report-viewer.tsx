@@ -1671,9 +1671,9 @@ export function MaReportViewer({
     }
     setCitationLoading(true);
     try {
-      const res = await api.getFileViewUrl(projectId, fileId);
-      urlCacheRef.current.set(cacheKey, { url: res.url, at: Date.now() });
-      setCitationUrl(res.url);
+      const url = await api.getFileBlobUrl(projectId, fileId);
+      urlCacheRef.current.set(cacheKey, { url, at: Date.now() });
+      setCitationUrl(url);
     } catch {
       setCitationUrl(null);
     } finally {

@@ -523,13 +523,13 @@ export function ReportViewer({
       if (cached && Date.now() - cached.at < 5 * 60 * 1000) return cached.url;
 
       try {
-        const res = await api.getFileViewUrl(projectId, fileId);
+        const url = await api.getFileBlobUrl(projectId, fileId);
         citationUrlCacheRef.current.set(cacheKey, {
-          url: res.url,
+          url,
           at: Date.now(),
         });
         forceCitationsRerender((x) => x + 1);
-        return res.url;
+        return url;
       } catch {
         return null;
       }
@@ -651,13 +651,13 @@ export function ReportViewer({
 
     setCitationLoading(true);
     try {
-      const res = await api.getFileViewUrl(projectId, fileId);
+      const url = await api.getFileBlobUrl(projectId, fileId);
       citationUrlCacheRef.current.set(cacheKey, {
-        url: res.url,
+        url,
         at: Date.now(),
       });
       forceCitationsRerender((x) => x + 1);
-      setCitationUrl(res.url);
+      setCitationUrl(url);
     } catch {
       setCitationUrl(null);
     } finally {
