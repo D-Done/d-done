@@ -808,8 +808,8 @@ export default function AiPage() {
 
                 {/* Title + subtitle */}
                 <motion.div variants={itemVariants} className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {t("ai_welcome_title", lang)}
+                  <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                    What are you working on?
                   </h2>
                   <p className="max-w-xs text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                     {t("ai_welcome_body", lang)}
