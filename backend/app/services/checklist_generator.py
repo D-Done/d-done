@@ -63,7 +63,7 @@ e) Any gap between what the credit committee approved and what was actually prov
 1. Documents referenced anywhere in the report that were mentioned but not uploaded.
 2. Warning notes (הערות אזהרה) that need to be registered in Tabu for the developer.
 3. Third-party interests (warning notes, liens) that need to be removed.
-4. Mortgages registered on parcels that must be released.
+4. Mortgages registered on parcels — use the term "גרירת משכנתא" (mortgage drag to the replacement apartment). Do NOT say "מחיקת משכנתא". The mortgage follows the tenant to their new unit.
 5. Tenants who have not yet signed the agreement.
 6. Lender compliance issues (actual lender ≠ lender in agreement).
 7. Missing corporate documents — company extract (נסח חברה), incorporation certificate.
@@ -106,7 +106,7 @@ e) Any gap between what the credit committee approved and what was actually prov
 1. Documents referenced anywhere in the report that were mentioned but not uploaded.
 2. Warning notes (liens, caveats) that need to be registered in the Land Registry for the developer.
 3. Third-party interests (warning notes, liens) that need to be removed.
-4. Mortgages registered on parcels that must be released.
+4. Mortgages registered on parcels — use the term "mortgage drag" (גרירת משכנתא): the mortgage is transferred to the tenant's replacement apartment, not cancelled.
 5. Tenants who have not yet signed the agreement.
 6. Lender compliance issues (actual lender ≠ lender in agreement).
 7. Missing corporate documents — company extract, incorporation certificate.
@@ -250,8 +250,8 @@ def _rule_based_items(report: RealEstateFinanceDDReport, language: str = "he") -
         if row.is_mortgage_registered is True:
             items.append({
                 "category": CAT_MORTGAGE,
-                "title": f"Release mortgage — {name} (sub-parcel {parcel})" if en else f"מחיקת משכנתא — {name} (תת-חלקה {parcel})",
-                "description": f"Mortgage registered on sub-parcel {parcel} of {name}. Must be released before closing." if en else f"משכנתא רשומה על תת-חלקה {parcel} של {name}. יש לטפל במחיקה לפני סגירת העסקה.",
+                "title": f"Mortgage drag — {name} (sub-parcel {parcel})" if en else f"גרירת משכנתא — {name} (תת-חלקה {parcel})",
+                "description": f"Mortgage registered on sub-parcel {parcel} of {name}. Must arrange mortgage drag (גרירה) to the replacement apartment before closing." if en else f"משכנתא רשומה על תת-חלקה {parcel} של {name}. יש לסדר גרירת המשכנתא לדירה החלופית לפני סגירת העסקה.",
                 "priority": "high",
             })
 
