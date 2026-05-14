@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { getMe, setOrgLanguage, type MeResponse } from "@/lib/api";
 import { GroupsSettings } from "@/components/groups-settings";
 import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -45,13 +46,13 @@ export default function SettingsPage() {
 
   return (
     <>
-      <h1 className="text-3xl font-bold">הגדרות</h1>
-      <p className="mt-1 text-muted-foreground">ניהול החשבון וההעדפות שלך</p>
+      <h1 className="text-3xl font-bold">{t("settings_title", lang)}</h1>
+      <p className="mt-1 text-muted-foreground">{t("settings_subtitle", lang)}</p>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>פרטי חשבון</CardTitle>
-          <CardDescription>המידע מסונכרן מחשבון ההתחברות שלך</CardDescription>
+          <CardTitle>{t("account_details", lang)}</CardTitle>
+          <CardDescription>{t("account_synced", lang)}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {user && (
@@ -67,15 +68,15 @@ export default function SettingsPage() {
           <Separator />
 
           <div className="space-y-2 text-sm text-muted-foreground">
-            <p>הגדרות נוספות יתווספו בקרוב — התראות, שפה, ועוד.</p>
+            <p>{t("account_coming_soon", lang)}</p>
           </div>
         </CardContent>
       </Card>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>קבוצות</CardTitle>
-          <CardDescription>ניהול קבוצות משתמשים להוספה מהירה לפרויקטים</CardDescription>
+          <CardTitle>{t("groups_title", lang)}</CardTitle>
+          <CardDescription>{t("groups_desc", lang)}</CardDescription>
         </CardHeader>
         <CardContent>
           <GroupsSettings />
@@ -86,7 +87,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>שפה / Language</CardTitle>
           <CardDescription>
-            שפת הדוחות, הצ׳קליסט וייצוא Word — לכל המשתמשים בחשבון
+            {t("language_card_desc", lang)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,26 +109,26 @@ export default function SettingsPage() {
               English
             </Button>
             {langSaved && (
-              <span className="text-sm text-green-600">✓ נשמר</span>
+              <span className="text-sm text-green-600">{t("saved", lang)}</span>
             )}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            שינוי השפה ישפיע על דוחות חדשים. דוחות קיימים לא ישתנו.
+            {t("language_change_note", lang)}
           </p>
         </CardContent>
       </Card>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>AI</CardTitle>
-          <CardDescription>התאמה אישית של הנחיות למודל לפי סוג עסקה</CardDescription>
+          <CardTitle>{t("ai_card_title", lang)}</CardTitle>
+          <CardDescription>{t("ai_card_desc", lang)}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
-            ניהול פרומפטים עבור נדל״ן, M&A, השקעה בחברה ועוד.
+            {t("ai_card_body", lang)}
           </div>
           <Button asChild className="rounded-2xl">
-            <Link href="/settings/ai-prompts">ניהול פרומפטים</Link>
+            <Link href="/settings/ai-prompts">{t("manage_prompts", lang)}</Link>
           </Button>
         </CardContent>
       </Card>

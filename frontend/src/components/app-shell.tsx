@@ -27,6 +27,8 @@ import {
   ROUTE_PENDING_APPROVAL,
 } from "@/lib/constants";
 import { getNotifications, getUnreadCount, markAllRead, type AppNotification } from "@/lib/notifications";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -57,6 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return true;
     }
   });
+  const { lang, dir } = useLanguage();
   const [user, setUser] = useState<MeResponse | null | "loading">("loading");
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -123,13 +126,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const authedUser = user;
 
   const navItems = [
-    { href: "/dashboard", label: "דשבורד", icon: LayoutDashboard },
-    { href: "/transactions", label: "פרויקטים", icon: FolderOpen },
-    { href: "/ai", label: "D-DONE AI", icon: Bot },
-    { href: "/settings", label: "הגדרות", icon: Settings },
+    { href: "/dashboard", label: t("nav_dashboard", lang), icon: LayoutDashboard },
+    { href: "/transactions", label: t("nav_projects", lang), icon: FolderOpen },
+    { href: "/ai", label: t("nav_ai", lang), icon: Bot },
+    { href: "/settings", label: t("nav_settings", lang), icon: Settings },
     ...(authedUser.is_admin ? [
-      { href: "/admin/users", label: "ניהול משתמשים", icon: ShieldCheck },
-      { href: "/admin/activity", label: "פעילות ועלויות", icon: Activity },
+      { href: "/admin/users", label: t("nav_user_mgmt", lang), icon: ShieldCheck },
+      { href: "/admin/activity", label: t("nav_activity", lang), icon: Activity },
     ] : []),
   ];
 
@@ -184,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="border-t border-white/10 p-4">
-              <DropdownMenu dir="rtl">
+              <DropdownMenu dir={dir}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -210,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem className="gap-2 text-destructive" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
-                    התנתק
+                    {t("nav_sign_out", lang)}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -227,7 +230,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   value={globalSearch}
                   onChange={(e) => setGlobalSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitSearch(globalSearch); }}
-                  placeholder="חיפוש פרויקטים..."
+                  placeholder={t("search_placeholder", lang)}
                   className="h-10 rounded-2xl bg-white dark:bg-slate-800 pr-10 shadow-sm"
                 />
               </div>
@@ -246,7 +249,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       setUnreadCount(0);
                     }
                   }}
-                  aria-label={unreadCount > 0 ? `${unreadCount} התראות חדשות` : "התראות"}
+                  aria-label={unreadCount > 0 ? `${unreadCount} ${t("notifications", lang)}` : t("notifications", lang)}
                 >
                   <Bell className="h-5 w-5 text-slate-600 dark:text-slate-300" />
                   {unreadCount > 0 && (
@@ -256,14 +259,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 </Button>
                 {showNotifications && (
-                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-xl" dir="rtl">
+                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-xl" dir={dir}>
                     <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-                      התראות
+                      {t("notifications", lang)}
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="px-4 py-6 text-center text-sm text-slate-400">
-                          אין התראות
+                          {t("no_notifications", lang)}
                         </div>
                       ) : (
                         notifications.slice(0, 10).map((n) => (

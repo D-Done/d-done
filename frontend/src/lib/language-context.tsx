@@ -6,12 +6,14 @@ import type { Lang } from "@/lib/i18n";
 
 interface LanguageContextValue {
   lang: Lang;
+  dir: "rtl" | "ltr";
   setLang: (l: Lang) => void;
   loading: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextValue>({
   lang: "he",
+  dir: "rtl",
   setLang: () => {},
   loading: true,
 });
@@ -31,8 +33,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLangState(l);
   }
 
+  const dir: "rtl" | "ltr" = lang === "en" ? "ltr" : "rtl";
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, loading }}>
+    <LanguageContext.Provider value={{ lang, dir, setLang, loading }}>
       {children}
     </LanguageContext.Provider>
   );

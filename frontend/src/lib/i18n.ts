@@ -2,13 +2,12 @@
 
 /**
  * Minimal i18n for Hebrew/English UI labels.
- * Used by report viewer, checklist panel, and settings.
  */
 
 export type Lang = "he" | "en";
 
 const translations: Record<string, Record<Lang, string>> = {
-  // Report viewer section headings
+  // ── Report viewer section headings ──────────────────────────
   executive_summary: { he: "סיכום מנהלים", en: "Executive Summary" },
   compound_details: { he: "פרטי המתחם", en: "Compound Details" },
   tenant_table: { he: "טבלת דיירים", en: "Tenant Table" },
@@ -24,13 +23,13 @@ const translations: Record<string, Record<Lang, string>> = {
   apartment_upgrade: { he: "שדרוג ושנמוך דירת התמורה", en: "Apartment Upgrade / Downgrade" },
   planning_legal: { he: "לוחות זמנים וסטטוס תכנוני", en: "Timeline & Planning Status" },
   corporate_governance: { he: "ממשל תאגידי ושעבודים", en: "Corporate Governance & Pledges" },
-  // Tenant table columns
+  // ── Tenant table columns ─────────────────────────────────────
   sub_parcel: { he: "תת-חלקה", en: "Sub-parcel" },
+  parcel: { he: "חלקה", en: "Parcel" },
   owner_name: { he: "שם בעלים", en: "Owner" },
   signed: { he: "חתם", en: "Signed" },
   date_signed: { he: "תאריך חתימה", en: "Date Signed" },
   warning_note: { he: "הערת אזהרה", en: "Caveat" },
-  parcel: { he: "חלקה", en: "Parcel" },
   warning_note_developer: { he: "הערת אזהרה לטובת היזם", en: "Caveat (Developer)" },
   restrictive_note: { he: "הערה מגבילה", en: "Restrictive Note" },
   mortgage: { he: "משכנתא", en: "Mortgage" },
@@ -38,11 +37,67 @@ const translations: Record<string, Record<Lang, string>> = {
   yes: { he: "כן", en: "Yes" },
   no: { he: "לא", en: "No" },
   na: { he: "—", en: "—" },
-  // Risk levels
+  // ── Risk levels ──────────────────────────────────────────────
   risk_high: { he: "גבוה", en: "High" },
   risk_medium: { he: "בינוני", en: "Medium" },
   risk_low: { he: "נמוך", en: "Low" },
-  // Checklist
+  // ── Report viewer misc ───────────────────────────────────────
+  signing_pct: { he: "אחוז חתימות", en: "Signing Rate" },
+  source_prefix: { he: "עמ'", en: "p." },
+  report_date_prefix: { he: "תאריך הפקה", en: "Date" },
+  addenda_tooltip: {
+    he: "ממצאים הנוגעים לתוספות ומכתבי הטבה — בדיקת תיאום מול דו״ח האפס",
+    en: "Findings related to addenda and beneficial letters — cross-checked against Zero Report",
+  },
+  // ── Status labels ────────────────────────────────────────────
+  status_pending: { he: "חדש", en: "New" },
+  status_processing: { he: "בתהליך", en: "In Progress" },
+  status_completed: { he: "הושלם", en: "Completed" },
+  status_failed: { he: "נכשל", en: "Failed" },
+  status_partial: { he: "חלקי", en: "Partial" },
+  status_needs_review: { he: "דורש בדיקה", en: "Needs Review" },
+  // ── Navigation / shell ───────────────────────────────────────
+  nav_dashboard: { he: "דשבורד", en: "Dashboard" },
+  nav_projects: { he: "פרויקטים", en: "Projects" },
+  nav_ai: { he: "D-DONE AI", en: "D-DONE AI" },
+  nav_settings: { he: "הגדרות", en: "Settings" },
+  nav_user_mgmt: { he: "ניהול משתמשים", en: "User Management" },
+  nav_activity: { he: "פעילות ועלויות", en: "Activity & Costs" },
+  nav_sign_out: { he: "התנתק", en: "Sign Out" },
+  search_placeholder: { he: "חיפוש פרויקטים...", en: "Search projects..." },
+  notifications: { he: "התראות", en: "Notifications" },
+  no_notifications: { he: "אין התראות", en: "No notifications" },
+  // ── Dashboard ────────────────────────────────────────────────
+  dashboard_greeting: { he: "שלום", en: "Hello" },
+  dashboard_subtitle: { he: "הנה סקירה של הפעולות שלך", en: "Here's an overview of your activity" },
+  new_project: { he: "פרויקט חדש", en: "New Project" },
+  total_projects: { he: 'סה"כ פרויקטים', en: "Total Projects" },
+  dd_running: { he: "בדיקות DD בהרצה", en: "DD Checks Running" },
+  dd_done: { he: "בדיקות DD שהושלמו", en: "DD Checks Completed" },
+  docs_scanned: { he: "מסמכים שנסרקו בכל הפרויקטים", en: "documents scanned across all projects" },
+  // ── Transactions list ────────────────────────────────────────
+  projects_title: { he: "פרויקטים", en: "Projects" },
+  manage_dd: { he: "ניהול כל פרויקטי ה-DD שלך", en: "Manage all your DD projects" },
+  vdr_upload: { he: "העלאת VDR באמצעות צד חיצוני", en: "External VDR Upload" },
+  no_projects: { he: "אין פרויקטים עדיין", en: "No projects yet" },
+  create_to_start: { he: "צור פרויקט חדש כדי להתחיל", en: "Create a new project to get started" },
+  view_project: { he: "צפייה בפרויקט", en: "View Project" },
+  delete_project: { he: "מחק פרויקט", en: "Delete project" },
+  delete_confirm_title: { he: "מחיקת פרויקט", en: "Delete Project" },
+  delete_confirm_body: {
+    he: "פעולה זו תמחק את כל המסמכים והניתוחים ולא ניתן לבטלה.",
+    en: "This will permanently delete all documents and analyses. This action cannot be undone.",
+  },
+  delete_btn: { he: "מחק", en: "Delete" },
+  cancel: { he: "ביטול", en: "Cancel" },
+  group_real_estate: { he: 'נדל"ן', en: "Real Estate" },
+  group_ma: { he: "M&A", en: "M&A" },
+  group_investment: { he: "השקעה בחברה", en: "Company Investment" },
+  group_other: { he: "אחר", en: "Other" },
+  group_unassigned: { he: "לא משויך", en: "Unassigned" },
+  block_prefix: { he: "גוש", en: "Block" },
+  parcel_prefix: { he: "חלקה", en: "Parcel" },
+  // ── Checklist ────────────────────────────────────────────────
   checklist_title: { he: "רשימת השלמות", en: "Completeness Checklist" },
   checklist_empty: {
     he: "הרשימה נוצרת אוטומטית לאחר השלמת הדוח. אם הרשימה ריקה — לחץ לרענון.",
@@ -54,23 +109,21 @@ const translations: Record<string, Record<Lang, string>> = {
   checklist_export: { he: "ייצוא Word", en: "Export Word" },
   completed: { he: "הושלם", en: "Completed" },
   pending: { he: "ממתין", en: "Pending" },
-  // Settings
-  settings_language: { he: "שפה", en: "Language" },
-  settings_language_desc: {
-    he: "בחר את שפת הדוחות ו-UI לכל המשתמשים בחשבון",
-    en: "Set the report and UI language for all users in your account",
-  },
-  settings_language_he: { he: "עברית", en: "Hebrew" },
-  settings_language_en: { he: "אנגלית", en: "English" },
-  settings_language_saved: { he: "השפה נשמרה", en: "Language saved" },
-  // Report viewer misc
-  signing_pct: { he: "אחוז חתימות", en: "Signing Rate" },
-  source_prefix: { he: "עמ'", en: "p." },
-  report_date_prefix: { he: "תאריך הפקה", en: "Date" },
-  addenda_tooltip: {
-    he: "ממצאים הנוגעים לתוספות ומכתבי הטבה — בדיקת תיאום מול דו״ח האפס",
-    en: "Findings related to addenda and beneficial letters — cross-checked against Zero Report",
-  },
+  // ── Settings ─────────────────────────────────────────────────
+  settings_title: { he: "הגדרות", en: "Settings" },
+  settings_subtitle: { he: "ניהול החשבון וההעדפות שלך", en: "Manage your account and preferences" },
+  account_details: { he: "פרטי חשבון", en: "Account Details" },
+  account_synced: { he: "המידע מסונכרן מחשבון ההתחברות שלך", en: "Information is synced from your login account" },
+  account_coming_soon: { he: "הגדרות נוספות יתווספו בקרוב — התראות, שפה, ועוד.", en: "More settings coming soon — notifications, language, and more." },
+  groups_title: { he: "קבוצות", en: "Groups" },
+  groups_desc: { he: "ניהול קבוצות משתמשים להוספה מהירה לפרויקטים", en: "Manage user groups for quick project assignment" },
+  language_card_desc: { he: "שפת הדוחות, הצ׳קליסט וייצוא Word — לכל המשתמשים בחשבון", en: "Reports, checklist and Word export language — for all users in the account" },
+  language_change_note: { he: "שינוי השפה ישפיע על דוחות חדשים. דוחות קיימים לא ישתנו.", en: "Language change affects new reports. Existing reports will not change." },
+  saved: { he: "✓ נשמר", en: "✓ Saved" },
+  ai_card_title: { he: "AI", en: "AI" },
+  ai_card_desc: { he: "התאמה אישית של הנחיות למודל לפי סוג עסקה", en: "Customize model instructions per deal type" },
+  ai_card_body: { he: 'ניהול פרומפטים עבור נדל״ן, M&A, השקעה בחברה ועוד.', en: "Manage prompts for Real Estate, M&A, Company Investment, and more." },
+  manage_prompts: { he: "ניהול פרומפטים", en: "Manage Prompts" },
 };
 
 export function t(key: string, lang: Lang): string {

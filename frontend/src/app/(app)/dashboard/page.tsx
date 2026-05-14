@@ -8,6 +8,8 @@ import { Plus, FolderOpen, Loader2, FileCheck, FileText } from "lucide-react";
 import * as api from "@/lib/api";
 import type { DashboardStats } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { OnboardingDialog } from "@/components/ui/onboarding-dialog";
 import { ApprovalCelebration } from "@/components/approval-celebration";
 
@@ -18,6 +20,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [me, setMe] = useState<api.MeResponse | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const { lang } = useLanguage();
 
   const fetchStats = useCallback(async () => {
     try {
@@ -98,10 +101,10 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              שלום, {userName ?? "משתמש"}!
+              {t("dashboard_greeting", lang)}, {userName ?? (lang === "en" ? "User" : "משתמש")}!
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              הנה סקירה של הפעולות שלך
+              {t("dashboard_subtitle", lang)}
             </p>
           </div>
 
@@ -109,7 +112,7 @@ export default function DashboardPage() {
             <Button asChild className="rounded-2xl">
               <Link href="/transactions/new">
                 <Plus className="ml-2 h-4 w-4" />
-                פרויקט חדש
+                {t("new_project", lang)}
               </Link>
             </Button>
           </div>
@@ -119,7 +122,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">סה״כ פרויקטים</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{t("total_projects", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
                 <FolderOpen className="h-4 w-4" />
               </span>
@@ -131,7 +134,7 @@ export default function DashboardPage() {
 
           <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">בדיקות DD בהרצה</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_running", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
               </span>
@@ -143,7 +146,7 @@ export default function DashboardPage() {
 
           <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">בדיקות DD שהושלמו</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_done", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400">
                 <FileCheck className="h-4 w-4" />
               </span>
@@ -158,7 +161,7 @@ export default function DashboardPage() {
         {!loading && stats && stats.documents_scanned > 0 && (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             <FileText className="mr-1.5 inline h-4 w-4 text-slate-400 dark:text-slate-500" />
-            {stats.documents_scanned} מסמכים שנסרקו בכל הפרויקטים
+            {stats.documents_scanned} {t("docs_scanned", lang)}
           </p>
         )}
       </div>

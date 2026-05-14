@@ -17,6 +17,8 @@ import {
 
 import * as api from "@/lib/api";
 import type { ProjectListItem } from "@/lib/types";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { getProjectDealType } from "@/lib/deal-type-store";
 import AvatarGroup from "@/components/ui/avatar-group";
 import { Button } from "@/components/ui/button";
@@ -34,14 +36,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { VdrExternalUploadDialog } from "@/components/vdr-external-upload-dialog";
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "חדש",
-  processing: "בתהליך",
-  completed: "הושלם",
-  failed: "נכשל",
-  partial: "חלקי",
-  needs_review: "דורש בדיקה",
-};
+function statusLabel(status: string, lang: import("@/lib/i18n").Lang): string {
+  const key = `status_${status}` as string;
+  return t(key, lang) !== key ? t(key, lang) : status;
+}
 
 function statusPillClass(status: string): string {
   switch (status) {
@@ -72,6 +70,7 @@ function projectTypeLabel(projectId: string): { group: string; label: string } {
 }
 
 function TransactionsList() {
+  const { lang, dir } = useLanguage();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -130,15 +129,15 @@ function TransactionsList() {
             <Building2 className="h-7 w-7" />
           </div>
           <h2 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">
-            אין פרויקטים עדיין
+            {t("no_projects", lang)}
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            צור פרויקט חדש כדי להתחיל
+            {t("create_to_start", lang)}
           </p>
           <Button className="mt-6 rounded-2xl" asChild>
             <Link href="/transactions/new">
               <Plus className="ml-2 h-4 w-4" />
-              פרויקט חדש
+              {t("new_project", lang)}
             </Link>
           </Button>
         </CardContent>
@@ -150,11 +149,11 @@ function TransactionsList() {
     <>
       <div className="mt-6 space-y-8">
         {[
-          { key: "real_estate", title: 'נדל"ן' },
-          { key: "ma", title: "M&A" },
-          { key: "company_investment", title: "השקעה בחברה" },
-          { key: "other", title: "אחר" },
-          { key: "unassigned", title: "לא משויך" },
+          { key: "real_estate", title: t("group_real_estate", lang) },
+          { key: "ma", title: t("group_ma", lang) },
+          { key: "company_investment", title: t("group_investment", lang) },
+          { key: "other", title: t("group_other", lang) },
+          { key: "unassigned", title: t("group_unassigned", lang) },
         ].map((group) => {
           const items = projects.filter(
             (p) => projectTypeLabel(p.id).group === group.key,
@@ -173,7 +172,7 @@ function TransactionsList() {
                       {group.title}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {items.length} פרויקטים
+                      {items.length} {t("nav_projects", lang).toLowerCase()}
                     </div>
                   </div>
                 </div>
@@ -199,7 +198,7 @@ function TransactionsList() {
                                   statusPillClass(p.status),
                                 ].join(" ")}
                               >
-                                {STATUS_LABELS[p.status] ?? p.status}
+                                {statusLabel(p.status, lang)}
                               </Badge>
                               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                 <FileText className="h-4 w-4" />
@@ -213,7 +212,7 @@ function TransactionsList() {
                                 <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                   <MapPin className="h-3.5 w-3.5 shrink-0" />
                                   <span className="font-mono">
-                                    {[p.block && `גוש ${p.block}`, p.parcel && `חלקה ${p.parcel}`]
+                                    {[p.block && `${t("block_prefix", lang)} ${p.block}`, p.parcel && `${t("parcel_prefix", lang)} ${p.parcel}`]
                                       .filter(Boolean)
                                       .join(" • ")}
                                   </span>
@@ -223,7 +222,7 @@ function TransactionsList() {
                             <div className="mt-6 flex-1" />
                             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                               <div className="flex items-center gap-1.5">
-                                <span>{p.file_count} מסמכים</span>
+                                <span>{p.file_count} {lang === "en" ? "docs" : "מסמכים"}</span>
                                 <span className="text-slate-300 dark:text-slate-500">•</span>
                                 <CalendarDays className="h-3.5 w-3.5" />
                                 <span>{new Date(p.created_at).toLocaleDateString("he-IL")}</span>
@@ -244,7 +243,7 @@ function TransactionsList() {
                             <div className="mt-4 border-t pt-4">
                               <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
                                 <span className="font-medium">
-                                  צפייה בפרויקט
+                                  {t("view_project", lang)}
                                 </span>
                                 <ChevronLeft className="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform group-hover:-translate-x-0.5" />
                               </div>
@@ -262,7 +261,7 @@ function TransactionsList() {
                         }}
                         disabled={isDeleting}
                         className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 opacity-0 transition-opacity hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 group-hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"
-                        aria-label="מחק פרויקט"
+                        aria-label={t("delete_project", lang)}
                       >
                         {isDeleting ? (
                           <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
@@ -284,15 +283,15 @@ function TransactionsList() {
         open={!!confirmProject}
         onOpenChange={(open) => !open && setConfirmProject(null)}
       >
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir={dir}>
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת פרויקט</AlertDialogTitle>
+            <AlertDialogTitle>{t("delete_confirm_title", lang)}</AlertDialogTitle>
             <AlertDialogDescription>
-              האם למחוק את הפרויקט{" "}
+              {lang === "en" ? "Delete project " : "האם למחוק את הפרויקט "}
               <span className="font-semibold text-slate-900 dark:text-slate-100">
                 &quot;{confirmProject?.title}&quot;
               </span>
-              ? פעולה זו תמחק את כל המסמכים והניתוחים ולא ניתן לבטלה.
+              {lang === "en" ? "? " : "? "}{t("delete_confirm_body", lang)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
@@ -300,9 +299,9 @@ function TransactionsList() {
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              מחק
+              {t("delete_btn", lang)}
             </AlertDialogAction>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel", lang)}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -312,14 +311,15 @@ function TransactionsList() {
 
 export default function TransactionsPage() {
   const [vdrDialogOpen, setVdrDialogOpen] = useState(false);
+  const { lang } = useLanguage();
 
   return (
     <>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">פרויקטים</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("projects_title", lang)}</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            ניהול כל פרויקטי ה-DD שלך
+            {t("manage_dd", lang)}
           </p>
         </div>
         <div className="flex gap-2">
@@ -329,12 +329,12 @@ export default function TransactionsPage() {
             onClick={() => setVdrDialogOpen(true)}
           >
             <Upload className="ml-2 h-4 w-4" />
-            העלאת VDR באמצעות צד חיצוני
+            {t("vdr_upload", lang)}
           </Button>
           <Button asChild className="rounded-2xl">
             <Link href="/transactions/new">
               <Plus className="ml-2 h-4 w-4" />
-              פרויקט חדש
+              {t("new_project", lang)}
             </Link>
           </Button>
         </div>
