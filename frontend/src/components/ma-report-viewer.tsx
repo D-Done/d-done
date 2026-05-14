@@ -85,13 +85,13 @@ const CHAPTER_ORDER: MaChapterId[] = [
 const SEVERITY_CLASSES: Record<string, string> = {
   critical: "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
   warning: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-  info: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+  info: "bg-slate-50 dark:bg-zinc-800/40 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-zinc-700/50",
 };
 
 const SEVERITY_BADGE_CLASSES: Record<string, string> = {
   critical: "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300",
   warning: "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300",
-  info: "border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
+  info: "border-slate-300 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-600 dark:text-slate-400",
 };
 
 const SEVERITY_LABELS: Record<string, string> = {
@@ -200,7 +200,7 @@ function SourceButton({
     <button
       type="button"
       onClick={() => onClick(source)}
-      className="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700 transition-colors"
+      className="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-zinc-700/50 bg-slate-50 dark:bg-zinc-800/70 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700 transition-colors"
     >
       <ExternalLink className="h-2.5 w-2.5 shrink-0" />
       {source.source_document_name} · עמ׳ {source.page_number}
@@ -433,7 +433,7 @@ function ContractFieldRow({
   value: string | React.ReactNode;
 }) {
   return (
-    <div className="flex gap-2 text-sm py-1.5 border-b border-slate-50 dark:border-slate-800 last:border-0">
+    <div className="flex gap-2 text-sm py-1.5 border-b border-slate-50 dark:border-zinc-800/50 last:border-0">
       <span className="w-36 shrink-0 text-slate-500 dark:text-slate-400 text-xs font-medium pt-0.5">
         {label}
       </span>
@@ -444,7 +444,7 @@ function ContractFieldRow({
 
 function ContractGroupHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-3 pb-1 border-b border-slate-100 dark:border-slate-700 mb-1">
+    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-3 pb-1 border-b border-slate-100 dark:border-zinc-700/50 mb-1">
       {children}
     </div>
   );
@@ -474,7 +474,7 @@ function SupplierObligationsSection({
       )}
 
       {anchor && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
           {/* Card header */}
           <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5 flex items-center justify-between">
             <span className="text-white font-semibold text-sm">
@@ -651,7 +651,7 @@ function CustomerObligationsSection({
       )}
 
       {anchor && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
           <div className="bg-indigo-700 dark:bg-indigo-800 px-4 py-2.5 flex items-center justify-between">
             <span className="text-white font-semibold text-sm">
               {val(customerName) !== "—" ? val(customerName) : "לקוח"}
@@ -982,7 +982,7 @@ function RegulatorySection({
             {compliancePlans.map((cp, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 px-4 py-3"
+                className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3"
               >
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
                   {val(cp.plan_name)}
@@ -1067,7 +1067,7 @@ function LitigationSection({
             {settlements.map((s, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 px-4 py-3"
+                className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3"
               >
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
                   {val(s.case_reference)}
@@ -1544,7 +1544,7 @@ function ChapterAccordion({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden"
+      className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden"
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-right hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -1602,7 +1602,7 @@ function ChapterAccordion({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="border-t border-slate-100 dark:border-slate-700 px-4 py-4">{renderBody()}</div>
+        <div className="border-t border-slate-100 dark:border-zinc-700/50 px-4 py-4">{renderBody()}</div>
       </CollapsibleContent>
     </Collapsible>
   );
@@ -1687,7 +1687,7 @@ export function MaReportViewer({
   return (
     <div className="space-y-4" dir="rtl">
       {/* ── Header card ─────────────────────────────────────────── */}
-      <Card className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-700">
+      <Card className="rounded-2xl bg-white dark:bg-zinc-900/80 shadow-sm border border-slate-100 dark:border-zinc-700/50">
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
@@ -1732,7 +1732,7 @@ export function MaReportViewer({
 
         {report.executive_summary?.summary && (
           <CardContent className="pt-0">
-            <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/50 px-4 py-3">
+            <div className="rounded-xl border border-slate-100 dark:border-zinc-700/50 bg-slate-50/60 dark:bg-zinc-800/40 px-4 py-3">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
                 <Info className="h-3.5 w-3.5" />
                 תמצית מנהלים
@@ -1772,7 +1772,7 @@ export function MaReportViewer({
               </div>
             )}
             {followTotal > 0 && (
-              <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm">
+              <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50 dark:bg-zinc-800/70 px-3 py-2 text-sm">
                 <Info className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <span className="font-bold text-slate-600 dark:text-slate-300">{followTotal}</span>
                 <span className="text-slate-500 dark:text-slate-400">השלמות נדרשות</span>
@@ -1804,7 +1804,7 @@ export function MaReportViewer({
 
       {/* ── Completeness checklist ──────────────────────────────── */}
       {completeness && completeness.items.length > 0 && (
-        <Card className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-700">
+        <Card className="rounded-2xl bg-white dark:bg-zinc-900/80 shadow-sm border border-slate-100 dark:border-zinc-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500 dark:text-amber-400" />

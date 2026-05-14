@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
         {/* KPI row — real metrics, no clutter */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500 dark:text-slate-400">{t("total_projects", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
@@ -132,7 +132,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_running", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_done", lang)}</span>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400">

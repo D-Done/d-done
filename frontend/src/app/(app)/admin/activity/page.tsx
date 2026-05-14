@@ -68,7 +68,7 @@ export default function AdminActivityPage() {
             { label: "טוקנים (קלט)", value: formatTokens(totals.total_prompt_tokens ?? 0), icon: Activity, color: "bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400" },
             { label: "טוקנים (סה״כ)", value: formatTokens(totals.total_tokens ?? 0), icon: Coins, color: "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400" },
           ].map((kpi) => (
-            <div key={kpi.label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+            <div key={kpi.label} className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400">{kpi.label}</span>
                 <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${kpi.color}`}>
@@ -81,7 +81,7 @@ export default function AdminActivityPage() {
         </div>
 
         {/* Activity table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30 text-right">

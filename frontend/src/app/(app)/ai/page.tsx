@@ -804,7 +804,7 @@ export default function AiPage() {
                 className="flex h-full flex-col items-center justify-center gap-6 px-4"
               >
                 {/* Title + subtitle */}
-                <motion.div variants={itemVariants} className="text-center space-y-3">
+                <motion.div variants={itemVariants} className="text-center space-y-3" dir="ltr">
                   <h2 className="text-[2rem] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
                     {userName ? `Hi ${userName},` : "Hi,"}<br />
                     What&apos;s on your mind?
@@ -823,6 +823,7 @@ export default function AiPage() {
                   ].map(({ icon: Icon, label, sub }) => (
                     <button
                       key={label}
+                      dir="ltr"
                       onClick={() => { setInput(label); inputRef.current?.focus(); }}
                       className="group flex flex-col items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/60 p-4 text-left hover:border-zinc-900 dark:hover:border-zinc-500 hover:shadow-sm transition-all duration-200"
                     >

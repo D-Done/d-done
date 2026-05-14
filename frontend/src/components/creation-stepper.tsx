@@ -98,7 +98,7 @@ export function CreationStepper({
                       "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15",
                     !isCompleted &&
                       !isCurrent &&
-                      "border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500",
+                      "border-slate-200 dark:border-zinc-700/50 bg-slate-100 dark:bg-zinc-800/70 text-slate-400 dark:text-slate-500",
                   )}
                   style={{ width: CIRCLE_SIZE, height: CIRCLE_SIZE }}
                   aria-current={isCurrent ? "step" : undefined}

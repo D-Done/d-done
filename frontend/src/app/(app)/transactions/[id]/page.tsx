@@ -192,7 +192,7 @@ function QAReviewBanner({
       </Card>
 
       {corrections.length > 0 && (
-        <Card className="rounded-2xl shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <Card className="rounded-2xl shadow-sm dark:bg-zinc-900/80 dark:border-zinc-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
@@ -218,7 +218,7 @@ function QAReviewBanner({
       )}
 
       {scores.length > 0 && (
-        <Card className="rounded-2xl shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <Card className="rounded-2xl shadow-sm dark:bg-zinc-900/80 dark:border-zinc-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">ציוני ביקורת QA</CardTitle>
           </CardHeader>
@@ -594,7 +594,7 @@ export default function TransactionPage() {
         {/* ══════════════════════════════════════════════════════════
             Bubble 1 — Project Header
         ══════════════════════════════════════════════════════════ */}
-        <Card className="rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-none bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center gap-3 px-5 py-4">
               <Button
@@ -652,7 +652,7 @@ export default function TransactionPage() {
         {/* ══════════════════════════════════════════════════════════
             Bubble 2 — Tabs: Documents | Project Details | DD Report
         ══════════════════════════════════════════════════════════ */}
-        <Card className="rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-none bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
           <Tabs
             value={activeTab}
             onValueChange={(v) => {
@@ -665,7 +665,7 @@ export default function TransactionPage() {
             }}
             dir="rtl"
           >
-            <div className="border-b border-slate-100 dark:border-slate-800 px-5">
+            <div className="border-b border-slate-100 dark:border-zinc-800/50 px-5">
               <TabsList className="h-auto bg-transparent gap-1 p-0">
                 <TabsTrigger
                   value="details"
@@ -754,7 +754,7 @@ export default function TransactionPage() {
                       <TableRow key={f.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-300">
                               <FileDown className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
@@ -980,7 +980,7 @@ export default function TransactionPage() {
                     project.description,
                   );
                   return detailRows.length > 0 ? (
-                    <div className="rounded-2xl border border-slate-100 dark:border-slate-700 dark:bg-slate-900/50 p-4 space-y-3">
+                    <div className="rounded-2xl border border-slate-100 dark:border-zinc-700/50 dark:bg-zinc-900/50 p-4 space-y-3">
                       <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                         <FileText className="h-4 w-4" />
                         פרטי פרויקט
@@ -989,7 +989,7 @@ export default function TransactionPage() {
                         {detailRows.map((row, i) => (
                           <div
                             key={i}
-                            className="flex flex-wrap justify-between gap-2 py-2 border-b border-slate-50 dark:border-slate-700 last:border-b-0"
+                            className="flex flex-wrap justify-between gap-2 py-2 border-b border-slate-50 dark:border-zinc-700/50 last:border-b-0"
                           >
                             <dt className="text-slate-500 dark:text-slate-400">{row.label}</dt>
                             <dd className="font-medium text-slate-900 dark:text-slate-100 text-left">
@@ -1003,7 +1003,7 @@ export default function TransactionPage() {
                 })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-slate-100 dark:border-slate-700 dark:bg-slate-900/50 p-4 space-y-3">
+                  <div className="rounded-2xl border border-slate-100 dark:border-zinc-700/50 dark:bg-zinc-900/50 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                       <User className="h-4 w-4" />
                       יוצר הפרויקט
@@ -1020,7 +1020,7 @@ export default function TransactionPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 dark:border-slate-700 dark:bg-slate-900/50 p-4 space-y-3">
+                  <div className="rounded-2xl border border-slate-100 dark:border-zinc-700/50 dark:bg-zinc-900/50 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                       <Clock className="h-4 w-4" />
                       תאריך ושעת פתיחה
@@ -1037,7 +1037,7 @@ export default function TransactionPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 dark:border-slate-700 dark:bg-slate-900/50 p-4 space-y-3">
+                <div className="rounded-2xl border border-slate-100 dark:border-zinc-700/50 dark:bg-zinc-900/50 p-4 space-y-3">
                   <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                     <Users className="h-4 w-4" />
                     משתתפים בפרויקט
@@ -1053,7 +1053,7 @@ export default function TransactionPage() {
                         {members?.map((m) => (
                           <li
                             key={m.user_id}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50 px-3 py-2"
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/50 dark:border-zinc-700/50 dark:bg-zinc-900/50 px-3 py-2"
                           >
                             <div className="min-w-0">
                               <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
@@ -1115,7 +1115,7 @@ export default function TransactionPage() {
                         )}
                       </ul>
                       {project.current_user_role === "owner" && (
-                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-zinc-700/50">
                           {/* Individual invite */}
                           <div className="flex flex-wrap items-center gap-2">
                             <div className="w-64">
@@ -1159,14 +1159,14 @@ export default function TransactionPage() {
 
                           {/* Group picker */}
                           {showGroupPicker && (
-                            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2">
+                            <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50 dark:bg-zinc-800/40 p-3 space-y-2">
                               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">בחר קבוצה להוספה לפרויקט</p>
                               {groupsLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
                               {!groupsLoading && groups.length === 0 && (
                                 <p className="text-xs text-slate-400">אין קבוצות. צור קבוצות בהגדרות.</p>
                               )}
                               {groups.map((g) => (
-                                <div key={g.id} className="flex items-center justify-between gap-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                <div key={g.id} className="flex items-center justify-between gap-2 rounded-lg bg-white dark:bg-zinc-800/70 border border-slate-200 dark:border-zinc-700/50 px-3 py-2">
                                   <div>
                                     <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{g.name}</p>
                                     <p className="text-xs text-slate-400">{g.member_count} חברים</p>
@@ -1360,13 +1360,13 @@ export default function TransactionPage() {
                 ["completed", "partial", "needs_review"].includes(
                   project.status,
                 ) && (
-                  <div className="rounded-2xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <div className="rounded-2xl border bg-slate-50 dark:bg-zinc-800/70 dark:border-zinc-700/50 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                     הדוח עדיין לא זמין. נסה לרענן בעוד כמה שניות.
                   </div>
                 )}
 
               {!report && !analyzing && project.status === "pending" && (
-                <div className="rounded-2xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="rounded-2xl border bg-slate-50 dark:bg-zinc-800/70 dark:border-zinc-700/50 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                   טרם הורצה בדיקת נאותות. העלה מסמכים והפעל בדיקה מלשונית
                   &quot;מסמכים&quot;.
                 </div>

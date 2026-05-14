@@ -142,10 +142,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 relative">
+      {/* Dark mode gradient blobs — visible behind all panels */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden hidden dark:block">
+        <div className="absolute -top-64 -right-64 h-[700px] w-[700px] rounded-full bg-violet-900/20 blur-3xl" />
+        <div className="absolute -bottom-64 -left-64 h-[700px] w-[700px] rounded-full bg-sky-900/15 blur-3xl" />
+      </div>
       <Collapsible open={sidebarOpen} onOpenChange={setOpen} className="contents">
         <CollapsibleContent asChild>
-          <aside className="fixed right-0 top-0 hidden h-screen w-72 flex-col bg-slate-950 text-slate-100 data-[state=closed]:hidden lg:flex">
+          <aside className="fixed right-0 top-0 hidden h-screen w-72 flex-col bg-zinc-950 text-zinc-100 data-[state=closed]:hidden lg:flex">
             <div className="flex h-16 shrink-0 items-center justify-between gap-3 px-5">
               <Link href="/dashboard" className="flex min-w-0 items-center gap-2 font-semibold">
                 <span className="truncate text-lg">D-Done</span>
@@ -174,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       "flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors",
                       active
                         ? "bg-white/10 text-slate-50"
-                        : "text-slate-300 hover:bg-white/5 hover:text-slate-100",
+                        : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100",
                     ].join(" ")}
                   >
                     <span className="flex items-center gap-3">
@@ -186,7 +191,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            <div className="border-t border-white/10 p-4">
+            <div className="border-t border-zinc-800/60 p-4">
               <DropdownMenu dir={dir}>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -222,7 +227,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </CollapsibleContent>
 
         <div className={`flex min-h-screen flex-col transition-[padding] duration-200 ease-out ${sidebarOpen ? "lg:pr-72" : ""}`}>
-          <header className="sticky top-0 z-40 shrink-0 border-b bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur">
+          <header className="sticky top-0 z-40 shrink-0 border-b bg-zinc-50/90 dark:bg-zinc-950/90 backdrop-blur dark:border-zinc-800/50">
             <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -231,7 +236,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onChange={(e) => setGlobalSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitSearch(globalSearch); }}
                   placeholder={t("search_placeholder", lang)}
-                  className="h-10 rounded-2xl bg-white dark:bg-slate-800 pr-10 shadow-sm"
+                  className="h-10 rounded-2xl bg-white dark:bg-zinc-900/80 dark:border-zinc-800/60 pr-10 shadow-sm"
                 />
               </div>
 
@@ -251,16 +256,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }}
                   aria-label={unreadCount > 0 ? `${unreadCount} ${t("notifications", lang)}` : t("notifications", lang)}
                 >
-                  <Bell className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                  <Bell className="h-5 w-5 text-slate-600 dark:text-zinc-300" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 end-0 flex h-4 w-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                    <span className="absolute top-0 end-0 flex h-4 w-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-zinc-950">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </Button>
                 {showNotifications && (
-                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-xl" dir={dir}>
-                    <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-950 shadow-xl" dir={dir}>
+                    <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200">
                       {t("notifications", lang)}
                     </div>
                     <div className="max-h-64 overflow-y-auto">
@@ -273,12 +278,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           <Link
                             key={n.id}
                             href={`/transactions/${n.projectId}`}
-                            className={`block px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700 last:border-b-0 ${
+                            className={`block px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60 border-b border-slate-100 dark:border-zinc-700/50 last:border-b-0 ${
                               !n.read ? "bg-blue-50/50 dark:bg-blue-900/20" : ""
                             }`}
                             onClick={() => setShowNotifications(false)}
                           >
-                            <p className="font-medium text-slate-700 dark:text-slate-200">{n.projectTitle}</p>
+                            <p className="font-medium text-slate-700 dark:text-zinc-200">{n.projectTitle}</p>
                             <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
                             <p className="text-xs text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString("he-IL")}</p>
                           </Link>

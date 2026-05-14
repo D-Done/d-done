@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Invite by email — all invites use the Arnon organization (backend default) */}
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-4">
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="invite-email" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               הזמן משתמש במייל
@@ -238,7 +238,7 @@ export default function AdminUsersPage() {
             אין משתמשים בקטגוריה זו
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30 text-right">
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.is_deleted ? (
-                        <span className="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        <span className="inline-flex rounded-full bg-slate-100 dark:bg-zinc-800/70 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                           הוסר
                         </span>
                       ) : (
@@ -327,8 +327,8 @@ export default function AdminUsersPage() {
         )}
 
         {/* Sent invitations */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-700/50 px-4 py-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 הזמנות שנשלחו
@@ -414,7 +414,7 @@ export default function AdminUsersPage() {
                               נוצלה
                             </span>
                           ) : isRevoked ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-zinc-800/70 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                               בוטלה
                             </span>
                           ) : (
@@ -461,8 +461,8 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Audit log (append-only) */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-700/50 px-4 py-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 יומן ביקורת

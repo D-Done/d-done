@@ -427,7 +427,7 @@ export default function NewTransactionPage() {
 
         {/* Step 1: transaction type */}
         {step === "type" ? (
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-8 shadow-sm">
             <h1 className="text-center text-3xl font-bold text-slate-900 dark:text-slate-100">
               פרויקט חדש
             </h1>
@@ -454,7 +454,7 @@ export default function NewTransactionPage() {
                       "group rounded-2xl border p-6 shadow-sm transition",
                       selected
                         ? "border-slate-900 dark:border-slate-400 ring-2 ring-slate-900/10 dark:ring-slate-400/20"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md",
+                        : "border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-800/70 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -466,7 +466,7 @@ export default function NewTransactionPage() {
                           {t.subtitle}
                         </div>
                       </div>
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-300">
                         <Icon className="h-5 w-5" />
                       </div>
                     </div>
@@ -476,7 +476,7 @@ export default function NewTransactionPage() {
             </div>
           </div>
         ) : step === "details" ? (
-          <Card className="rounded-3xl bg-white dark:bg-slate-900 shadow-sm">
+          <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-2xl">פרטי הפרויקט</CardTitle>
               <CardDescription>
@@ -642,7 +642,7 @@ export default function NewTransactionPage() {
             </CardContent>
           </Card>
         ) : step === "documents" ? (
-          <Card className="rounded-3xl bg-white dark:bg-slate-900 shadow-sm">
+          <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
             <>
               <CardHeader>
                 <CardTitle className="text-2xl">מסמכים</CardTitle>
@@ -705,7 +705,7 @@ export default function NewTransactionPage() {
           </Card>
         ) : (
           /* Step 4: Analysis */
-          <Card className="rounded-3xl bg-white dark:bg-slate-900 shadow-sm">
+          <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-2xl">ניתוח</CardTitle>
               <CardDescription>

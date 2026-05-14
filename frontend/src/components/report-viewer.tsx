@@ -76,7 +76,7 @@ const PdfCitationViewer = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-40 w-full items-center justify-center bg-slate-50 dark:bg-slate-900 text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex h-40 w-full items-center justify-center bg-slate-50 dark:bg-zinc-900/80 text-xs text-slate-400 dark:text-slate-500">
         טוען תצוגת מסמך...
       </div>
     ),
@@ -191,7 +191,7 @@ function ReportSection({
   const titleEl = (
     <div className="flex items-center gap-2.5 w-full">
       <CardTitle className="flex items-center gap-2.5 text-xl font-bold flex-1 min-w-0">
-        <div className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2 shrink-0">{icon}</div>
+        <div className="rounded-xl bg-slate-100 dark:bg-zinc-800/70 p-2 shrink-0">{icon}</div>
         {title}
       </CardTitle>
       {sectionKey && (
@@ -200,7 +200,7 @@ function ReportSection({
           className={cn(
             "shrink-0 flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors",
             showComments || comments.length > 0
-              ? "text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800"
+              ? "text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-zinc-800/70"
               : "text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 opacity-0 group-hover:opacity-100",
           )}
           title="הערות"
@@ -217,7 +217,7 @@ function ReportSection({
   return (
     <Card
       className={cn(
-        "rounded-3xl border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden group",
+        "rounded-3xl border-none bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden group",
         className,
       )}
     >
@@ -237,13 +237,13 @@ function ReportSection({
 
         {/* ── Comment thread (expands below title) ───────────────── */}
         {showComments && sectionKey && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/50 space-y-3">
             {comments.length === 0 && (
               <p className="text-xs text-slate-400 dark:text-slate-500">אין הערות עדיין</p>
             )}
             {comments.map((c) => (
               <div key={c.id} className="flex gap-2.5 group/cmt">
-                <div className="h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 mt-0.5">
+                <div className="h-6 w-6 rounded-full bg-slate-100 dark:bg-zinc-800/70 flex items-center justify-center text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 mt-0.5">
                   {(c.author_name ?? c.author_email ?? "?")[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -283,12 +283,12 @@ function ReportSection({
                     }
                   }}
                   placeholder="הוסף הערה..."
-                  className="flex-1 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 placeholder:text-slate-400 dark:text-slate-200"
+                  className="flex-1 text-sm rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 placeholder:text-slate-400 dark:text-slate-200"
                 />
                 <button
                   onClick={handleSubmit}
                   disabled={!newComment.trim() || submitting}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-40 transition shrink-0"
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-semibold hover:bg-slate-700 dark:hover:bg-zinc-300 disabled:opacity-40 transition shrink-0"
                 >
                   {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : "שלח"}
                 </button>
@@ -314,7 +314,7 @@ function StatBubble({
   sub?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-2xl bg-slate-50 dark:bg-slate-800/50 px-5 py-4 text-center min-w-[120px]">
+    <div className="flex flex-col items-center gap-1 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 px-5 py-4 text-center min-w-[120px]">
       <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
       <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{value}</span>
       {sub && <span className="text-[11px] text-slate-400 dark:text-slate-500">{sub}</span>}
@@ -327,7 +327,7 @@ function StatBubble({
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-slate-700 last:border-b-0">
+    <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-zinc-700/50 last:border-b-0">
       <div className="text-sm font-medium text-slate-500 dark:text-slate-400 shrink-0">{label}</div>
       <div className="text-sm text-slate-900 dark:text-slate-100 flex-1 text-start">{value}</div>
     </div>
@@ -395,14 +395,14 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
                     <div className="relative w-full" style={{ height: 16 }}>
                       {/* Left arm to sibling */}
                       {!only && !isFirst && (
-                        <div className="absolute right-1/2 left-0 bottom-0 h-0.5 bg-slate-300 dark:bg-slate-600" />
+                        <div className="absolute right-1/2 left-0 bottom-0 h-0.5 bg-slate-300 dark:bg-zinc-600" />
                       )}
                       {/* Vertical stem down */}
-                      <div className="absolute top-0 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-600"
+                      <div className="absolute top-0 bottom-0 w-0.5 bg-slate-300 dark:bg-zinc-600"
                            style={{ left: "calc(50% - 1px)" }} />
                       {/* Right arm to sibling */}
                       {!only && !isLast && (
-                        <div className="absolute left-1/2 right-0 bottom-0 h-0.5 bg-slate-300 dark:bg-slate-600" />
+                        <div className="absolute left-1/2 right-0 bottom-0 h-0.5 bg-slate-300 dark:bg-zinc-600" />
                       )}
                     </div>
                   </div>
@@ -410,7 +410,7 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
               })}
             </div>
             {/* Single vertical from horizontal bar to parent */}
-            <div className="w-0.5 h-4 bg-slate-300 dark:bg-slate-600" />
+            <div className="w-0.5 h-4 bg-slate-300 dark:bg-zinc-600" />
           </>
         )}
 
@@ -419,7 +419,7 @@ function UboGraphView({ graph }: { graph: UboGraph }) {
           className={cn(
             "rounded-xl border px-3 py-2 text-center min-w-[140px] max-w-[220px]",
             node.type === "company"
-              ? "border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              ? "border-slate-300 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-900 dark:text-slate-100"
               : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-900/30 text-slate-800 dark:text-slate-200",
           )}
         >
@@ -843,7 +843,7 @@ export function ReportViewer({
       <div className="space-y-3">
         {title && <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400">{title}</h4>}
         {items.map(({ finding: f, findingIndex }, idx) => (
-          <div key={idx} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+          <div key={idx} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40">
             <div className="flex items-center gap-2 mb-2">
               <SeverityIcon severity={f.severity} />
               <span className="font-bold">{f.title}</span>
@@ -901,11 +901,11 @@ export function ReportViewer({
     return (
       <div className="w-full space-y-6">
         {/* ─── 1. Executive Summary ───────────────────────────────── */}
-        <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2 shrink-0">
+                <div className="rounded-xl bg-slate-100 dark:bg-zinc-800/70 p-2 shrink-0">
                   <Sparkles className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                 </div>
                 <div className="min-w-0">
@@ -1086,7 +1086,7 @@ export function ReportViewer({
                               "rounded-full text-xs",
                               t.is_signed
                                 ? "bg-emerald-100 text-emerald-800"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400",
+                                : "bg-slate-100 dark:bg-zinc-800/70 text-slate-500 dark:text-slate-400",
                             )}
                           >
                             {yn(t.is_signed)}
@@ -1199,7 +1199,7 @@ export function ReportViewer({
             <div className="space-y-0">
               {fin.lender_definition_clause != null &&
               fin.lender_definition_clause !== "" ? (
-                <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-start justify-between gap-4 py-2.5 border-b border-slate-100 dark:border-zinc-700/50">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 shrink-0">
                     הגדרת הבנק המלווה בהסכם
                   </div>
@@ -1250,10 +1250,10 @@ export function ReportViewer({
               <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-2">
                 פירוט ערבויות
               </p>
-              <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-x-auto">
+              <div className="rounded-xl border border-slate-100 dark:border-zinc-700/50 overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <TableHeader>
-                    <TableRow className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                    <TableRow className="bg-slate-50/80 dark:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-700/50">
                       <TableHead className="py-2.5 px-4 text-right font-semibold text-slate-600 dark:text-slate-300 w-[28%]">
                         ערבות
                       </TableHead>
@@ -1266,9 +1266,9 @@ export function ReportViewer({
                     {guaranteeFindings.map(({ finding: f, findingIndex }, i) => (
                       <TableRow
                         key={i}
-                        className={i % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/60"}
+                        className={i % 2 === 0 ? "bg-white dark:bg-zinc-900/80" : "bg-slate-50/60 dark:bg-zinc-800/50"}
                       >
-                        <TableCell className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right border-b border-slate-100 dark:border-slate-700 align-top">
+                        <TableCell className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right border-b border-slate-100 dark:border-zinc-700/50 align-top">
                           <span className="inline-flex items-center gap-1.5">
                             {f.severity === "warning" && (
                               <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0" />
@@ -1276,7 +1276,7 @@ export function ReportViewer({
                             {f.title}
                           </span>
                         </TableCell>
-                        <TableCell className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-slate-700 min-w-[280px] align-top">
+                        <TableCell className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-zinc-700/50 min-w-[280px] align-top">
                           <span className="inline-flex items-start gap-1">
                             {f.description}
                             <CitationKeysInline
@@ -1349,7 +1349,7 @@ export function ReportViewer({
                   <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-2">
                     לוח זמנים חוזי — הסכם הפרויקט
                   </p>
-                  <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                  <div className="rounded-xl border border-slate-100 dark:border-zinc-700/50 overflow-hidden">
                     <table className="w-full text-sm">
                       <tbody>
                         {(report as RealEstateFinanceDDReport).contractual_milestones!.map(
@@ -1357,13 +1357,13 @@ export function ReportViewer({
                             <tr
                               key={i}
                               className={
-                                i % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/60"
+                                i % 2 === 0 ? "bg-white dark:bg-zinc-900/80" : "bg-slate-50/60 dark:bg-zinc-800/50"
                               }
                             >
-                              <td className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right w-2/5 border-b border-slate-100 dark:border-slate-700">
+                              <td className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right w-2/5 border-b border-slate-100 dark:border-zinc-700/50">
                                 {m.milestone}
                               </td>
-                              <td className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-slate-700">
+                              <td className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-zinc-700/50">
                                 {m.deadline_or_condition}
                               </td>
                             </tr>
@@ -1496,7 +1496,7 @@ export function ReportViewer({
     if (isStandardDDReport(report)) {
       return (
         <div className="w-full space-y-6">
-          <Card className="rounded-3xl border-none bg-white dark:bg-slate-900 shadow-sm p-6">
+          <Card className="rounded-3xl border-none bg-white dark:bg-zinc-900/80 shadow-sm p-6">
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="cursor-help inline-block">
@@ -1514,7 +1514,7 @@ export function ReportViewer({
 
           <div className="grid gap-4">
             {report.findings.map((f, i) => (
-              <Card key={i} className="rounded-2xl border-none shadow-sm p-4 dark:bg-slate-900">
+              <Card key={i} className="rounded-2xl border-none shadow-sm p-4 dark:bg-zinc-900/80">
                 <div className="flex items-center justify-end gap-2 mb-2">
                   <h4 className="font-bold dark:text-slate-100">{f.title}</h4>
                   <SeverityIcon severity={f.severity} />
@@ -1539,9 +1539,9 @@ export function ReportViewer({
         <Sheet open={citationOpen} onOpenChange={setCitationOpen}>
           <SheetContent
             side="left"
-            className="flex w-full max-w-[95vw] sm:max-w-4xl flex-col p-0 gap-0 border-r bg-slate-50 dark:bg-slate-900"
+            className="flex w-full max-w-[95vw] sm:max-w-4xl flex-col p-0 gap-0 border-r bg-slate-50 dark:bg-zinc-900/80"
           >
-            <SheetHeader className="p-4 shrink-0 border-b bg-white dark:bg-slate-900">
+            <SheetHeader className="p-4 shrink-0 border-b bg-white dark:bg-zinc-900/80">
               <div className="flex flex-col gap-2">
                 <SheetTitle className="text-base font-bold text-right">
                   {citationKey ? `${citationKey} • ` : ""}

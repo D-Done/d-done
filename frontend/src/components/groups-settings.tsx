@@ -153,7 +153,7 @@ export function GroupsSettings() {
       </div>
 
       {groups.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 py-12 text-center text-sm text-slate-400">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-zinc-700/50 py-12 text-center text-sm text-slate-400">
           <Users className="mx-auto h-8 w-8 mb-3 opacity-40" />
           אין קבוצות עדיין. צור קבוצה ראשונה.
         </div>
@@ -168,7 +168,7 @@ export function GroupsSettings() {
           return (
             <div
               key={group.id}
-              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden"
+              className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden"
             >
               {/* Group header */}
               <div className="flex items-center gap-3 px-4 py-3">
@@ -233,14 +233,14 @@ export function GroupsSettings() {
 
               {/* Expanded members */}
               {expanded && (
-                <div className="border-t border-slate-100 dark:border-slate-800 px-4 pb-3 pt-2 space-y-2">
+                <div className="border-t border-slate-100 dark:border-zinc-800/50 px-4 pb-3 pt-2 space-y-2">
                   {group.members.length === 0 && (
                     <p className="text-xs text-slate-400 py-1">אין חברים עדיין</p>
                   )}
                   {group.members.map((m) => (
                     <div
                       key={m.user_id}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 px-3 py-2"
+                      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 dark:bg-zinc-800/40 px-3 py-2"
                     >
                       <div className="min-w-0">
                         {m.name && (

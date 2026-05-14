@@ -67,7 +67,7 @@ export function ProjectTimeline({
     <TooltipProvider>
       <div
         className={cn(
-          "rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden",
+          "rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden",
           className,
         )}
         dir="rtl"
@@ -78,7 +78,7 @@ export function ProjectTimeline({
           onClick={() => setIsOpen((prev) => !prev)}
           className="flex w-full items-center gap-3 px-6 pt-5 pb-4 text-right hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors duration-150"
         >
-          <div className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2 shrink-0">
+          <div className="rounded-xl bg-slate-100 dark:bg-zinc-800/70 p-2 shrink-0">
             <Clock className="h-5 w-5 text-slate-700 dark:text-slate-300" />
           </div>
           <Tooltip>
@@ -212,7 +212,7 @@ export function ProjectTimeline({
                                       "cursor-default gap-1 px-2 py-0.5 text-[10px] font-normal transition-colors duration-200",
                                       isActive
                                         ? "border-amber-200/80 text-amber-600/80"
-                                        : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500",
+                                        : "border-slate-200 dark:border-zinc-700/50 text-slate-400 dark:text-slate-500",
                                     )}
                                   >
                                     <FileText className="h-2.5 w-2.5" />

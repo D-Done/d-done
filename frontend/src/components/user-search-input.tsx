@@ -91,12 +91,12 @@ export function UserSearchInput({ onSelect, placeholder = "שם או מייל...
           onFocus={() => query && results.length > 0 && setOpen(true)}
           placeholder={placeholder}
           dir="auto"
-          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-2 pr-8 pl-8 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 disabled:opacity-50 transition"
+          className="w-full rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 py-2 pr-8 pl-8 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 disabled:opacity-50 transition"
         />
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 shadow-lg overflow-hidden">
           {results.map((u, i) => (
             <button
               key={u.id}
@@ -110,7 +110,7 @@ export function UserSearchInput({ onSelect, placeholder = "שם או מייל...
                   : "hover:bg-slate-50 dark:hover:bg-slate-800",
               ].join(" ")}
             >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800/70 text-slate-500">
                 <User className="h-3.5 w-3.5" />
               </div>
               <div className="min-w-0 flex-1">

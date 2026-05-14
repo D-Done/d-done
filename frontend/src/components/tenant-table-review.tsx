@@ -408,7 +408,7 @@ export function TenantTableReview({
 
   if (loading || !data) {
     return (
-      <div className="flex h-64 items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
+      <div className="flex h-64 items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 dark:border-zinc-700/50 dark:bg-zinc-900/50 dark:text-slate-400">
         <Loader2 className="h-5 w-5 animate-spin" />
         {loading ? "טוען נתוני סקירה..." : "אין נתונים לסקירה"}
       </div>
@@ -426,13 +426,13 @@ export function TenantTableReview({
   return (
     <div
       className={cn(
-        "grid h-[calc(100vh-8rem)] grid-rows-[auto_1fr_auto] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950",
+        "grid h-[calc(100vh-8rem)] grid-rows-[auto_1fr_auto] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-zinc-800/50 dark:bg-slate-950",
         className,
       )}
       dir="rtl"
     >
       {/* Header */}
-      <div className="min-h-0 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <div className="min-h-0 border-b border-slate-200 px-5 py-4 dark:border-zinc-800/50">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
@@ -464,9 +464,9 @@ export function TenantTableReview({
       {/* Main content: PDF + Table side by side */}
       <div className="grid min-h-0 grid-cols-[55%_1fr] overflow-hidden">
         {/* PDF Viewer — scrolls independently */}
-        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l border-slate-200 dark:border-slate-800">
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l border-slate-200 dark:border-zinc-800/50">
           {/* PDF toolbar */}
-          <div className="shrink-0 flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/80 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
+          <div className="shrink-0 flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/80 px-3 py-2.5 dark:border-zinc-800/50 dark:bg-zinc-900/50">
             <div className="relative flex min-w-0 flex-1 items-center gap-2">
               <FileText className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
               <label className="sr-only" htmlFor="tenant-review-doc-select">
@@ -476,7 +476,7 @@ export function TenantTableReview({
                 id="tenant-review-doc-select"
                 value={selectedFileId ?? ""}
                 onChange={(e) => setSelectedFileId(e.target.value || null)}
-                className="w-full min-w-0 flex-1 appearance-none truncate rounded-lg border-2 border-slate-200 bg-white py-2 pl-8 pr-3 text-sm font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-indigo-400"
+                className="w-full min-w-0 flex-1 appearance-none truncate rounded-lg border-2 border-slate-200 bg-white py-2 pl-8 pr-3 text-sm font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-600/50 dark:bg-zinc-900/80 dark:text-slate-200 dark:focus:border-indigo-400"
                 dir="rtl"
                 aria-label="בחר מסמך להצגה"
               >
@@ -488,7 +488,7 @@ export function TenantTableReview({
               </select>
               <ChevronDown className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             </div>
-            <div className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm dark:border-zinc-700/50 dark:bg-zinc-800/70">
               <Button
                 variant="ghost"
                 size="icon"
@@ -525,7 +525,7 @@ export function TenantTableReview({
             </div>
           </div>
 
-          <div className="h-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 dark:bg-slate-900/50">
+          <div className="h-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 dark:bg-zinc-900/50">
             {pdfLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-slate-400">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -570,7 +570,7 @@ export function TenantTableReview({
         <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
           {/* Document group tabs */}
           {docGroups.length > 1 && (
-            <div className="shrink-0 flex gap-0 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+            <div className="shrink-0 flex gap-0 overflow-x-auto border-b border-slate-200 dark:border-zinc-800/50">
               {docGroups.map((g, gi) => {
                 const grpRows = g.rowIndices.map((i) => rows[i]);
                 const grpSigned = grpRows.filter((r) => r.is_signed).length;
@@ -597,7 +597,7 @@ export function TenantTableReview({
           )}
 
           {/* Signing stats bar */}
-          <div className="shrink-0 flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-slate-800">
+          <div className="shrink-0 flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-zinc-800/50">
             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
               אחוז חתימות:{" "}
               <span className="font-bold text-indigo-600 dark:text-indigo-400">
@@ -614,10 +614,10 @@ export function TenantTableReview({
           </div>
 
           {/* Tenant table */}
-          <div className="h-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain border border-slate-200 dark:border-slate-800 rounded-lg">
+          <div className="h-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain border border-slate-200 dark:border-zinc-800/50 rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/80 dark:bg-slate-900/50">
+                <TableRow className="bg-slate-50/80 dark:bg-zinc-900/50">
                   <TableHead className="text-xs w-16">תת חלקה</TableHead>
                   <TableHead className="text-xs">שם דייר / בעלים</TableHead>
                   <TableHead className="text-xs text-center">חתמה</TableHead>
@@ -658,7 +658,7 @@ export function TenantTableReview({
                         onChange={(e) =>
                           updateRow(idx, { sub_parcel: e.target.value })
                         }
-                        className="w-14 rounded-md border border-slate-200 bg-transparent px-2 py-1 font-mono text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700"
+                        className="w-14 rounded-md border border-slate-200 bg-transparent px-2 py-1 font-mono text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-zinc-700/50"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </TableCell>
@@ -669,7 +669,7 @@ export function TenantTableReview({
                         onChange={(e) =>
                           updateRow(idx, { owner_name: e.target.value })
                         }
-                        className="w-full rounded-md border border-slate-200 bg-transparent px-2 py-1 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-700"
+                        className="w-full rounded-md border border-slate-200 bg-transparent px-2 py-1 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-zinc-700/50"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </TableCell>
@@ -722,7 +722,7 @@ export function TenantTableReview({
 
           {/* Correction prompt area */}
           {mode === "correction" && (
-            <div className="shrink-0 border-t border-slate-200 bg-amber-50/50 px-4 py-3 dark:border-slate-800 dark:bg-amber-950/20">
+            <div className="shrink-0 border-t border-slate-200 bg-amber-50/50 px-4 py-3 dark:border-zinc-800/50 dark:bg-amber-950/20">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                 <div className="flex-1">
@@ -733,7 +733,7 @@ export function TenantTableReview({
                     value={correctionText}
                     onChange={(e) => setCorrectionText(e.target.value)}
                     placeholder="לדוגמה: בתת חלקה 3 השם שגוי, צריך להיות ישראל ישראלי. חלק מהחתימות לא זוהו בעמוד 5..."
-                    className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm placeholder:text-amber-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-amber-800 dark:bg-slate-900 dark:placeholder:text-amber-700"
+                    className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm placeholder:text-amber-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-amber-800 dark:bg-zinc-900/80 dark:placeholder:text-amber-700"
                     rows={3}
                     dir="rtl"
                     autoFocus
@@ -746,7 +746,7 @@ export function TenantTableReview({
       </div>
 
       {/* Action buttons — always visible at bottom (grid row 3) */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 dark:border-zinc-800/50 dark:bg-slate-950">
         <div>
           {mode === "review" ? (
             <Button

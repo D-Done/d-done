@@ -126,9 +126,9 @@ function TransactionsList() {
 
   if (projects.length === 0) {
     return (
-      <Card className="mt-10 rounded-2xl bg-white dark:bg-slate-900 text-center shadow-sm">
+      <Card className="mt-10 rounded-2xl bg-white dark:bg-zinc-900/80 text-center shadow-sm">
         <CardContent className="py-16">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-zinc-800/70 text-slate-600 dark:text-slate-300">
             <Building2 className="h-7 w-7" />
           </div>
           <h2 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">
@@ -167,7 +167,7 @@ function TransactionsList() {
             <div key={group.key}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-600/50 bg-white dark:bg-zinc-800/70 text-slate-700 dark:text-slate-300">
                     <Folder className="h-4 w-4" />
                   </div>
                   <div>
@@ -189,7 +189,7 @@ function TransactionsList() {
                       <Link href={`/transactions/${p.id}`}>
                         <Card
                           className={[
-                            "h-full cursor-pointer rounded-2xl bg-white dark:bg-slate-900 shadow-sm transition hover:shadow-md",
+                            "h-full cursor-pointer rounded-2xl bg-white dark:bg-zinc-900/80 shadow-sm transition hover:shadow-md",
                             isDeleting ? "pointer-events-none opacity-50" : "",
                           ].join(" ")}
                         >
@@ -203,7 +203,7 @@ function TransactionsList() {
                               >
                                 {statusLabel(p.status, lang)}
                               </Badge>
-                              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-600 dark:text-slate-300">
                                 <FileText className="h-4 w-4" />
                               </div>
                             </div>
