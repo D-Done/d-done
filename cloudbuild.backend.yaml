@@ -32,6 +32,9 @@ steps:
         "${_REGION}",
         "--platform",
         "managed",
+        "--no-cpu-throttling",
+        "--min-instances",
+        "1",
         "--quiet",
       ]
 
