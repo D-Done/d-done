@@ -57,18 +57,18 @@ export default function AdminActivityPage() {
       <div className="flex flex-col gap-6" dir="rtl">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">פעילות משתמשים</h1>
-          <p className="mt-1 text-sm text-slate-500">מעקב אחר שימוש ועלויות מודלי AI</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">מעקב אחר שימוש ועלויות מודלי AI</p>
         </div>
 
         {/* Summary KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "משתמשים", value: totals.total_users ?? 0, icon: Users, color: "bg-violet-50 text-violet-600" },
-            { label: "בדיקות DD", value: totals.total_dd_checks ?? 0, icon: FileCheck, color: "bg-emerald-50 text-emerald-600" },
-            { label: "טוקנים (קלט)", value: formatTokens(totals.total_prompt_tokens ?? 0), icon: Activity, color: "bg-sky-50 text-sky-600" },
-            { label: "טוקנים (סה״כ)", value: formatTokens(totals.total_tokens ?? 0), icon: Coins, color: "bg-amber-50 text-amber-600" },
+            { label: "משתמשים", value: totals.total_users ?? 0, icon: Users, color: "bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400" },
+            { label: "בדיקות DD", value: totals.total_dd_checks ?? 0, icon: FileCheck, color: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400" },
+            { label: "טוקנים (קלט)", value: formatTokens(totals.total_prompt_tokens ?? 0), icon: Activity, color: "bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400" },
+            { label: "טוקנים (סה״כ)", value: formatTokens(totals.total_tokens ?? 0), icon: Coins, color: "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400" },
           ].map((kpi) => (
-            <div key={kpi.label} className="rounded-2xl border bg-white dark:bg-slate-800 p-5 shadow-sm">
+            <div key={kpi.label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400">{kpi.label}</span>
                 <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${kpi.color}`}>
@@ -81,7 +81,7 @@ export default function AdminActivityPage() {
         </div>
 
         {/* Activity table */}
-        <div className="overflow-x-auto rounded-xl border bg-white dark:bg-slate-800">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30 text-right">

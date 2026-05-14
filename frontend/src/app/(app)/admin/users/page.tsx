@@ -192,16 +192,16 @@ export default function AdminUsersPage() {
     <>
       <div className="flex flex-col gap-6" dir="rtl">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">ניהול משתמשים</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">ניהול משתמשים</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             הזמן משתמשים במייל, נהל אדמינים ובטל הזמנות במידת הצורך
           </p>
         </div>
 
         {/* Invite by email — all invites use the Arnon organization (backend default) */}
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-white p-4">
+        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="invite-email" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="invite-email" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               הזמן משתמש במייל
             </label>
             <Input
@@ -238,7 +238,7 @@ export default function AdminUsersPage() {
             אין משתמשים בקטגוריה זו
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border bg-white">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30 text-right">
@@ -257,7 +257,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <PastelAvatar name={u.name} email={u.email} size="sm" />
-                        <span className="font-medium text-slate-900">{u.name || "—"}</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">{u.name || "—"}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -268,7 +268,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.is_admin ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 dark:bg-violet-950/40 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
                           <Shield className="h-3 w-3" /> אדמין
                         </span>
                       ) : (
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.is_deleted ? (
-                        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                        <span className="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                           הוסר
                         </span>
                       ) : (
@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+                              className="h-8 w-8 p-0 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-700"
                               title={u.is_admin ? "הסר אדמין" : "הפוך לאדמין"}
                               onClick={() => handleToggleAdmin(u.id, u.is_admin)}
                               disabled={u.is_deleted}
@@ -306,7 +306,7 @@ export default function AdminUsersPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700"
                               title="הסר גישה (מחיקה רכה)"
                               disabled={
                                 u.is_deleted || meId === u.id || actionLoading === u.id
@@ -327,13 +327,13 @@ export default function AdminUsersPage() {
         )}
 
         {/* Sent invitations */}
-        <div className="rounded-xl border bg-white">
-          <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 הזמנות שנשלחו
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 ניתן לבטל הזמנה כדי למנוע שימוש בקישור ישן
               </p>
             </div>
@@ -410,15 +410,15 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-4 py-3">
                           {isAccepted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                               נוצלה
                             </span>
                           ) : isRevoked ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                               בוטלה
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                               פעילה
                             </span>
                           )}
@@ -461,13 +461,13 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Audit log (append-only) */}
-        <div className="rounded-xl border bg-white">
-          <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 יומן ביקורת
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {auditTotal} רשומות במערכת (100 האחרונות)
               </p>
             </div>
