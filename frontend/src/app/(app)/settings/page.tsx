@@ -66,10 +66,6 @@ export default function SettingsPage() {
           )}
 
           <Separator />
-
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>{t("account_coming_soon", lang)}</p>
-          </div>
         </CardContent>
       </Card>
 
