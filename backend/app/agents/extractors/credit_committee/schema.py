@@ -33,6 +33,24 @@ class CreditCommitteeExtraction(BaseModel):
     loan_term_months: int | None = Field(
         default=None, description="Loan term in months"
     )
+    # Project / compound details (TASK 2)
+    project_address: str | None = Field(
+        default=None, description="Full project address in Hebrew"
+    )
+    gush: str | None = Field(default=None, description="Block number (גוש)")
+    helka: str | None = Field(default=None, description="Parcel number (חלקה)")
+    existing_buildings_count: int | None = Field(
+        default=None, description="Number of existing buildings before demolition"
+    )
+    existing_apartments_count: int | None = Field(
+        default=None, description="Number of existing apartments before demolition"
+    )
+    planned_buildings_count: int | None = Field(
+        default=None, description="Number of planned buildings after construction"
+    )
+    planned_apartments_count: int | None = Field(
+        default=None, description="Number of planned apartments after construction"
+    )
     collateral_requirements: list[str] = Field(
         default_factory=list,
         description="Required collateral / security as listed by the committee",

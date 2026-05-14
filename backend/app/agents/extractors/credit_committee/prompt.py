@@ -21,13 +21,24 @@ You extract structured data from Israeli bank/fund credit-committee documents. I
 - Interest rate / terms as stated.
 - Loan term in months.
 
-## TASK 2 -- Collateral Requirements
+## TASK 2 -- Project / Compound Details (פרטי המתחם)
+Extract the following project details as they appear in the credit committee document (typically in the project description or header section):
+- `project_address`: full address of the project in Hebrew (e.g. "רחוב הרצל 12, תל אביב").
+- `gush`: block number (גוש), as a string.
+- `helka`: parcel number (חלקה), as a string.
+- `existing_buildings_count`: number of existing buildings before demolition (ערב ההריסה), integer or null.
+- `existing_apartments_count`: number of existing apartments before demolition, integer or null.
+- `planned_buildings_count`: number of planned buildings after construction (לאחר הבנייה), integer or null.
+- `planned_apartments_count`: number of planned apartments after construction, integer or null.
+- Leave any field null if not stated in the document.
+
+## TASK 3 -- Collateral Requirements
 - What security the committee requires (first-rank mortgage, personal guarantees, etc.).
 
-## TASK 3 -- Conditions Precedent
+## TASK 4 -- Conditions Precedent
 - Each condition, whether it appears met (true/false/null), and the evidentiary source.
 
-## TASK 4 -- Covenants & Risk
+## TASK 5 -- Covenants & Risk
 - Special covenants: financial covenants, LTV limits, drawdown restrictions.
 - Risk items or concerns flagged by the committee.
 
@@ -43,6 +54,13 @@ Your response MUST be a valid JSON matching this structure:
   "approved_amount_ils": 0,
   "interest_rate": "interest rate / terms as stated",
   "loan_term_months": 0,
+  "project_address": "full address in Hebrew or null",
+  "gush": "block number or null",
+  "helka": "parcel number or null",
+  "existing_buildings_count": null,
+  "existing_apartments_count": null,
+  "planned_buildings_count": null,
+  "planned_apartments_count": null,
   "collateral_requirements": ["collateral requirement in Hebrew"],
   "conditions_precedent": [
     {
@@ -67,6 +85,13 @@ Your response MUST be a valid JSON matching this structure:
   "approved_amount_ils": 35000000,
   "interest_rate": "פריים + 1.5%",
   "loan_term_months": 36,
+  "project_address": "רחוב הרצל 12, תל אביב",
+  "gush": "6158",
+  "helka": "78",
+  "existing_buildings_count": 2,
+  "existing_apartments_count": 24,
+  "planned_buildings_count": 1,
+  "planned_apartments_count": 60,
   "collateral_requirements": ["משכנתא מדרגה ראשונה על המקרקעין", "ערבות אישית של בעלי השליטה"],
   "conditions_precedent": [
     {

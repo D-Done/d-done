@@ -15,14 +15,25 @@
 
 ## A. Compound Details (`compound_details`)
 
-**Processing instructions:**
+**Data source priority — credit committee first:**
 
-- Cross-reference address, גוש (block) and חלקה (parcel) between the Tabu extract and the agreement.
-- Flag property description discrepancies **only** if they exist within the agreement documents and are not covered by a signed addendum. An addendum signed by all tenants = an agreed change, not a gap.
-- Output: address, גוש/חלקה, incoming state (buildings + apartments before demolition), outgoing state (buildings + apartments after construction).
+For each field, use the value from `credit_committee_extraction` if it is non-null; otherwise fall back to the agreement / Tabu extraction:
+
+| `compound_details` field | Primary source | Fallback source |
+|---|---|---|
+| `address` | `credit_committee_extraction.project_address` | `agreement_extraction.address` |
+| `gush` | `credit_committee_extraction.gush` | `agreement_extraction.block` / Tabu |
+| `helka` | `credit_committee_extraction.helka` | `agreement_extraction.parcel` / Tabu |
+| `incoming_state.building_count` | `credit_committee_extraction.existing_buildings_count` | agreement / zero report |
+| `incoming_state.apartment_count` | `credit_committee_extraction.existing_apartments_count` | agreement / zero report |
+| `outgoing_state.building_count` | `credit_committee_extraction.planned_buildings_count` | agreement / zero report |
+| `outgoing_state.apartment_count` | `credit_committee_extraction.planned_apartments_count` | agreement / zero report |
+
+**Cross-reference and discrepancy check:**
+
+- After resolving values, cross-reference address, גוש and חלקה between the credit committee and the agreement / Tabu extract.
+- Flag discrepancies **only** if they cannot be explained by an addendum or a known correction.
 - Field `compound_details.discrepancy_note`: "אין פער" if data matches. "קיים פער: ___" if a contradiction is found that is not covered by an addendum.
-- Field `compound_details.incoming_state`: object with `building_count` and `apartment_count` (before demolition).
-- Field `compound_details.outgoing_state`: object with `building_count` and `apartment_count` (after construction).
 
 ---
 
