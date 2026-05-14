@@ -36,43 +36,43 @@ const CATEGORIES: Record<string, { label: string; labelEn: string; icon: React.R
     label: "חתימות חסרות",
     labelEn: "Missing Signatures",
     icon: <PenLine className="h-4 w-4" />,
-    color: "text-red-600 bg-red-50 border-red-200",
+    color: "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/40 dark:border-red-800/50",
   },
   warning_note: {
     label: "הערות אזהרה",
     labelEn: "Caveats / Warning Notes",
     icon: <AlertTriangle className="h-4 w-4" />,
-    color: "text-orange-600 bg-orange-50 border-orange-200",
+    color: "text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950/40 dark:border-orange-800/50",
   },
   mortgage: {
     label: "משכנתאות",
     labelEn: "Mortgages",
     icon: <Landmark className="h-4 w-4" />,
-    color: "text-purple-600 bg-purple-50 border-purple-200",
+    color: "text-purple-600 bg-purple-50 border-purple-200 dark:text-purple-400 dark:bg-purple-950/40 dark:border-purple-800/50",
   },
   missing_doc: {
     label: "מסמכים חסרים",
     labelEn: "Missing Documents",
     icon: <FileText className="h-4 w-4" />,
-    color: "text-blue-600 bg-blue-50 border-blue-200",
+    color: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/40 dark:border-blue-800/50",
   },
   lender: {
     label: "גוף המממן",
     labelEn: "Financing Body",
     icon: <Building2 className="h-4 w-4" />,
-    color: "text-yellow-700 bg-yellow-50 border-yellow-200",
+    color: "text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-950/40 dark:border-yellow-800/50",
   },
   corporate: {
     label: "תאגידי",
     labelEn: "Corporate",
     icon: <MapPin className="h-4 w-4" />,
-    color: "text-slate-600 bg-slate-50 border-slate-200",
+    color: "text-zinc-600 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-800/50 dark:border-zinc-700/50",
   },
   other: {
     label: "אחר",
     labelEn: "Other",
     icon: <CheckSquare className="h-4 w-4" />,
-    color: "text-slate-500 bg-slate-50 border-slate-200",
+    color: "text-zinc-500 bg-zinc-50 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-800/50 dark:border-zinc-700/50",
   },
 };
 
@@ -119,7 +119,7 @@ function ShareDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-6 space-y-4" dir="rtl">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl dark:ring-1 dark:ring-zinc-700/50 p-6 space-y-4" dir="rtl">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">שיתוף רשימת השלמות</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -138,7 +138,7 @@ function ShareDialog({
               <input
                 readOnly
                 value={result.url}
-                className="flex-1 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono"
+                className="flex-1 rounded border border-zinc-200 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-800 dark:text-zinc-200 px-3 py-2 text-sm font-mono"
               />
               <Button
                 size="sm"
@@ -241,11 +241,11 @@ function AddItemForm({
   };
 
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 space-y-3" dir="rtl">
+    <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-900/50 p-4 space-y-3" dir="rtl">
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-800/60 text-zinc-800 dark:text-zinc-200 px-3 py-2 text-sm"
       >
         {CATEGORY_ORDER.map((cat) => (
           <option key={cat} value={cat}>
@@ -344,14 +344,14 @@ function ItemRow({
 
   return (
     <div
-      className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50 ${item.is_completed ? "opacity-60" : ""}`}
+      className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 ${item.is_completed ? "opacity-60" : ""}`}
       dir="rtl"
     >
       {/* Checkbox */}
       <button
         onClick={handleToggle}
         disabled={toggling}
-        className="mt-0.5 shrink-0 text-slate-400 hover:text-slate-700 disabled:opacity-50"
+        className="mt-0.5 shrink-0 text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-50"
         title={item.is_completed ? "סמן כלא-הושלם" : "סמן כהושלם"}
       >
         {toggling ? (
@@ -359,19 +359,19 @@ function ItemRow({
         ) : item.is_completed ? (
           <CheckSquare className="h-4 w-4 text-emerald-600" />
         ) : (
-          <div className="h-4 w-4 rounded border-2 border-slate-300" />
+          <div className="h-4 w-4 rounded border-2 border-zinc-300 dark:border-zinc-600" />
         )}
       </button>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p
-          className={`text-sm font-medium leading-snug ${item.is_completed ? "line-through text-slate-400" : "text-slate-800"}`}
+          className={`text-sm font-medium leading-snug ${item.is_completed ? "line-through text-zinc-400 dark:text-zinc-500" : "text-zinc-800 dark:text-zinc-200"}`}
         >
           {item.title}
         </p>
         {item.description && (
-          <p className="mt-0.5 text-xs text-slate-500 leading-snug">{item.description}</p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 leading-snug">{item.description}</p>
         )}
         {item.is_completed && item.completed_by && (
           <p className="mt-0.5 text-xs text-emerald-600">
@@ -390,7 +390,7 @@ function ItemRow({
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="shrink-0 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-500 transition-opacity disabled:opacity-50"
+        className="shrink-0 opacity-0 group-hover:opacity-100 text-zinc-400 dark:text-zinc-600 hover:text-blue-500 dark:hover:text-blue-400 transition-opacity disabled:opacity-50"
         title="צרף מסמך"
       >
         {uploading ? (
@@ -404,7 +404,7 @@ function ItemRow({
       <button
         onClick={handleDelete}
         disabled={deleting}
-        className="shrink-0 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-opacity disabled:opacity-50"
+        className="shrink-0 opacity-0 group-hover:opacity-100 text-zinc-400 dark:text-zinc-600 hover:text-red-400 dark:hover:text-red-400 transition-opacity disabled:opacity-50"
         title="מחק פריט"
       >
         {deleting ? (
@@ -442,10 +442,10 @@ function CategorySection({
   const done = items.filter((i) => i.is_completed).length;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/60 overflow-hidden">
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className="flex items-center justify-between w-full px-4 py-3 text-right hover:bg-slate-50 transition-colors"
+        className="flex items-center justify-between w-full px-4 py-3 text-right hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
         dir="rtl"
       >
         <div className="flex items-center gap-2.5">
@@ -453,22 +453,22 @@ function CategorySection({
             {cfg.icon}
             {catLabel}
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-zinc-400 dark:text-zinc-500">
             {done}/{items.length}
           </span>
           {done === items.length && items.length > 0 && (
-            <span className="text-xs text-emerald-600 font-medium">✓ {t("completed", catLang)}</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ {t("completed", catLang)}</span>
           )}
         </div>
         {collapsed ? (
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
         ) : (
-          <ChevronUp className="h-4 w-4 text-slate-400" />
+          <ChevronUp className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
         )}
       </button>
 
       {!collapsed && (
-        <div className="border-t border-slate-100 divide-y divide-slate-50">
+        <div className="border-t border-zinc-100 dark:border-zinc-800/50 divide-y divide-zinc-50 dark:divide-zinc-800/40">
           {items.map((item) => (
             <ItemRow
               key={item.id}
@@ -574,9 +574,9 @@ export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: strin
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">רשימת השלמות</h2>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">רשימת השלמות</h2>
           {totalItems > 0 && (
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
               {totalDone} מתוך {totalItems} הושלמו
             </p>
           )}
@@ -633,13 +633,13 @@ export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: strin
       {/* Progress bar */}
       {totalItems > 0 && (
         <div className="space-y-1.5">
-          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+          <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800/60 overflow-hidden">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-xs text-zinc-400 dark:text-zinc-500">
             <span>{pct}% {t("completed", lang)}</span>
             <span>{totalItems - totalDone} {t("pending", lang)}</span>
           </div>
@@ -657,15 +657,15 @@ export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: strin
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12 text-slate-400">
+        <div className="flex items-center justify-center py-12 text-zinc-400 dark:text-zinc-500">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : totalItems === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center">
-          <CheckSquare className="h-10 w-10 text-slate-300" />
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700/50 py-14 text-center">
+          <CheckSquare className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
           <div>
-            <p className="font-medium text-slate-600">{t("checklist_title", lang)}</p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="font-medium text-zinc-600 dark:text-zinc-400">{t("checklist_title", lang)}</p>
+            <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
               {t("checklist_empty", lang)}
             </p>
           </div>
