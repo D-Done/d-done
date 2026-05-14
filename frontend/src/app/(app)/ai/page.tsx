@@ -24,6 +24,7 @@ import {
   deleteConversation,
   getConversation,
   getFileBlobUrl,
+  getMe,
   listConversations,
   listProjects,
   updateConversation,
@@ -150,6 +151,12 @@ const itemVariants = {
 export default function AiPage() {
   const { lang, dir } = useLanguage();
   const locale = lang === "en" ? "en-US" : "he-IL";
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMe().then((u) => { if (u) setUserName(u.name ?? u.email?.split("@")[0] ?? null); });
+  }, []);
+
   // Conversations sidebar
   const [conversations, setConversations] = useState<ConversationOut[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -796,17 +803,11 @@ export default function AiPage() {
                 animate="visible"
                 className="flex h-full flex-col items-center justify-center gap-6 px-4"
               >
-                {/* Icon */}
-                <motion.div variants={itemVariants}>
-                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-zinc-900 dark:bg-zinc-800 shadow-2xl shadow-zinc-900/40 ring-1 ring-zinc-700/50">
-                    <Sparkles className="h-9 w-9 text-white" strokeWidth={1.5} />
-                  </div>
-                </motion.div>
-
                 {/* Title + subtitle */}
                 <motion.div variants={itemVariants} className="text-center space-y-3">
                   <h2 className="text-[2rem] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
-                    What are you working on?
+                    {userName ? `Hi ${userName},` : "Hi,"}<br />
+                    What&apos;s on your mind?
                   </h2>
                   <p className="max-w-sm text-sm text-zinc-400 dark:text-zinc-500 leading-relaxed">
                     Connect a project, upload documents, or ask anything — D-DONE AI will answer with full context and citations.
