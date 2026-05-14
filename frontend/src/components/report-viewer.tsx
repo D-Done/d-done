@@ -1065,8 +1065,8 @@ export function ReportViewer({
                       <TableHead>{t("owner_name", lang)}</TableHead>
                       <TableHead>{t("signed", lang)}</TableHead>
                       <TableHead>{t("date_signed", lang)}</TableHead>
-                      <TableHead>{t("warning_note", lang)}</TableHead>
-                      <TableHead>{t("warning_note", lang)}</TableHead>
+                      <TableHead>{t("warning_note_developer", lang)}</TableHead>
+                      <TableHead>{t("restrictive_note", lang)}</TableHead>
                       <TableHead>{t("mortgage", lang)}</TableHead>
                       <TableHead className="min-w-[200px]">{t("notes", lang)}</TableHead>
                     </TableRow>
