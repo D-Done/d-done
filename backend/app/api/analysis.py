@@ -334,6 +334,9 @@ async def _run_analysis_task(
                 dd_check.status = "needs_review"
                 dd_check.agent_session_id = analysis_result.agent_session_id
                 dd_check.hitl_data = analysis_result.hitl_data
+                dd_check.prompt_tokens = analysis_result.prompt_tokens
+                dd_check.completion_tokens = analysis_result.completion_tokens
+                dd_check.total_tokens = analysis_result.total_tokens
 
                 result = await db.execute(select(Project).where(Project.id == project_id))
                 project_row = result.scalar_one()
@@ -360,6 +363,9 @@ async def _run_analysis_task(
             dd_check.report = analysis_result.report_dict
             dd_check.agent_session_id = analysis_result.agent_session_id
             dd_check.completed_at = datetime.now(timezone.utc)
+            dd_check.prompt_tokens = analysis_result.prompt_tokens
+            dd_check.completion_tokens = analysis_result.completion_tokens
+            dd_check.total_tokens = analysis_result.total_tokens
 
             result = await db.execute(select(Project).where(Project.id == project_id))
             project = result.scalar_one()
@@ -367,7 +373,7 @@ async def _run_analysis_task(
             project.pipeline_stage = None
 
             await db.commit()
-            logger.info("DD analysis completed: check_id=%s", check_id)
+            logger.info("DD analysis completed: check_id=%s, tokens=%d", check_id, analysis_result.total_tokens)
 
             # Auto-generate completeness checklist for finance projects
             if "tenant_table" in (analysis_result.report_dict or {}):
@@ -667,6 +673,9 @@ async def approve_tenant_table(
     dd_check.report = analysis_result.report_dict
     dd_check.hitl_data = None
     dd_check.completed_at = datetime.now(timezone.utc)
+    dd_check.prompt_tokens = (dd_check.prompt_tokens or 0) + analysis_result.prompt_tokens
+    dd_check.completion_tokens = (dd_check.completion_tokens or 0) + analysis_result.completion_tokens
+    dd_check.total_tokens = (dd_check.total_tokens or 0) + analysis_result.total_tokens
 
     result = await db.execute(select(Project).where(Project.id == project_id))
     project_row = result.scalar_one()
@@ -676,7 +685,7 @@ async def approve_tenant_table(
     await db.commit()
     await db.refresh(dd_check)
 
-    logger.info("DD Phase 2 completed after tenant table approval: check_id=%s", check_id)
+    logger.info("DD Phase 2 completed after tenant table approval: check_id=%s, total_tokens=%d", check_id, dd_check.total_tokens)
     project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
     send_report_ready_notification(
         to_email=user.email,
@@ -1112,11 +1121,17 @@ class _AnalysisResult:
         agent_session_id: str | None = None,
         needs_review: bool = False,
         hitl_data: dict | None = None,
+        prompt_tokens: int = 0,
+        completion_tokens: int = 0,
+        total_tokens: int = 0,
     ):
         self.report_dict = report_dict
         self.agent_session_id = agent_session_id
         self.needs_review = needs_review
         self.hitl_data = hitl_data
+        self.prompt_tokens = prompt_tokens
+        self.completion_tokens = completion_tokens
+        self.total_tokens = total_tokens
 
 
 async def _run_analysis(
@@ -1247,13 +1262,17 @@ async def _run_analysis(
         " (phase1 only)" if phase1_only else "",
     )
 
+    _prompt_tokens = 0
+    _completion_tokens = 0
     try:
         async for event in runner.run_async(
             user_id=SYSTEM_USER_ID,
             session_id=session_id,
             new_message=user_message,
         ):
-            pass
+            if event.usage_metadata:
+                _prompt_tokens += event.usage_metadata.prompt_token_count or 0
+                _completion_tokens += event.usage_metadata.candidates_token_count or 0
     except BaseExceptionGroup as beg:
         real = [e for e in beg.exceptions if not isinstance(e, GeneratorExit)]
         if real:
@@ -1284,6 +1303,9 @@ async def _run_analysis(
             agent_session_id=session_id,
             needs_review=True,
             hitl_data=hitl_data,
+            prompt_tokens=_prompt_tokens,
+            completion_tokens=_completion_tokens,
+            total_tokens=_prompt_tokens + _completion_tokens,
         )
 
     report_dict = state.get(STATE_ENRICHED_REPORT) or state.get("finance_dd_report")
@@ -1295,6 +1317,9 @@ async def _run_analysis(
     return _AnalysisResult(
         report_dict=report_dict,
         agent_session_id=session_id,
+        prompt_tokens=_prompt_tokens,
+        completion_tokens=_completion_tokens,
+        total_tokens=_prompt_tokens + _completion_tokens,
     )
 
 
@@ -1347,13 +1372,17 @@ async def _run_analysis_phase2(
 
     logger.info("Starting DD Phase 2 for session_id=%s", session_id)
 
+    _prompt_tokens = 0
+    _completion_tokens = 0
     try:
         async for event in runner.run_async(
             user_id=SYSTEM_USER_ID,
             session_id=session_id,
             new_message=user_message,
         ):
-            pass
+            if event.usage_metadata:
+                _prompt_tokens += event.usage_metadata.prompt_token_count or 0
+                _completion_tokens += event.usage_metadata.candidates_token_count or 0
     except BaseExceptionGroup as beg:
         real = [e for e in beg.exceptions if not isinstance(e, GeneratorExit)]
         if real:
@@ -1375,6 +1404,9 @@ async def _run_analysis_phase2(
     return _AnalysisResult(
         report_dict=report_dict,
         agent_session_id=session_id,
+        prompt_tokens=_prompt_tokens,
+        completion_tokens=_completion_tokens,
+        total_tokens=_prompt_tokens + _completion_tokens,
     )
 
 
@@ -1603,13 +1635,17 @@ async def _run_ma_analysis(
         len(uploaded_files),
     )
 
+    _prompt_tokens = 0
+    _completion_tokens = 0
     try:
-        async for _event in runner.run_async(
+        async for event in runner.run_async(
             user_id=SYSTEM_USER_ID,
             session_id=session_id,
             new_message=user_message,
         ):
-            pass
+            if event.usage_metadata:
+                _prompt_tokens += event.usage_metadata.prompt_token_count or 0
+                _completion_tokens += event.usage_metadata.candidates_token_count or 0
     except BaseExceptionGroup as beg:
         real = [e for e in beg.exceptions if not isinstance(e, GeneratorExit)]
         if real:
@@ -1631,4 +1667,7 @@ async def _run_ma_analysis(
     return _AnalysisResult(
         report_dict=report_dict,
         agent_session_id=session_id,
+        prompt_tokens=_prompt_tokens,
+        completion_tokens=_completion_tokens,
+        total_tokens=_prompt_tokens + _completion_tokens,
     )
