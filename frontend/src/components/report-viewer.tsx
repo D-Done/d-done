@@ -1060,7 +1060,7 @@ export function ReportViewer({
                 <Table className="min-w-[1100px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("sub_parcel", lang)}</TableHead>
+                      <TableHead>{t("parcel", lang)}</TableHead>
                       <TableHead>{t("sub_parcel", lang)}</TableHead>
                       <TableHead>{t("owner_name", lang)}</TableHead>
                       <TableHead>{t("signed", lang)}</TableHead>

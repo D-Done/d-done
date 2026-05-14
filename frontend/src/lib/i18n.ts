@@ -30,6 +30,7 @@ const translations: Record<string, Record<Lang, string>> = {
   signed: { he: "חתם", en: "Signed" },
   date_signed: { he: "תאריך חתימה", en: "Date Signed" },
   warning_note: { he: "הערת אזהרה", en: "Caveat" },
+  parcel: { he: "חלקה", en: "Parcel" },
   warning_note_developer: { he: "הערת אזהרה לטובת היזם", en: "Caveat (Developer)" },
   restrictive_note: { he: "הערה מגבילה", en: "Restrictive Note" },
   mortgage: { he: "משכנתא", en: "Mortgage" },
