@@ -1248,7 +1248,7 @@ export function ReportViewer({
           >
             <div>
               <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-2">
-                פירוט ערבויות — הסכם הפרויקט
+                פירוט ערבויות
               </p>
               <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -1263,29 +1263,30 @@ export function ReportViewer({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {guaranteeFindings.map(({ finding: f, findingIndex }, i) => {
-                      const noteMatch = f.description.match(/הערה[:\s]*([^.]+)/i) ?? f.description.match(/ערבויות לא מוזכרות[^.]*\.?/);
-                      const notes = noteMatch ? (typeof noteMatch[1] === "string" ? noteMatch[1].trim() : noteMatch[0]) : f.description;
-                      return (
-                        <TableRow
-                          key={i}
-                          className={i % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/60"}
-                        >
-                          <TableCell className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right border-b border-slate-100 dark:border-slate-700">
+                    {guaranteeFindings.map(({ finding: f, findingIndex }, i) => (
+                      <TableRow
+                        key={i}
+                        className={i % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/60"}
+                      >
+                        <TableCell className="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-200 text-right border-b border-slate-100 dark:border-slate-700 align-top">
+                          <span className="inline-flex items-center gap-1.5">
+                            {f.severity === "warning" && (
+                              <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                            )}
                             {f.title}
-                          </TableCell>
-                          <TableCell className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-slate-700 min-w-[280px]">
-                            <span className="inline-flex items-start gap-1">
-                              {notes}
-                              <CitationKeysInline
-                                sources={f.sources}
-                                findingIndex={findingIndex}
-                              />
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-slate-600 dark:text-slate-300 text-right border-b border-slate-100 dark:border-slate-700 min-w-[280px] align-top">
+                          <span className="inline-flex items-start gap-1">
+                            {f.description}
+                            <CitationKeysInline
+                              sources={f.sources}
+                              findingIndex={findingIndex}
+                            />
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </table>
               </div>

@@ -156,38 +156,30 @@ All tenant-table observations (unsigned owners, name mismatches, missing warning
 
 ## F. Guarantees & Collateral (`findings` — category: `"financial"` **only**)
 
-**Step 1 — List every guarantee from the project agreement:**
+**Goal:** List all guarantees that appear in the project agreement and/or the credit committee decision, with a brief explanation of each. Do **not** cross-reference with the zero report. Do **not** mention the source document in the finding title or description.
 
-Iterate through `agreement_extraction.guarantees` (each entry has `guarantee_type`, `amount`, `trigger_condition`, `source`).
-For **each guarantee** emit one finding:
-- `title`: the `guarantee_type` in Hebrew
-- `description`: include `amount` and `trigger_condition` if present
-- `sources`: use the entry's `source` field (source_document_name, page_number, verbatim_quote)
-- `severity`: `"info"` unless a problem is identified in the steps below
+**Step 1 — Collect guarantees from both sources:**
 
-Focus only on `agreement_extraction` — do **not** read from project agreement additions.
+- From `agreement_extraction.guarantees` (fields: `guarantee_type`, `amount`, `trigger_condition`, `source`).
+- From `credit_committee_extraction.collateral_requirements` (a list of strings).
 
-**Step 2 — Cross-reference with the zero report:**
+Merge the two lists, deduplicating by concept (e.g. if both mention "ערבות אישית" — emit it once).
 
-Compare `agreement_extraction.guarantees` against `zero_report_extraction.guarantees_mentioned`.
-- Any guarantee in the agreement that does **not** appear in `zero_report_extraction.guarantees_mentioned` → flag as a finding: severity `"warning"`, description explaining it is unbudgeted / not reflected in the zero report.
-- Any guarantee mentioned in `zero_report_extraction.guarantees_mentioned` that does **not** appear in the agreement → flag as a finding: severity `"warning"`.
-- If `zero_report_extraction.guarantees_mentioned` is empty — note "ערבויות לא מוזכרות בדו\"ח האפס" in the relevant findings.
+**Step 2 — Emit one finding per guarantee:**
 
-**Step 3 — חוק המכר guarantee detail:**
+For each guarantee:
+- `title`: the guarantee name in Hebrew only (e.g. "ערבות חוק המכר", "ערבות שכירות", "ערבות אישית") — do **not** append or mention the source document.
+- `description`: one or two short Hebrew sentences explaining what this guarantee is and its key terms (amount, trigger, CPI linkage if relevant). Base the explanation on whatever fields are available. Keep it concise — this is a table row, not a full paragraph.
+- `sources`: include the `source` reference from `agreement_extraction` if present (for citation); if only from credit committee, omit sources.
+- `severity`: `"info"` for all guarantees unless a concrete problem is identified (e.g. rent guarantee duration shorter than construction period — see below).
 
-From the relevant `agreement_extraction.guarantees` entry (type contains "חוק המכר"):
-- Is it CPI-linked? What is the "מדד הבסיס"?
-- Add these details to the finding description.
+**Step 3 — Rent guarantee duration check (only flag if genuinely short):**
 
-**Step 4 — Rent guarantee duration comparison (critical!):**
-
-- Agreement rent guarantee duration: from the `agreement_extraction.guarantees` entry whose type contains "שכירות" — use `trigger_condition` or `amount` field.
-- Zero report construction period: `zero_report_extraction.construction_duration_months`.
-- Zero report rent guarantee duration: `zero_report_extraction.rent_guarantee_duration_months`.
+- Rent guarantee duration: from the guarantee entry whose type contains "שכירות" — `trigger_condition` or `amount` field.
+- Construction period: `agreement_extraction.project_timelines` or `zero_report_extraction.construction_duration_months`.
 
 If the rent guarantee duration is **shorter** than the construction period:
-- Update the rent guarantee finding severity to `"warning"`.
+- Set that finding's severity to `"warning"`.
 - Add to `high_risk_flags`: "ערבות השכירות קצרה ממשך הביצוע — דיירים עלולים להישאר ללא כיסוי."
 - **Installment renewals** (renewal every few months) = standard practice → do **not** flag as a gap.
 

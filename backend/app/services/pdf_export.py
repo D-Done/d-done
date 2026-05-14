@@ -561,11 +561,44 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 {% endif %}
 
-{% if findings %}
-<!-- ── 10. Findings ── -->
+{% if guarantee_findings %}
+<!-- ── 10. Guarantees ── -->
 <div class="section">
   <div class="section-header">
     <span class="section-num">10</span>
+    <span class="section-title">ערבויות ובטחונות</span>
+  </div>
+  <div class="section-body" style="padding:0;">
+    <table style="width:100%; border-collapse:collapse; font-size:9pt; direction:rtl;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+          <th style="padding:8px 14px; text-align:right; font-weight:600; color:#475569; width:30%;">ערבות</th>
+          <th style="padding:8px 14px; text-align:right; font-weight:600; color:#475569;">הסבר</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in guarantee_findings %}
+        <tr style="background:{{ 'white' if loop.index is odd else '#f8fafc' }}; border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 14px; font-weight:500; color:#1e293b; vertical-align:top;">
+            {% if f.severity == 'warning' %}
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#d97706; margin-left:6px; vertical-align:middle;"></span>
+            {% endif %}
+            {{ f.title }}
+          </td>
+          <td style="padding:8px 14px; color:#475569; vertical-align:top;">{{ f.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if findings %}
+<!-- ── 11. Findings ── -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">11</span>
     <span class="section-title">ממצאים</span>
     <span style="margin-right:auto; font-size:9pt; color:#64748b;">{{ findings|length }} ממצאים</span>
   </div>
@@ -590,10 +623,10 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 {% endif %}
 
 {% if timeline %}
-<!-- ── 11. Timeline ── -->
+<!-- ── 12. Timeline ── -->
 <div class="section">
   <div class="section-header">
-    <span class="section-num">11</span>
+    <span class="section-num">12</span>
     <span class="section-title">לוחות זמנים</span>
   </div>
   <div class="section-body" style="padding: 4px 14px;">
@@ -669,6 +702,10 @@ def _render_finance(report: RealEstateFinanceDDReport, project_title: str) -> st
     env.globals["sev_class"] = _sev_class
     env.globals["sev_label"] = _sev_label
 
+    all_findings = report.findings or []
+    guarantee_findings = [f for f in all_findings if getattr(f, "category", None) == "financial"]
+    other_findings = [f for f in all_findings if getattr(f, "category", None) != "financial"]
+
     tpl = env.from_string(_HTML_TEMPLATE)
     return tpl.render(
         css=css,
@@ -691,7 +728,8 @@ def _render_finance(report: RealEstateFinanceDDReport, project_title: str) -> st
         ubo_chain=report.developer_ubo_chain,
         ubo_edges=_ubo_edges(report),
         high_risk_flags=report.high_risk_flags,
-        findings=report.findings,
+        guarantee_findings=guarantee_findings,
+        findings=other_findings,
         timeline=getattr(report, "timeline", []) or [],
     )
 
@@ -732,6 +770,7 @@ def _render_standard(report: DDReport, project_title: str) -> str:
         ubo_chain=[],
         ubo_edges=[],
         high_risk_flags=[],
+        guarantee_findings=[],
         findings=report.findings,
         timeline=getattr(report, "timeline", []) or [],
     )
