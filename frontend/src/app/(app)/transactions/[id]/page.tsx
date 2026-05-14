@@ -286,6 +286,22 @@ export default function TransactionPage() {
   const userChangedTabRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autostartFiredRef = useRef(false);
+  const reportLoadedRef = useRef(false);
+
+  const loadReport = useCallback(async () => {
+    if (reportLoadedRef.current) return;
+    try {
+      const r = await api.getResults(id);
+      reportLoadedRef.current = true;
+      setReportData(r);
+      if (r.report && typeof r.report === "object" && "qa_attempt" in r.report) {
+        const stored = (r.report as Record<string, unknown>).qa_attempt;
+        if (typeof stored === "number") setQaAttempts(stored);
+      }
+    } catch {
+      // Results may not be available yet
+    }
+  }, [id]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -294,22 +310,6 @@ export default function TransactionPage() {
 
       const terminal = ["completed", "partial", "needs_review", "failed"];
       if (terminal.includes(p.status)) {
-        if (p.status !== "failed") {
-          try {
-            const r = await api.getResults(id);
-            setReportData(r);
-            if (
-              r.report &&
-              typeof r.report === "object" &&
-              "qa_attempt" in r.report
-            ) {
-              const stored = (r.report as Record<string, unknown>).qa_attempt;
-              if (typeof stored === "number") setQaAttempts(stored);
-            }
-          } catch {
-            // Results may not be available yet
-          }
-        }
         if (pollRef.current) {
           clearInterval(pollRef.current);
           pollRef.current = null;
@@ -339,6 +339,7 @@ export default function TransactionPage() {
           setAnalyzing(false);
           fetchData();
           if (p.status === "completed" || p.status === "partial") {
+            loadReport();
             const { addNotification } = await import("@/lib/notifications");
             addNotification(p.id, p.title, "בדיקת הנאותות הושלמה בהצלחה");
           }
@@ -351,13 +352,22 @@ export default function TransactionPage() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [id, fetchData, project?.status, analyzing]);
+  }, [id, fetchData, loadReport, project?.status, analyzing]);
 
   // Open report/documents tab when URL has ?tab=report or ?tab=documents (e.g. from new-transaction success)
   useEffect(() => {
     const t = searchParams.get("tab");
     if (t === "report" || t === "documents") setActiveTab(t);
   }, [searchParams]);
+
+  // Lazy-load report only when the report tab is active and project is in a terminal state
+  useEffect(() => {
+    if (activeTab !== "report") return;
+    if (!project) return;
+    const terminal = ["completed", "partial", "needs_review"];
+    if (!terminal.includes(project.status)) return;
+    loadReport();
+  }, [activeTab, project?.status, loadReport]);
 
   // Fetch project members when viewing the details tab
   useEffect(() => {
@@ -443,6 +453,7 @@ export default function TransactionPage() {
     if (!project) return;
     setAnalyzing(true);
     setReportData(null);
+    reportLoadedRef.current = false;
     setQaSummary(null);
     setQaAttempts(1);
     setActiveTab("report");
@@ -484,6 +495,7 @@ export default function TransactionPage() {
     if (!project) return;
     setAnalyzing(true);
     setReportData(null);
+    reportLoadedRef.current = false;
     setQaSummary(null);
     setQaAttempts(1);
     setActiveTab("report");
