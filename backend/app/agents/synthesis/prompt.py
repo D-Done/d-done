@@ -125,7 +125,7 @@ Use the following priority rule:
 *Cross-reference against the authorizing protocol:*
 
 Compare the resolved signatory name(s) against `signing_protocol_extraction.authorized_signatories`:
-- Check both that the **name matches** an authorized signatory in the protocol AND that their **authority scope** covers this type of transaction (financing agreement / הסכם מימון).
+- Check both that the **name matches** an authorized signatory in the protocol AND that their **authority scope** covers this type of transaction (the project agreement — הסכם הפרויקט, e.g. תמ"א 38 / פינוי-בינוי).
 - Place result in `developer_signature.signing_protocol_authorized` (bool):
   - `true` = protocol confirms the signatory is authorized for this transaction type.
   - `false` = name not found in protocol, or found but scope does not cover this transaction → add to `high_risk_flags`: "החותם על ההסכם אינו מורשה חתימה על פי הפרוטוקול או שהסמכות אינה מכסה עסקאות מסוג זה."
