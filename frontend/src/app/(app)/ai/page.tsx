@@ -53,9 +53,6 @@ import {
   Plus,
   Send,
   Sparkles,
-  ShieldCheck,
-  BarChart2,
-  FileSearch,
   Trash2,
   User,
   X,
@@ -801,11 +798,11 @@ export default function AiPage() {
               >
                 {/* Icon */}
                 <motion.div variants={itemVariants} className="relative">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-xl shadow-violet-500/25">
-                    <Sparkles className="h-9 w-9 text-white" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-zinc-900 dark:bg-zinc-800 shadow-2xl shadow-zinc-900/40 ring-1 ring-zinc-700/50">
+                    <Sparkles className="h-9 w-9 text-white" strokeWidth={1.5} />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-900 shadow-sm">
-                    <div className="h-2 w-2 rounded-full bg-white" />
+                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-900 shadow-sm">
+                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
                   </div>
                 </motion.div>
 
@@ -822,17 +819,17 @@ export default function AiPage() {
                 {/* Starter question cards */}
                 <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 w-full max-w-xl mt-1">
                   {[
-                    { icon: FileSearch, label: lang === "en" ? "What is a Zero Report?" : "מה זה דוח אפס?", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40" },
-                    { icon: ShieldCheck, label: lang === "en" ? "What's checked in due diligence?" : "מה בודקים בבדיקת נאותות?", color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/40" },
-                    { icon: BarChart2, label: lang === "en" ? "RE financing risks?" : "סיכונים במימון נדל\"ן?", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
-                  ].map(({ icon: Icon, label, color, bg }) => (
+                    { icon: Sparkles, label: lang === "en" ? "What can D-DONE AI do?" : "מה D-DONE AI יכול לעשות?" },
+                    { icon: Link2, label: lang === "en" ? "How do I link a project?" : "איך מקשרים פרויקט?" },
+                    { icon: MessageSquare, label: lang === "en" ? "How do conversations work?" : "איך עובדות השיחות?" },
+                  ].map(({ icon: Icon, label }) => (
                     <button
                       key={label}
                       onClick={() => { setInput(label); inputRef.current?.focus(); }}
                       className="group flex flex-col items-center gap-2.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/60 bg-white/70 dark:bg-zinc-800/50 p-4 text-center backdrop-blur-sm hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-md transition-all duration-200"
                     >
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}>
-                        <Icon className={`h-4.5 w-4.5 ${color}`} strokeWidth={1.75} />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-700/60">
+                        <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-300" strokeWidth={1.75} />
                       </div>
                       <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 leading-snug">
                         {label}
@@ -1011,8 +1008,8 @@ export default function AiPage() {
                     ? ["Summarize the document", "What are the key points?", "What risks exist?", "What are the important dates?"]
                     : ["סכם את המסמך", "מה הנקודות העיקריות?", "אילו סיכונים קיימים?", "מה התאריכים החשובים?"]
                   : lang === "en"
-                    ? ["What's checked in due diligence?", "What are RE financing risks?", "What is a Zero Report?"]
-                    : ["מה בודקים בבדיקת נאותות?", "מה הסיכונים במימון נדל\"ן?", "מה זה דוח אפס?"]
+                    ? ["What can D-DONE AI do?", "How do I link a project?", "How do conversations work?"]
+                    : ["מה D-DONE AI יכול לעשות?", "איך מקשרים פרויקט?", "איך עובדות השיחות?"]
               ).map((q) => (
                 <button
                   key={q}
