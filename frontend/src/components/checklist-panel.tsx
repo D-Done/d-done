@@ -285,11 +285,13 @@ function ItemRow({
   projectId,
   onUpdate,
   onDelete,
+  onFileUploaded,
 }: {
   item: ChecklistItem;
   projectId: string;
   onUpdate: (updated: ChecklistItem) => void;
   onDelete: (id: string) => void;
+  onFileUploaded?: () => void;
 }) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -330,6 +332,7 @@ function ItemRow({
       await api.uploadChecklistFile(projectId, item.id, file);
       const updated = await api.updateChecklistItem(projectId, item.id, { is_completed: true });
       onUpdate(updated);
+      onFileUploaded?.();
       toast.success(`"${file.name}" הועלה והפריט סומן כהושלם`);
     } catch (err) {
       toast.error(`שגיאה בהעלאה: ${err instanceof Error ? err.message : err}`);
@@ -422,6 +425,7 @@ function CategorySection({
   projectId,
   onUpdate,
   onDelete,
+  onFileUploaded,
   lang: catLang,
 }: {
   category: string;
@@ -429,6 +433,7 @@ function CategorySection({
   projectId: string;
   onUpdate: (updated: ChecklistItem) => void;
   onDelete: (id: string) => void;
+  onFileUploaded?: () => void;
   lang: import("@/lib/i18n").Lang;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -471,6 +476,7 @@ function CategorySection({
               projectId={projectId}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              onFileUploaded={onFileUploaded}
             />
           ))}
         </div>
@@ -481,7 +487,7 @@ function CategorySection({
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export function ChecklistPanel({ projectId }: { projectId: string }) {
+export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: string; onFileUploaded?: () => void }) {
   const { lang } = useLanguage();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -682,6 +688,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
               projectId={projectId}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
+              onFileUploaded={onFileUploaded}
               lang={lang}
             />
           ))}

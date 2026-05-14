@@ -1362,7 +1362,7 @@ export default function TransactionPage() {
                 project.status,
               ) && (
                 <TabsContent value="checklist" className="p-5 m-0">
-                  <ChecklistPanel projectId={project.id} />
+                  <ChecklistPanel projectId={project.id} onFileUploaded={fetchData} />
                 </TabsContent>
               )}
           </Tabs>
