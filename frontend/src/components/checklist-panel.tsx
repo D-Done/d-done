@@ -535,7 +535,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
             ) : (
               <RefreshCw className="h-3.5 w-3.5" />
             )}
-            {items.length === 0 ? "צור רשימה" : "עדכן מהדוח"}
+            {generating ? "" : "רענן מהדוח"}
           </Button>
           {items.length > 0 && (
             <>
@@ -605,9 +605,9 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center">
           <CheckSquare className="h-10 w-10 text-slate-300" />
           <div>
-            <p className="font-medium text-slate-600">אין עדיין רשימת השלמות</p>
+            <p className="font-medium text-slate-600">רשימת ההשלמות ריקה</p>
             <p className="mt-1 text-sm text-slate-400">
-              לחץ על &quot;צור רשימה&quot; כדי שהמערכת תנתח את הדוח ותייצר רשימה אוטומטית
+              הרשימה נוצרת אוטומטית לאחר השלמת הדוח. אם הרשימה ריקה — לחץ לרענון.
             </p>
           </div>
           <Button onClick={handleGenerate} disabled={generating} className="gap-2">
@@ -616,7 +616,7 @@ export function ChecklistPanel({ projectId }: { projectId: string }) {
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
-            צור רשימה אוטומטית
+            רענן מהדוח
           </Button>
         </div>
       ) : (

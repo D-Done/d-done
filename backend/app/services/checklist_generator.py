@@ -40,34 +40,49 @@ CATEGORY_LABELS = {
 GEMINI_MODEL = "gemini-2.5-flash"
 
 _SYSTEM_PROMPT = """\
-You are an expert Israeli real estate finance analyst.
+You are an expert Israeli real estate finance (מימון נדל"ן) attorney and analyst.
 You receive a completed DD report JSON and generate a completeness checklist —
 a list of action items the project team must complete before the deal closes.
 
-Focus on:
-1. Documents referenced in the report (credit committee, zero report, agreements, appendices)
-   that were mentioned but not actually uploaded to the system.
+## PRIORITY FOCUS — Credit Committee (ועדת אשראי) cross-reference
+This is the most important analysis step. Read every finding, high_risk_flag,
+and the financing/lender sections and identify:
+a) Documents or agreements that the credit committee REFERENCED or REQUIRED but are
+   NOT present in the uploaded files (e.g., "הסכם X צורף כנספח לועדת האשראי" but
+   the file was never uploaded, or "יש לצרף אישור Y" mentioned in the credit decision).
+b) Addendums, side letters, or supplementary agreements (תוספות להסכם, מכתבי כוונות,
+   הסכמי גרירה) mentioned anywhere in the report but not uploaded.
+c) Beneficial documents (מסמכים מיטיבים) — letters granting additional rights or
+   exemptions that are referenced but missing.
+d) Rights-transfer agreements (הסכמי העברת זכויות) — if the report mentions a change
+   of developer / rights transfer between entities (e.g., company A transferred rights
+   to company B), the actual transfer agreement must be uploaded.
+e) Any gap between what the credit committee approved and what was actually provided.
+
+## Additional focus areas
+1. Documents referenced anywhere in the report that were mentioned but not uploaded.
 2. Warning notes (הערות אזהרה) that need to be registered in Tabu for the developer.
-3. Third-party interests (warning notes, liens, encumbrances) that need to be removed.
+3. Third-party interests (warning notes, liens) that need to be removed.
 4. Mortgages registered on parcels that must be released.
 5. Tenants who have not yet signed the agreement.
-6. Lender compliance issues that need to be resolved with tenants.
-7. Missing corporate / company extract documents (נסח חברה).
-8. Planning permits or committee decisions mentioned but not uploaded.
+6. Lender compliance issues (actual lender ≠ lender in agreement).
+7. Missing corporate documents — company extract (נסח חברה), incorporation certificate.
+8. Planning permits, zoning decisions, or committee approvals mentioned but not uploaded.
 9. Any other actionable gap surfaced in findings or high_risk_flags.
 
+## Output format
 Respond with a JSON object: {"items": [...]}
-Each item has:
-  - category: one of "missing_doc" | "warning_note" | "mortgage" | "lender" | "signing" | "corporate" | "other"
-  - title: short Hebrew action title (max 120 chars)
-  - description: detailed Hebrew explanation (max 400 chars)
+Each item:
+  - category: "missing_doc" | "warning_note" | "mortgage" | "lender" | "signing" | "corporate" | "other"
+  - title: short Hebrew action title (max 120 chars), be specific — name the document/party
+  - description: detailed Hebrew explanation referencing where it was mentioned (max 400 chars)
   - priority: "high" | "medium" | "low"
 
 Rules:
-- Be specific — name the tenant, parcel, or document involved.
-- Do NOT include items for things that are already completed/resolved.
+- Be specific — name the exact document, tenant, parcel, or counterparty.
+- Do NOT include items already completed/resolved.
 - Do NOT repeat the same item twice.
-- Return between 3 and 30 items.
+- Return between 3 and 40 items.
 - Output ONLY valid JSON, no markdown fences.
 """
 
@@ -232,6 +247,23 @@ def _rule_based_items(report: RealEstateFinanceDDReport) -> list[dict]:
             "title": "צירוף נסח חברה ושרשרת בעלות (UBO)",
             "description": "לא צורפו מסמכי חברה המאמתים את שרשרת הבעלות של היזם.",
             "priority": "medium",
+        })
+
+    # Rights transfer agreement — when developer changed hands
+    zr = report.zero_report_metrics
+    if zr and zr.developer_entity_change:
+        ec = zr.developer_entity_change
+        orig = ec.original_developer or "הגורם המקורי"
+        curr = ec.current_developer or "הגורם הנוכחי"
+        items.append({
+            "category": CAT_MISSING_DOC,
+            "title": f"הסכם העברת זכויות — {orig} ל-{curr}",
+            "description": (
+                f"הדוח מזהה שינוי יזם מ-{orig} ל-{curr}. "
+                f"יש להמציא הסכם העברת זכויות חתום המאשר את המעבר. "
+                + (ec.change_details or "")
+            )[:400],
+            "priority": "high",
         })
 
     return items

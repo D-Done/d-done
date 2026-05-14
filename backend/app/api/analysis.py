@@ -237,6 +237,52 @@ class AgentSessionEventsResponse(BaseModel):
     judge_events: list[dict] = Field(default_factory=list)
 
 
+# ---- Checklist auto-generation ----
+
+
+async def _auto_generate_checklist(
+    db: AsyncSession,
+    project_id: UUID,
+    check_id: UUID,
+    report_dict: dict,
+) -> None:
+    """Generate and persist checklist items right after a finance DD report completes."""
+    try:
+        from app.agents.schemas import RealEstateFinanceDDReport
+        from app.db.models import ChecklistItem
+        from app.services.checklist_generator import generate_checklist_items
+
+        report = RealEstateFinanceDDReport.model_validate(report_dict)
+
+        # Run blocking Gemini call in a thread
+        import asyncio
+        new_items_list = await asyncio.to_thread(generate_checklist_items, report)
+
+        # Delete any uncompleted items from a previous run
+        from sqlalchemy import delete as sa_delete
+        await db.execute(
+            sa_delete(ChecklistItem).where(
+                ChecklistItem.project_id == project_id,
+                ChecklistItem.is_completed == False,
+            )
+        )
+
+        for item_data in new_items_list:
+            db.add(ChecklistItem(
+                project_id=project_id,
+                check_id=check_id,
+                category=item_data.get("category", "other"),
+                title=item_data.get("title", "")[:500],
+                description=(item_data.get("description") or "")[:2000] or None,
+                sort_order=item_data.get("sort_order", 0),
+            ))
+
+        await db.commit()
+        logger.info("Auto-generated %d checklist items for project %s", len(new_items_list), project_id)
+    except Exception as exc:
+        logger.error("Auto-checklist generation failed for project %s: %s", project_id, exc, exc_info=True)
+
+
 # ---- Endpoints ----
 
 
@@ -319,6 +365,11 @@ async def _run_analysis_task(
 
             await db.commit()
             logger.info("DD analysis completed: check_id=%s", check_id)
+
+            # Auto-generate completeness checklist for finance projects
+            if "tenant_table" in (analysis_result.report_dict or {}):
+                await _auto_generate_checklist(db, project_id, check_id, analysis_result.report_dict)
+
             project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
             send_report_ready_notification(
                 to_email=user_email,
