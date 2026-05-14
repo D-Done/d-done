@@ -313,6 +313,7 @@ class File(Base):
     doc_type = Column(String(50), nullable=False, default="other")
     file_size_bytes = Column(Integer, nullable=True)
     upload_status = Column(String(50), nullable=False, default="pending")
+    source = Column(String(50), nullable=True)  # None = analysis upload, "checklist_upload" = from checklist
     uploaded_by_id = Column(
         Uuid,
         ForeignKey("users.id", ondelete="SET NULL"),

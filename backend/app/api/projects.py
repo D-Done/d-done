@@ -91,6 +91,7 @@ class FileResponse(BaseModel):
     uploaded_by_name: str | None = None
     uploaded_by_email: str | None = None
     uploaded_by_is_deleted: bool = False
+    source: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -724,6 +725,7 @@ def _file_to_response(f: File) -> FileResponse:
         uploaded_by_name=u.name if u else None,
         uploaded_by_email=u.email if u else None,
         uploaded_by_is_deleted=bool(getattr(u, "is_deleted", False)) if u else False,
+        source=f.source,
     )
 
 

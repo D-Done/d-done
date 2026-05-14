@@ -701,6 +701,7 @@ export interface ProjectFile {
   uploaded_by_name?: string | null;
   uploaded_by_email?: string | null;
   uploaded_by_is_deleted?: boolean;
+  source?: string | null;
 }
 
 export type BackendTransactionType =

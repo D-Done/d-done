@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Building2,
@@ -293,6 +293,8 @@ function ItemRow({
 }) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleToggle = async () => {
     setToggling(true);
@@ -317,6 +319,23 @@ function ItemRow({
       toast.error("שגיאה במחיקה");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await api.uploadChecklistFile(projectId, item.id, file);
+      const updated = await api.updateChecklistItem(projectId, item.id, { is_completed: true });
+      onUpdate(updated);
+      toast.success(`"${file.name}" הועלה והפריט סומן כהושלם`);
+    } catch (err) {
+      toast.error(`שגיאה בהעלאה: ${err instanceof Error ? err.message : err}`);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -357,6 +376,26 @@ function ItemRow({
           </p>
         )}
       </div>
+
+      {/* Upload file */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="shrink-0 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-500 transition-opacity disabled:opacity-50"
+        title="צרף מסמך"
+      >
+        {uploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <FileText className="h-3.5 w-3.5" />
+        )}
+      </button>
 
       {/* Delete */}
       <button

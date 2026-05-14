@@ -1242,3 +1242,16 @@ export async function setOrgLanguage(language: "he" | "en"): Promise<{ language:
     body: JSON.stringify({ language }),
   });
 }
+
+export async function uploadChecklistFile(
+  projectId: string,
+  itemId: string,
+  file: File,
+): Promise<{ status: string; item_id: string; file_name: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  return request(`/projects/${projectId}/checklist/${itemId}/upload`, {
+    method: "POST",
+    body: form,
+  });
+}

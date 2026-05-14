@@ -540,7 +540,10 @@ export default function TransactionPage() {
   }
 
   const uploadedFiles = project.files.filter(
-    (f) => f.upload_status === "uploaded",
+    (f) => f.upload_status === "uploaded" && f.source !== "checklist_upload",
+  );
+  const checklistUploadedFiles = project.files.filter(
+    (f) => f.source === "checklist_upload",
   );
   const hasUploads = uploadedFiles.length > 0;
   const canAnalyze =
@@ -711,7 +714,7 @@ export default function TransactionPage() {
                   </span>
                 </div>
               </div>
-              {project.files.length === 0 ? (
+              {uploadedFiles.length === 0 ? (
                 <div className="py-10 text-center text-sm text-slate-500">
                   עדיין לא הועלו מסמכים לפרויקט
                 </div>
@@ -727,7 +730,7 @@ export default function TransactionPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {project.files.map((f) => (
+                    {uploadedFiles.map((f) => (
                       <TableRow key={f.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -818,6 +821,73 @@ export default function TransactionPage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+
+              {checklistUploadedFiles.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                    <FileText className="h-4 w-4" />
+                    מסמכים שהושלמו מהצ׳קליסט
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>מסמך</TableHead>
+                        <TableHead>גודל</TableHead>
+                        <TableHead>תאריך</TableHead>
+                        <TableHead>פעולות</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {checklistUploadedFiles.map((f) => (
+                        <TableRow key={f.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                                <FileText className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate font-medium text-slate-900 dark:text-slate-100">
+                                  {f.original_name}
+                                </div>
+                                <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                                  הושלם מהצ׳קליסט
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-300">
+                            {formatBytes(f.file_size_bytes)}
+                          </TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-300">
+                            {new Date(f.created_at).toLocaleDateString("he-IL")}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl"
+                              title="הורד מסמך"
+                              onClick={async () => {
+                                try {
+                                  const { url } = await api.getFileDownloadUrl(project.id, f.id);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = f.original_name;
+                                  a.click();
+                                } catch {
+                                  toast.error("שגיאה בהורדת המסמך");
+                                }
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </TabsContent>
 

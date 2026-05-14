@@ -469,6 +469,7 @@ async def public_upload_file(
             file_size_bytes=len(data),
             gcs_uri=gcs_uri,
             upload_status="uploaded",
+            source="checklist_upload",
         )
         db.add(file_record)
 
@@ -479,3 +480,70 @@ async def public_upload_file(
 
     db.commit()
     return {"status": "ok", "item_id": item_id}
+
+
+@router.post("/api/v1/projects/{project_id}/checklist/{item_id}/upload", status_code=201)
+async def upload_checklist_file(
+    project_id: UUID,
+    item_id: UUID,
+    file: UploadFile = File(...),
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    """Authenticated upload of a file for a checklist item.
+
+    Stores the file in GCS under the project folder, creates a File record
+    (source='checklist_upload'), marks the item completed.
+    """
+    from app.core.config import settings as app_settings3
+    from google.cloud import storage as gcs_storage
+
+    require_project_access(db, user.id, project_id)
+
+    item = db.query(ChecklistItem).filter(
+        ChecklistItem.id == item_id,
+        ChecklistItem.project_id == project_id,
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="פריט לא נמצא")
+
+    ct = file.content_type or "application/octet-stream"
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="הקובץ ריק")
+
+    def _do_upload() -> str | None:
+        try:
+            client = gcs_storage.Client()
+            bucket_obj = client.bucket(app_settings3.gcs_bucket_name)
+            safe_name = (file.filename or "upload").replace("/", "_")
+            blob_path = f"projects/{project_id}/checklist_uploads/{uuid4()}_{safe_name}"
+            blob = bucket_obj.blob(blob_path)
+            blob.upload_from_string(data, content_type=ct)
+            return f"gs://{app_settings3.gcs_bucket_name}/{blob_path}"
+        except Exception as exc:
+            logger.error("GCS upload failed for checklist item: %s", exc, exc_info=True)
+            return None
+
+    gcs_uri = await asyncio.to_thread(_do_upload)
+    if not gcs_uri:
+        raise HTTPException(status_code=500, detail="שגיאה בהעלאת הקובץ")
+
+    file_record = FileModel(
+        project_id=project_id,
+        original_name=file.filename or "upload",
+        content_type=ct,
+        file_size_bytes=len(data),
+        gcs_uri=gcs_uri,
+        upload_status="uploaded",
+        uploaded_by_id=user.id,
+        source="checklist_upload",
+    )
+    db.add(file_record)
+
+    item.is_completed = True
+    item.completed_at = _utcnow()
+    item.completed_by = user.name or user.email
+
+    db.commit()
+    return {"status": "ok", "item_id": str(item_id), "file_name": file.filename}
