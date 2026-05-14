@@ -317,7 +317,7 @@ def list_projects(
     return result
 
 
-_STALE_PROCESSING_MINUTES = 40
+_STALE_PROCESSING_MINUTES = 25
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
