@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Clock,
   Download,
+  Eye,
   FileDown,
   FileText,
   FolderOpen,
@@ -39,6 +40,12 @@ import type {
 import { getProjectDealType } from "@/lib/deal-type-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysisStatus } from "@/components/analysis-status";
 import { TenantTableReview } from "@/components/tenant-table-review";
@@ -275,6 +282,7 @@ export default function TransactionPage() {
   const [addingGroupId, setAddingGroupId] = useState<string | null>(null);
   // True after user approves HITL review — hides the sheet and resumes animation
   const [hitlApproved, setHitlApproved] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ name: string; url: string } | null>(null);
   const userChangedTabRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autostartFiredRef = useRef(false);
@@ -778,14 +786,27 @@ export default function TransactionPage() {
                               variant="ghost"
                               size="icon"
                               className="rounded-xl"
+                              title="תצוגה מקדימה"
+                              onClick={async () => {
+                                try {
+                                  const { url } = await api.getFileViewUrl(project.id, f.id);
+                                  setPreviewFile({ name: f.original_name, url });
+                                } catch {
+                                  toast.error("שגיאה בטעינת התצוגה המקדימה");
+                                }
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl"
                               title="הורד מסמך"
                               onClick={async () => {
                                 try {
                                   const { url } = await api.getFileDownloadUrl(project.id, f.id);
-                                  const a = document.createElement("a");
-                                  a.href = url;
-                                  a.download = f.original_name;
-                                  a.click();
+                                  window.open(url, "_blank");
                                 } catch {
                                   toast.error("שגיאה בהורדת המסמך");
                                 }
@@ -863,25 +884,40 @@ export default function TransactionPage() {
                             {new Date(f.created_at).toLocaleDateString("he-IL")}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-xl"
-                              title="הורד מסמך"
-                              onClick={async () => {
-                                try {
-                                  const { url } = await api.getFileDownloadUrl(project.id, f.id);
-                                  const a = document.createElement("a");
-                                  a.href = url;
-                                  a.download = f.original_name;
-                                  a.click();
-                                } catch {
-                                  toast.error("שגיאה בהורדת המסמך");
-                                }
-                              }}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-xl"
+                                title="תצוגה מקדימה"
+                                onClick={async () => {
+                                  try {
+                                    const { url } = await api.getFileViewUrl(project.id, f.id);
+                                    setPreviewFile({ name: f.original_name, url });
+                                  } catch {
+                                    toast.error("שגיאה בטעינת התצוגה המקדימה");
+                                  }
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-xl"
+                                title="הורד מסמך"
+                                onClick={async () => {
+                                  try {
+                                    const { url } = await api.getFileDownloadUrl(project.id, f.id);
+                                    window.open(url, "_blank");
+                                  } catch {
+                                    toast.error("שגיאה בהורדת המסמך");
+                                  }
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1381,6 +1417,24 @@ export default function TransactionPage() {
           </div>
         </>
       )}
+
+      {/* ─── File Preview Dialog ──────────────────────────────── */}
+      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }}>
+        <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b shrink-0">
+            <DialogTitle className="text-sm font-medium truncate" dir="rtl">
+              {previewFile?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {previewFile && (
+            <iframe
+              src={previewFile.url}
+              className="flex-1 w-full border-0"
+              title={previewFile.name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
