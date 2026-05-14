@@ -675,6 +675,20 @@ export async function deleteProjectFile(
   });
 }
 
+export async function getFileBlobUrl(
+  projectId: string,
+  fileId: string,
+  download = false,
+): Promise<string> {
+  const res = await fetch(
+    `${API_BASE}/projects/${projectId}/files/${fileId}/content${download ? "?download=true" : ""}`,
+    { credentials: "include" },
+  );
+  if (!res.ok) throw new Error(`${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 // ============================================================
 // VDR (external-party upload)
 // ============================================================

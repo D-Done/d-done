@@ -789,7 +789,7 @@ export default function TransactionPage() {
                               title="תצוגה מקדימה"
                               onClick={async () => {
                                 try {
-                                  const { url } = await api.getFileViewUrl(project.id, f.id);
+                                  const url = await api.getFileBlobUrl(project.id, f.id);
                                   setPreviewFile({ name: f.original_name, url });
                                 } catch {
                                   toast.error("שגיאה בטעינת התצוגה המקדימה");
@@ -805,8 +805,12 @@ export default function TransactionPage() {
                               title="הורד מסמך"
                               onClick={async () => {
                                 try {
-                                  const { url } = await api.getFileDownloadUrl(project.id, f.id);
-                                  window.open(url, "_blank");
+                                  const url = await api.getFileBlobUrl(project.id, f.id, true);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = f.original_name;
+                                  a.click();
+                                  setTimeout(() => URL.revokeObjectURL(url), 10_000);
                                 } catch {
                                   toast.error("שגיאה בהורדת המסמך");
                                 }
@@ -1419,7 +1423,7 @@ export default function TransactionPage() {
       )}
 
       {/* ─── File Preview Dialog ──────────────────────────────── */}
-      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }}>
+      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) { if (previewFile) URL.revokeObjectURL(previewFile.url); setPreviewFile(null); } }}>
         <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-4 py-3 border-b shrink-0">
             <DialogTitle className="text-sm font-medium truncate" dir="rtl">

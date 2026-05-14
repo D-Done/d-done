@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -442,6 +443,54 @@ def get_file_download_url(
         raise HTTPException(status_code=502, detail=f"Failed to generate download URL: {exc}")
 
     return FileViewUrlResponse(url=url, expires_in_seconds=exp)
+
+
+@router.get("/{project_id}/files/{file_id}/content")
+async def get_file_content(
+    project_id: UUID,
+    file_id: UUID,
+    download: bool = False,
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    """Stream a file directly from GCS — no signed URL needed."""
+    import asyncio
+    from app.services.gcs import _get_client, _parse_gcs_uri
+
+    project, _ = require_project_access(db, user.id, project_id)
+    file = (
+        db.query(File)
+        .filter(File.id == file_id, File.project_id == project.id)
+        .first()
+    )
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    if file.upload_status != "uploaded":
+        raise HTTPException(status_code=409, detail="File not yet uploaded")
+
+    def _download() -> bytes:
+        client = _get_client()
+        bucket_name, object_name = _parse_gcs_uri(file.gcs_uri)
+        return client.bucket(bucket_name).blob(object_name).download_as_bytes()
+
+    try:
+        data = await asyncio.to_thread(_download)
+    except Exception as exc:
+        logger.error("GCS download failed for file %s: %s", file_id, exc)
+        raise HTTPException(status_code=502, detail="Could not fetch file from storage")
+
+    content_type = file.content_type or "application/octet-stream"
+    safe_name = (file.original_name or "file").replace('"', '\\"')
+    disposition = "attachment" if download else "inline"
+
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'{disposition}; filename="{safe_name}"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
 
 
 @router.delete("/{project_id}/files/{file_id}", status_code=204)
