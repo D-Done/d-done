@@ -10,6 +10,7 @@ All endpoints require authentication and scope data to the current user.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -316,6 +317,9 @@ def list_projects(
     return result
 
 
+_STALE_PROCESSING_MINUTES = 40
+
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(
     project_id: UUID,
@@ -324,6 +328,31 @@ def get_project(
 ):
     """Get a single project with its files and DD checks."""
     project, role = require_project_access(db, user.id, project_id)
+
+    # Auto-fail projects stuck in "processing" for too long (Cloud Run instance recycled)
+    if project.status == "processing":
+        stale_cutoff = datetime.now(timezone.utc) - timedelta(minutes=_STALE_PROCESSING_MINUTES)
+        stuck_check = (
+            db.query(DDCheck)
+            .filter(
+                DDCheck.project_id == project_id,
+                DDCheck.status == "processing",
+                DDCheck.started_at < stale_cutoff,
+            )
+            .first()
+        )
+        if stuck_check:
+            logger.warning(
+                "Auto-failing stale processing check %s (project %s) — started_at=%s",
+                stuck_check.id, project_id, stuck_check.started_at,
+            )
+            stuck_check.status = "failed"
+            stuck_check.error_message = "הניתוח נתקע (instance recycled). אנא הרץ מחדש."
+            project.status = "failed"
+            project.pipeline_stage = None
+            db.commit()
+            db.refresh(project)
+
     return _project_to_response(project, current_user_role=role)
 
 
