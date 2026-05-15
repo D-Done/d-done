@@ -705,14 +705,12 @@ export default function NewTransactionPage() {
           </Card>
         ) : (
           /* Step 4: Analysis */
-          <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl">ניתוח</CardTitle>
-              <CardDescription>
-                הרצת בדיקת נאותות — המערכת מנתחת את המסמכים ומפיקה דוח.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">ניתוח</h2>
+              <p className="text-muted-foreground text-sm mt-1">הרצת בדיקת נאותות — המערכת מנתחת את המסמכים ומפיקה דוח.</p>
+            </div>
+            <div className="space-y-6">
               {analysisError ? (
                 <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50/50 p-4">
                   <p className="text-sm text-red-800">{analysisError}</p>
@@ -765,8 +763,8 @@ export default function NewTransactionPage() {
                   }}
                 />
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
     </>
