@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const pendingInvite = getInviteCookie();
@@ -95,6 +96,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications]);
 
   const setOpen = (value: boolean) => {
     setSidebarOpen(value);
@@ -242,7 +254,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <ThemeToggle />
 
-              <div className="relative">
+              <div className="relative" ref={notificationsRef}>
                 <Button
                   variant="ghost"
                   size="icon"
