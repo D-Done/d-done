@@ -142,13 +142,13 @@ function LoginContent() {
 
       <p className="text-center text-xs text-muted-foreground mt-6">
         בהתחברות אתה מסכים ל
-        <span className="text-primary cursor-pointer hover:underline">
+        <a href="/docs/terms-of-use.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline underline-offset-2">
           תנאי השימוש
-        </span>{" "}
+        </a>{" "}
         ול
-        <span className="text-primary cursor-pointer hover:underline">
+        <a href="/docs/privacy-policy.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline underline-offset-2">
           מדיניות הפרטיות
-        </span>
+        </a>
       </p>
     </div>
   );
