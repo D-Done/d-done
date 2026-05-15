@@ -742,7 +742,7 @@ export function FileUploadZone({
   // ── Folder layout ─────────────────────────────────────────────────────────
 
   return (
-    <div className="flex rounded-xl border overflow-hidden min-h-[480px]">
+    <div className="flex rounded-xl border overflow-hidden min-h-[280px] max-h-[380px]">
       {/* ── Sidebar ── */}
       <div className="w-60 shrink-0 border-l bg-muted/30 flex flex-col">
         <div className="px-3 py-2.5 border-b flex items-center justify-between">
