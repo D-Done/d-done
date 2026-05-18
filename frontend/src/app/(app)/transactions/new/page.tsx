@@ -74,14 +74,7 @@ function playSuccessSound() {
 
 type TransactionType = "real_estate_financing" | "ma" | "company_investment";
 type PartyRole = "bank" | "insurance" | "fund" | "other";
-type MaRole =
-  | "target"
-  | "buyer"
-  | "seller"
-  | "investor"
-  | "counsel_target"
-  | "counsel_buyer"
-  | "other";
+type MaRole = "buyer" | "investor" | "other";
 
 const ROLE_LABELS: Record<PartyRole, string> = {
   bank: "בנק",
@@ -91,12 +84,8 @@ const ROLE_LABELS: Record<PartyRole, string> = {
 };
 
 const MA_ROLE_LABELS: Record<MaRole, string> = {
-  target: "חברת המטרה",
   buyer: "הרוכש",
-  seller: "המוכר",
   investor: "המשקיע",
-  counsel_target: 'עו"ד חברת המטרה',
-  counsel_buyer: 'עו"ד הרוכש',
   other: "אחר",
 };
 
