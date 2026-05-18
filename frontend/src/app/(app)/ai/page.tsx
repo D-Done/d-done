@@ -401,8 +401,8 @@ export default function AiPage() {
 
   // ── Send message ────────────────────────────────────────────────────────
 
-  const handleSend = useCallback(async () => {
-    const question = input.trim();
+  const handleSend = useCallback(async (overrideText?: string) => {
+    const question = (overrideText ?? input).trim();
     if (!question || loading) return;
 
     const hasProjectContext = !!projectId;
@@ -838,7 +838,7 @@ export default function AiPage() {
                   ].map(({ icon: Icon, label, sub }) => (
                     <button
                       key={label}
-                      onClick={() => { setInput(label); inputRef.current?.focus(); }}
+                      onClick={() => { setInput(label); handleSend(label); }}
                       className="group flex flex-col items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/60 p-4 text-left hover:border-zinc-900 dark:hover:border-zinc-500 hover:shadow-sm transition-all duration-200"
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-700/60 group-hover:bg-zinc-900 group-hover:text-white dark:group-hover:bg-zinc-100 dark:group-hover:text-zinc-900 transition-colors duration-200">
