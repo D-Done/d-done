@@ -196,6 +196,11 @@ export default function AiPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Re-focus input after response finishes ─────────────────────────────
+  useEffect(() => {
+    if (!loading) inputRef.current?.focus();
+  }, [loading]);
+
   // ── Load conversations on mount ─────────────────────────────────────────
 
   const loadConversations = useCallback(async () => {
@@ -475,7 +480,6 @@ export default function AiPage() {
       console.error("Ask failed:", err);
     } finally {
       setLoading(false);
-      inputRef.current?.focus();
     }
   }, [
     input,

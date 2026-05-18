@@ -131,7 +131,7 @@ const translations: Record<string, Record<Lang, string>> = {
   ai_unlink_title: { he: "נתק מפרויקט", en: "Unlink project" },
   ai_link_project: { he: "קשר פרויקט", en: "Link project" },
   ai_linked_project: { he: "פרויקט מקושר", en: "Linked project" },
-  ai_subtitle: { he: "ניתוח מסמכים עם ביסוס חזותי", en: "Document analysis with visual grounding" },
+  ai_subtitle: { he: "עוזר חכם לבדיקת נאותות", en: "Smart due diligence assistant" },
   ai_welcome_title: { he: "שלום, אני D-DONE AI", en: "Hi, I'm D-DONE AI" },
   ai_welcome_body: {
     he: "התחל שיחה חדשה, קשר אותה לפרויקט קיים, ושאל שאלות על המסמכים והדוח. אמצא תשובות עם ציטוטים ויזואליים מדויקים.",
@@ -143,7 +143,7 @@ const translations: Record<string, Record<Lang, string>> = {
   ai_ready_no_context: { he: "העלה מסמכים או קשר פרויקט כדי להתחיל", en: "Upload documents or link a project to get started" },
   ai_project_ready: { he: "מוכן. שאל אותי עליו.", en: "ready. Ask me about it." },
   ai_docs_ready: { he: "המסמכים מוכנים. שאל אותי עליהם.", en: "Documents are ready. Ask me about them." },
-  ai_analyzing: { he: "מנתח את המסמכים...", en: "Analyzing documents..." },
+  ai_analyzing: { he: "חושב...", en: "Thinking..." },
   ai_attach: { he: "צרף מסמכים", en: "Attach documents" },
   ai_placeholder: { he: "שאל שאלה...", en: "Ask a question..." },
   ai_add: { he: "הוסף", en: "Add" },
