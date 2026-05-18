@@ -401,6 +401,15 @@ From `credit_committee_extraction`: identify any **individual persons** (not com
 3. Combine findings from both sources into a single summary string (e.g., "מדד תשומות הבניה ומדד המחירים לצרכן, בסיס 06/2025").
 4. Only set to `"אין התייחסות למדד"` after confirming **both** fields are null or contain the "not found" phrase.
 
+**`total_mortgage_registration` — mortgage-registration amount (from credit committee ONLY):**
+
+Use **only** `credit_committee_extraction` (never the zero report or any other source):
+- `policies = credit_committee_extraction.total_policies_ils ?? 0`
+- `guarantees = credit_committee_extraction.total_guarantees_ils ?? 0`
+- `equity = credit_committee_extraction.equity_completion_ils ?? 0`
+- `total_mortgage_registration = (policies + guarantees + equity) × 1.5`
+- Set to `null` if all three source fields are null (no data available from the credit committee).
+
 **`construction_restrictions` — ALWAYS POPULATE (never return empty):**
 1. Start with all items in `zero_report_extraction.construction_restrictions`.
 2. Also check `credit_committee_extraction` for any planning constraints, antiquities (עתיקות), preservation (שימור), permit status, or engineering constraints not already listed.

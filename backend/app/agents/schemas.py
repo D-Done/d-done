@@ -287,6 +287,15 @@ class ZeroReportMetrics(BaseModel):
             "(original_developer, current_developer, change_details). Null if none."
         ),
     )
+    total_mortgage_registration: float | None = Field(
+        default=None,
+        description=(
+            "Calculated total mortgage amount to register (סך המשכנתא לרישום) in ILS. "
+            "Formula (from credit committee only): "
+            "(total_policies_ils + total_guarantees_ils + equity_completion_ils) × 1.5. "
+            "Null if insufficient data."
+        ),
+    )
 
 
 class FinanceCheck(BaseModel):

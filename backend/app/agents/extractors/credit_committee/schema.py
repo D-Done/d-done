@@ -59,6 +59,18 @@ class CreditCommitteeExtraction(BaseModel):
             "Null if the document contains no mention of indexation."
         ),
     )
+    total_policies_ils: float | None = Field(
+        default=None,
+        description="Total face value of all insurance policies (פוליסות) in ILS, as stated in the credit committee. Null if not mentioned.",
+    )
+    total_guarantees_ils: float | None = Field(
+        default=None,
+        description="Total face value of all guarantees (ערבויות) in ILS, as stated in the credit committee. Null if not mentioned.",
+    )
+    equity_completion_ils: float | None = Field(
+        default=None,
+        description="Equity completion (השלמת הון עצמי) amount in ILS, as stated in the credit committee. Null if not mentioned.",
+    )
     collateral_requirements: list[str] = Field(
         default_factory=list,
         description="Required collateral / security as listed by the committee",

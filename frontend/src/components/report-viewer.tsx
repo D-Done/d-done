@@ -1480,6 +1480,23 @@ export function ReportViewer({
                 </div>
               )}
               <InfoRow label="הצמדה למדד" value={zr.indexation_details} />
+              {zr.total_mortgage_registration != null && (
+                <InfoRow
+                  label="סך המשכנתא לרישום"
+                  value={
+                    <span>
+                      {new Intl.NumberFormat("he-IL", {
+                        style: "currency",
+                        currency: "ILS",
+                        maximumFractionDigits: 0,
+                      }).format(zr.total_mortgage_registration)}
+                      <span className="text-slate-400 dark:text-slate-500 text-xs ms-1">
+                        (פוליסות + ערבויות + השלמת הון עצמי) × 1.5
+                      </span>
+                    </span>
+                  }
+                />
+              )}
             </div>
           </ReportSection>
         )}

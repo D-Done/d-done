@@ -131,6 +131,8 @@ export interface ZeroReportMetrics {
   construction_restrictions: string[];
   /** 'אין התייחסות למדד בדו"ח האפס' when absent */
   indexation_details?: string | null;
+  /** (policies + guarantees + equity_completion) × 1.5 — from credit committee only */
+  total_mortgage_registration?: number | null;
 }
 
 /** Lender-facing cross-document compliance checks. */

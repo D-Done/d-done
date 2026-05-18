@@ -35,13 +35,19 @@ Extract the following project details as they appear in the credit committee doc
 ## TASK 3 -- Indexation (הצמדה למדד)
 - `indexation_details`: search the entire document for any mention of indexation, CPI linkage, or base-index date (מדד המחירים לצרכן, מדד תשומות הבנייה, מדד בסיס, הצמדה למדד, תאריך בסיס וכו'). Write a concise Hebrew summary: index name + base date + mechanism. Set to null only if the document contains no mention of indexation whatsoever.
 
-## TASK 4 -- Collateral Requirements
+## TASK 4 -- Mortgage Registration Inputs (לצורך חישוב סך המשכנתא לרישום)
+Extract the following three monetary values **only from this document** (in ILS). Set to null if not explicitly stated:
+- `total_policies_ils`: the total face value of all **insurance policies** (פוליסות ביטוח) listed in the committee decision. Sum all policy amounts if multiple are listed.
+- `total_guarantees_ils`: the total face value of all **guarantees** (ערבויות) listed in the committee decision. Sum all guarantee amounts if multiple are listed (e.g. ערבות חוק המכר, ערבות שכירות, ערבות בדק). **Do not include** items already counted as policies.
+- `equity_completion_ils`: the **equity completion** (השלמת הון עצמי) amount if stated — the amount the borrower commits to inject as additional equity. Null if not mentioned.
+
+## TASK 5 -- Collateral Requirements
 - What security the committee requires (first-rank mortgage, personal guarantees, etc.).
 
-## TASK 5 -- Conditions Precedent
+## TASK 6 -- Conditions Precedent
 - Each condition, whether it appears met (true/false/null), and the evidentiary source.
 
-## TASK 6 -- Covenants & Risk
+## TASK 7 -- Covenants & Risk
 - Special covenants: financial covenants, LTV limits, drawdown restrictions.
 - Risk items or concerns flagged by the committee.
 
@@ -65,6 +71,9 @@ Your response MUST be a valid JSON matching this structure:
   "planned_buildings_count": null,
   "planned_apartments_count": null,
   "indexation_details": "Hebrew summary of indexation or null",
+  "total_policies_ils": null,
+  "total_guarantees_ils": null,
+  "equity_completion_ils": null,
   "collateral_requirements": ["collateral requirement in Hebrew"],
   "conditions_precedent": [
     {
@@ -97,6 +106,9 @@ Your response MUST be a valid JSON matching this structure:
   "planned_buildings_count": 1,
   "planned_apartments_count": 60,
   "indexation_details": "הלוואה צמודה למדד המחירים לצרכן, בסיס 06/2025",
+  "total_policies_ils": 8000000,
+  "total_guarantees_ils": 15000000,
+  "equity_completion_ils": 3000000,
   "collateral_requirements": ["משכנתא מדרגה ראשונה על המקרקעין", "ערבות אישית של בעלי השליטה"],
   "conditions_precedent": [
     {
