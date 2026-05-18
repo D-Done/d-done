@@ -248,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onChange={(e) => setGlobalSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitSearch(globalSearch); }}
                   placeholder={t("search_placeholder", lang)}
-                  className="h-10 rounded-2xl bg-white dark:bg-zinc-900/80 dark:border-zinc-800/60 pe-10 shadow-sm"
+                  className="h-10 rounded-2xl bg-white dark:bg-zinc-900/80 dark:border-zinc-800/60 pr-10 shadow-sm"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 </Button>
                 {showNotifications && (
-                  <div className="absolute start-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-950 shadow-xl" dir={dir}>
+                  <div className="absolute end-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-950 shadow-xl" dir={dir}>
                     <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200">
                       {t("notifications", lang)}
                     </div>
