@@ -1321,25 +1321,40 @@ function FindingsList({
   onOpenSource: (src: SourceRef) => void;
 }) {
   return (
-    <div className="space-y-2 mt-3">
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+    <div className="mt-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
         ממצאים ({findings.length})
       </div>
-      <div className="space-y-2">
+      <div className="divide-y divide-slate-100 dark:divide-zinc-800/60">
         {findings.map((f) => (
-          <div key={f.id} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40">
-            <div className="flex items-center gap-2 mb-2">
-              <FindingSeverityIcon severity={f.severity} />
-              <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{f.title}</span>
-            </div>
-            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{f.description}</p>
-            {f.sources && f.sources.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {f.sources.map((s, idx) => (
-                  <SourceButton key={idx} source={s} onClick={onOpenSource} />
-                ))}
+          <div key={f.id} className="flex gap-3 py-4 first:pt-0">
+            <div
+              className={`w-0.5 shrink-0 rounded-full ${
+                f.severity === "critical"
+                  ? "bg-red-400 dark:bg-red-500"
+                  : f.severity === "warning"
+                    ? "bg-amber-400 dark:bg-amber-500"
+                    : "bg-slate-300 dark:bg-zinc-600"
+              }`}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2 mb-1.5">
+                <FindingSeverityIcon severity={f.severity} />
+                <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-snug">
+                  {f.title}
+                </span>
               </div>
-            )}
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                {f.description}
+              </p>
+              {f.sources && f.sources.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {f.sources.map((s, idx) => (
+                    <SourceButton key={idx} source={s} onClick={onOpenSource} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -1776,27 +1791,28 @@ export function MaReportViewer({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2">
+              <div className="divide-y divide-slate-100 dark:divide-zinc-800/60">
                 {allFollowUps.map((fu, i) => (
-                  <li key={fu.id ?? i} className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40">
-                    <div className="flex items-start gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{fu.chapter}</div>
-                        <div className="text-sm text-slate-700 dark:text-slate-300">{fu.description}</div>
-                        {fu.suggested_document && (
-                          <div className="mt-1 text-xs opacity-60">מסמך מוצע: {fu.suggested_document}</div>
-                        )}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`shrink-0 text-[10px] ${SEVERITY_BADGE_CLASSES[fu.severity] || ""}`}
-                      >
-                        {SEVERITY_LABELS[fu.severity] || fu.severity}
-                      </Badge>
+                  <div key={fu.id ?? i} className="flex gap-3 py-3.5 first:pt-0">
+                    <div
+                      className={`w-0.5 shrink-0 rounded-full ${
+                        fu.severity === "critical"
+                          ? "bg-red-400 dark:bg-red-500"
+                          : fu.severity === "warning"
+                            ? "bg-amber-400 dark:bg-amber-500"
+                            : "bg-slate-300 dark:bg-zinc-600"
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-0.5">{fu.chapter}</div>
+                      <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{fu.description}</div>
+                      {fu.suggested_document && (
+                        <div className="mt-1 text-xs text-slate-400 dark:text-slate-500">מסמך מוצע: {fu.suggested_document}</div>
+                      )}
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </CardContent>
           </Card>
         );
@@ -1811,35 +1827,31 @@ export function MaReportViewer({
               השלמות נדרשות ({completeness.items.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             {completeness.summary_he && (
               <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">{completeness.summary_he}</p>
             )}
-            <ul className="space-y-2">
+            <div className="divide-y divide-slate-100 dark:divide-zinc-800/60">
               {completeness.items.map((it) => (
-                <li
-                  key={it.id}
-                  className={`rounded-xl border p-3 ${SEVERITY_CLASSES[it.severity] || ""}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium">{it.description}</div>
-                      {it.suggested_document && (
-                        <div className="mt-1 text-xs opacity-70">
-                          מסמך מוצע: {it.suggested_document}
-                        </div>
-                      )}
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`shrink-0 text-[10px] ${SEVERITY_BADGE_CLASSES[it.severity] || ""}`}
-                    >
-                      {SEVERITY_LABELS[it.severity] || it.severity}
-                    </Badge>
+                <div key={it.id} className="flex gap-3 py-3.5 first:pt-0">
+                  <div
+                    className={`w-0.5 shrink-0 rounded-full ${
+                      it.severity === "critical"
+                        ? "bg-red-400 dark:bg-red-500"
+                        : it.severity === "warning"
+                          ? "bg-amber-400 dark:bg-amber-500"
+                          : "bg-slate-300 dark:bg-zinc-600"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{it.description}</div>
+                    {it.suggested_document && (
+                      <div className="mt-1 text-xs text-slate-400 dark:text-slate-500">מסמך מוצע: {it.suggested_document}</div>
+                    )}
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </CardContent>
         </Card>
       )}
