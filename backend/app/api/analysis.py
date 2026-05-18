@@ -1247,7 +1247,12 @@ def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]
 
     The Phase 2 LLM can re-derive is_signed from extraction data and undo the
     user's manual review. We enforce the approved values deterministically after
-    the LLM runs, matching on (helka, sub_parcel).
+    the LLM runs.
+
+    HITL records come from agreement_extraction.tenant_records which have
+    sub_parcel + owner_name but NO helka (helka is Tabu-only). Phase 2 builds
+    tenant_table from Tabu and assigns helka. So we cannot match on helka when
+    the approved records don't carry it — fall back to sub_parcel-only matching.
     """
     if not approved_records:
         return
@@ -1255,20 +1260,33 @@ def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]
     if not tenant_table:
         return
 
-    # Build a lookup: (helka, sub_parcel) -> approved is_signed
-    approved_map: dict[tuple, bool | None] = {}
+    # Decide matching strategy: use (helka, sub_parcel) only when approved records
+    # actually carry helka/parcel info; otherwise fall back to sub_parcel alone.
+    has_helka = any(
+        bool(rec.get("helka") or rec.get("parcel"))
+        for rec in approved_records
+    )
+
+    approved_map: dict[tuple, bool] = {}
     for rec in approved_records:
-        helka = str(rec.get("helka") or rec.get("parcel") or "").strip()
         sub = str(rec.get("sub_parcel") or "").strip()
         is_signed = rec.get("is_signed")
-        if is_signed is not None:
+        if is_signed is None or not sub:
+            continue
+        if has_helka:
+            helka = str(rec.get("helka") or rec.get("parcel") or "").strip()
             approved_map[(helka, sub)] = bool(is_signed)
+        else:
+            approved_map[(sub,)] = bool(is_signed)
 
     patched = 0
     for row in tenant_table:
-        helka = str(row.get("helka") or "").strip()
         sub = str(row.get("sub_parcel") or "").strip()
-        key = (helka, sub)
+        if has_helka:
+            helka = str(row.get("helka") or "").strip()
+            key: tuple = (helka, sub)
+        else:
+            key = (sub,)
         if key in approved_map:
             row["is_signed"] = approved_map[key]
             patched += 1
@@ -1279,8 +1297,13 @@ def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]
         total = len(tenant_table)
         report_dict["signing_percentage"] = round(signed / total, 4) if total else 0.0
         logger.info(
-            "HITL override: patched %d/%d tenant rows; signing_percentage=%.2f",
-            patched, total, report_dict["signing_percentage"],
+            "HITL override: patched %d/%d tenant rows (helka_match=%s); signing_percentage=%.2f",
+            patched, total, has_helka, report_dict["signing_percentage"],
+        )
+    else:
+        logger.warning(
+            "HITL override: 0 rows patched (approved=%d, table=%d, helka_match=%s) — key mismatch?",
+            len(approved_records), len(tenant_table), has_helka,
         )
 
 
