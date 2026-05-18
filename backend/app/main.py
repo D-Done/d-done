@@ -41,19 +41,34 @@ if os.environ.get("K_SERVICE"):
         logger.warning("Cloud Logging setup skipped: %s", e)
 
 
+_SHUTDOWN_DRAIN_SECONDS = 3300  # wait up to 55 min for analyses to finish; Cloud Run stop-timeout is 3600s
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    # Cancel any live analysis tasks so they can mark themselves as failed in DB.
     from app.api.analysis import _running_analysis_tasks
+
     if _running_analysis_tasks:
         logger.warning(
-            "Graceful shutdown: cancelling %d running analysis task(s)", len(_running_analysis_tasks)
+            "Graceful shutdown: %d running analysis task(s) — waiting up to %ds for completion",
+            len(_running_analysis_tasks),
+            _SHUTDOWN_DRAIN_SECONDS,
         )
-        tasks = list(_running_analysis_tasks)
-        for t in tasks:
-            t.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            # Wait for all running analyses to finish naturally before Cloud Run force-kills us.
+            await asyncio.wait_for(
+                asyncio.gather(*list(_running_analysis_tasks), return_exceptions=True),
+                timeout=_SHUTDOWN_DRAIN_SECONDS,
+            )
+            logger.info("Graceful shutdown: all analysis tasks completed")
+        except asyncio.TimeoutError:
+            # Still running after drain window — cancel and mark as failed so users can re-run.
+            logger.warning("Graceful shutdown: drain timeout, cancelling remaining analysis tasks")
+            tasks = list(_running_analysis_tasks)
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     from app.agents.session_store import close_session_service
     await close_session_service()

@@ -35,6 +35,8 @@ steps:
         "--no-cpu-throttling",
         "--min-instances",
         "1",
+        "--stop-timeout",
+        "3600",
         "--quiet",
       ]
 
