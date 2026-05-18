@@ -748,7 +748,7 @@ export default function AiPage() {
               className="gap-1.5 border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm text-xs py-1 px-2.5 shadow-sm shrink-0"
             >
               <Sparkles className="h-3.5 w-3.5 text-zinc-500" />
-              {modelMode === "pro" ? "Gemini 3.1 Pro" : "Gemini 3 Flash"}
+              {modelMode === "pro" ? "Gemini — Thinking" : "Gemini — Fast"}
             </Badge>
           </div>
 
@@ -1003,7 +1003,7 @@ export default function AiPage() {
               {/* Model toggle — always visible */}
               <button
                 onClick={() => setModelMode((m) => m === "flash" ? "pro" : "flash")}
-                title={modelMode === "flash" ? "Switch to Pro (slower, smarter)" : "Switch to Flash (faster)"}
+                title={modelMode === "flash" ? "Switch to Thinking (slower, smarter)" : "Switch to Fast (faster)"}
                 className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-all duration-150 ${
                   modelMode === "pro"
                     ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-inset ring-violet-300/60 dark:ring-violet-700/60"
@@ -1011,9 +1011,9 @@ export default function AiPage() {
                 }`}
               >
                 {modelMode === "pro" ? (
-                  <><Brain className="h-4 w-4" /><span>Pro</span></>
+                  <><Brain className="h-4 w-4" /><span>Thinking</span></>
                 ) : (
-                  <><Zap className="h-4 w-4" /><span>Flash</span></>
+                  <><Zap className="h-4 w-4" /><span>Fast</span></>
                 )}
               </button>
 
