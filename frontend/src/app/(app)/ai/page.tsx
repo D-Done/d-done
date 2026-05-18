@@ -1040,7 +1040,7 @@ export default function AiPage() {
                 style={{ minHeight: "44px", maxHeight: "120px" }}
               />
               <Button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!canSend}
                 size="icon"
                 className="h-10 w-10 shrink-0 rounded-xl bg-zinc-900 hover:bg-zinc-700 shadow-sm transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100 disabled:opacity-50"
