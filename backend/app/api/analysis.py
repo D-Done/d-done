@@ -419,6 +419,85 @@ async def _run_analysis_task(
             )
 
 
+async def _run_phase2_task(
+    *,
+    check_id: UUID,
+    project_id: UUID,
+    session_id: str,
+    approved_records: list[dict],
+    user_email: str,
+    project_title: str,
+) -> None:
+    """Background coroutine for Phase 2 synthesis — mirrors _run_analysis_task.
+
+    Fired via asyncio.create_task() so approve_tenant_table returns 202
+    immediately. The HTTP connection can be dropped without killing Phase 2.
+    """
+    from app.db.session import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+        try:
+            analysis_result = await _run_analysis_phase2(
+                session_id=session_id,
+                approved_tenant_records=approved_records,
+            )
+
+            _apply_hitl_tenant_overrides(analysis_result.report_dict, approved_records)
+
+            result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
+            dd_check = result.scalar_one()
+            dd_check.status = "completed"
+            dd_check.report = analysis_result.report_dict
+            dd_check.hitl_data = None
+            dd_check.completed_at = datetime.now(timezone.utc)
+            dd_check.prompt_tokens = (dd_check.prompt_tokens or 0) + analysis_result.prompt_tokens
+            dd_check.completion_tokens = (dd_check.completion_tokens or 0) + analysis_result.completion_tokens
+            dd_check.total_tokens = (dd_check.total_tokens or 0) + analysis_result.total_tokens
+
+            result = await db.execute(select(Project).where(Project.id == project_id))
+            project = result.scalar_one()
+            project.status = "completed"
+            project.pipeline_stage = None
+
+            await db.commit()
+            logger.info("DD Phase 2 completed: check_id=%s", check_id)
+
+            project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
+            send_report_ready_notification(
+                to_email=user_email,
+                project_name=project_title,
+                project_url=project_url,
+                needs_hitl_review=False,
+            )
+
+        except asyncio.CancelledError:
+            logger.warning("Phase 2 task cancelled (instance shutdown): check_id=%s", check_id)
+            try:
+                result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
+                dd_check = result.scalar_one_or_none()
+                if dd_check and dd_check.status == "processing":
+                    dd_check.status = "failed"
+                    dd_check.error_message = "שלב 2 הופסק עקב הפסקת שרת — אנא אשר שוב"
+                    dd_check.completed_at = datetime.now(timezone.utc)
+                result = await db.execute(select(Project).where(Project.id == project_id))
+                project = result.scalar_one_or_none()
+                if project and project.status == "processing":
+                    project.status = "failed"
+                    project.pipeline_stage = None
+                await db.commit()
+            except Exception:
+                pass
+            raise
+        except ExceptionGroup as eg:
+            await _handle_analysis_failure(
+                eg, check_id=check_id, project_id=project_id, db=db, user_email=user_email
+            )
+        except Exception as exc:
+            await _handle_analysis_failure(
+                exc, check_id=check_id, project_id=project_id, db=db, user_email=user_email
+            )
+
+
 @router.post("/{project_id}/analyze", response_model=AnalyzeResponse)
 async def start_analysis(
     project_id: UUID,
@@ -668,65 +747,31 @@ async def approve_tenant_table(
             report=None,
         )
 
-    dd_check.status = "processing"
     result = await db.execute(select(Project).where(Project.id == project_id))
     project_row = result.scalar_one()
+    project_title = project_row.title
+    dd_check.status = "processing"
     project_row.status = "processing"
     project_row.pipeline_stage = "synthesis"
     await db.commit()
 
-    try:
-        analysis_result = await _run_analysis_phase2(
+    task = asyncio.create_task(
+        _run_phase2_task(
+            check_id=check_id,
+            project_id=project_id,
             session_id=session_id,
-            approved_tenant_records=body.tenant_records,
+            approved_records=body.tenant_records,
+            user_email=user.email,
+            project_title=project_title,
         )
-    except Exception as exc:
-        logger.exception("Phase 2 failed: %s", exc)
-        result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
-        dd_check = result.scalar_one()
-        dd_check.status = "failed"
-        result = await db.execute(select(Project).where(Project.id == project_id))
-        project_row = result.scalar_one()
-        project_row.status = "failed"
-        await db.commit()
-        raise HTTPException(status_code=500, detail=str(exc))
-
-    # Patch the LLM-generated tenant_table with the user's manual overrides.
-    # The LLM sometimes re-derives is_signed from extraction data, overriding
-    # the human review. We enforce the approved values deterministically.
-    _apply_hitl_tenant_overrides(analysis_result.report_dict, body.tenant_records)
-
-    result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
-    dd_check = result.scalar_one()
-    dd_check.status = "completed"
-    dd_check.report = analysis_result.report_dict
-    dd_check.hitl_data = None
-    dd_check.completed_at = datetime.now(timezone.utc)
-    dd_check.prompt_tokens = (dd_check.prompt_tokens or 0) + analysis_result.prompt_tokens
-    dd_check.completion_tokens = (dd_check.completion_tokens or 0) + analysis_result.completion_tokens
-    dd_check.total_tokens = (dd_check.total_tokens or 0) + analysis_result.total_tokens
-
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project_row = result.scalar_one()
-    project_row.status = "completed"
-    project_row.pipeline_stage = None
-
-    await db.commit()
-    await db.refresh(dd_check)
-
-    logger.info("DD Phase 2 completed after tenant table approval: check_id=%s, total_tokens=%d", check_id, dd_check.total_tokens)
-    project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
-    send_report_ready_notification(
-        to_email=user.email,
-        project_name=project_row.title,
-        project_url=project_url,
-        needs_hitl_review=False,
     )
+    _running_analysis_tasks.add(task)
+    task.add_done_callback(_running_analysis_tasks.discard)
 
     return AnalyzeResponse(
         check_id=str(dd_check.id),
-        status="completed",
-        report=analysis_result.report_dict,
+        status="processing",
+        report=None,
     )
 
 
