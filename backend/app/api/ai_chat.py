@@ -38,8 +38,9 @@ from app.db.session import AsyncSessionLocal
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
 logger = logging.getLogger(__name__)
 
-GEMINI_CHAT_MODEL = "gemini-3-flash-preview"   # matches bbox_lab flash model (Vertex AI)
-GEMINI_FILES_MODEL = "gemini-3-flash-preview"  # same for GCS path
+GEMINI_CHAT_MODEL = "gemini-3-flash-preview"      # fast (default)
+GEMINI_CHAT_PRO_MODEL = "gemini-3.1-pro-preview"  # heavy / thinking
+GEMINI_FILES_MODEL = "gemini-3-flash-preview"     # GCS path (flash default)
 
 
 def _utcnow() -> datetime:
@@ -292,6 +293,7 @@ async def ask_in_conversation(
     conv_id: UUID,
     question: str = Form(...),
     files: list[UploadFile] = File(default=[]),
+    model: str = Form(default="flash"),
     user: CurrentUser = Depends(get_approved_user),
 ):
     """Ask a question in a conversation.
@@ -301,6 +303,8 @@ async def ask_in_conversation(
     - Otherwise, the caller must upload files directly (same as the old /bbox-lab/ask).
     """
     import asyncio
+
+    resolved_model = GEMINI_CHAT_PRO_MODEL if model == "pro" else GEMINI_CHAT_MODEL
 
     async with AsyncSessionLocal() as db:
         conv = await _assert_conv_owner(conv_id, user.id, db)
@@ -362,6 +366,7 @@ async def ask_in_conversation(
                     question=question,
                     extra_context=extra_context,
                     history=history,
+                    model=resolved_model,
                 )
             else:
                 # No DD report yet — fall back to GCS file reading.
@@ -376,6 +381,7 @@ async def ask_in_conversation(
                         gcs_uris=gcs_uris,
                         extra_context=None,
                         history=history,
+                        model=resolved_model,
                     )
                 except Exception as exc:
                     logger.error("_run_ask_with_gcs failed: %s", exc, exc_info=True)
@@ -412,6 +418,7 @@ async def ask_in_conversation(
                     _run_ask_general,
                     question=question,
                     history=history,
+                    model=resolved_model,
                 )
 
         # ── Persist messages ────────────────────────────────────────────
@@ -456,7 +463,8 @@ async def ask_in_conversation(
 # ── Gemini helpers ───────────────────────────────────────────────────────────
 
 def _run_ask_general(
-    *, question: str, extra_context: str | None = None, history: list[dict] | None = None
+    *, question: str, extra_context: str | None = None, history: list[dict] | None = None,
+    model: str = GEMINI_CHAT_MODEL,
 ) -> object:
     """Call Gemini with a plain text question (+ optional project context + conversation history)."""
     from google import genai
@@ -496,7 +504,7 @@ def _run_ask_general(
     contents.append(types.Content(role="user", parts=[types.Part.from_text(text=current_text)]))
 
     response = client.models.generate_content(
-        model=GEMINI_CHAT_MODEL,
+        model=model,
         contents=contents,
         config=config,
     )
@@ -514,7 +522,7 @@ def _run_ask_general(
         answer=data.get("answer", ""),
         citations=[],
         raw_token_usage=None,
-        model_used=GEMINI_CHAT_MODEL,
+        model_used=model,
     )
 
 
@@ -524,6 +532,7 @@ def _run_ask_with_gcs(
     gcs_uris: list[tuple[str, str, str]],
     extra_context: str | None,
     history: list[dict] | None = None,
+    model: str = GEMINI_FILES_MODEL,
 ) -> object:
     """Call Gemini with GCS-referenced files instead of inline bytes."""
     from app.api.bbox_lab import ASK_SYSTEM_INSTRUCTION, AskCitation, AskResponse as _AskResp
@@ -584,7 +593,7 @@ def _run_ask_with_gcs(
 
     logger.info(
         "Ask-GCS: model=%s files=%d has_context=%s turns=%d question=%s",
-        GEMINI_FILES_MODEL,
+        model,
         len(gcs_uris),
         bool(extra_context),
         len(contents),
@@ -592,7 +601,7 @@ def _run_ask_with_gcs(
     )
 
     response = client.models.generate_content(
-        model=GEMINI_FILES_MODEL,
+        model=model,
         contents=contents,
         config=config,
     )

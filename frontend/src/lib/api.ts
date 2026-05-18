@@ -956,9 +956,11 @@ export async function askInConversation(
   convId: string,
   question: string,
   files?: File[],
+  model: "flash" | "pro" = "flash",
 ): Promise<AiAskResponse> {
   const formData = new FormData();
   formData.append("question", question);
+  formData.append("model", model);
   if (files) {
     for (const f of files) formData.append("files", f);
   }

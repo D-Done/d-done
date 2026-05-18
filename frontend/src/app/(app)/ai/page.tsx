@@ -41,6 +41,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import {
   Bot,
+  Brain,
   FileUp,
   FolderOpen,
   Link2,
@@ -57,6 +58,7 @@ import {
   Trash2,
   User,
   X,
+  Zap,
 } from "lucide-react";
 // MessageSquare is used in the empty-state welcome screen cards
 
@@ -180,6 +182,7 @@ export default function AiPage() {
   // Chat
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState("");
+  const [modelMode, setModelMode] = useState<"flash" | "pro">("flash");
 
   // Citation drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -451,6 +454,7 @@ export default function AiPage() {
         convId,
         question,
         hasProjectContext ? undefined : files,
+        modelMode,
       );
       const assistantMsg: LocalMessage = {
         id: "a-" + Date.now(),
@@ -744,7 +748,7 @@ export default function AiPage() {
               className="gap-1.5 border-zinc-200/50 dark:border-zinc-700/50 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm text-xs py-1 px-2.5 shadow-sm shrink-0"
             >
               <Sparkles className="h-3.5 w-3.5 text-zinc-500" />
-              Gemini 3 Flash
+              {modelMode === "pro" ? "Gemini 3.1 Pro" : "Gemini 3 Flash"}
             </Badge>
           </div>
 
@@ -996,6 +1000,23 @@ export default function AiPage() {
           {/* Input area */}
           <div className="relative z-10 p-4 sm:p-5 shrink-0 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border-t border-zinc-200/50 dark:border-zinc-700/40">
             <div className="relative flex items-end gap-3 rounded-2xl bg-white/70 dark:bg-zinc-800/70 backdrop-blur-xl ring-1 ring-inset ring-zinc-200/80 dark:ring-zinc-700/80 p-2 shadow-sm focus-within:ring-zinc-800/40 focus-within:shadow-md transition-all duration-300">
+              {/* Model toggle — always visible */}
+              <button
+                onClick={() => setModelMode((m) => m === "flash" ? "pro" : "flash")}
+                title={modelMode === "flash" ? "עבור למצב חושב (Pro)" : "עבור למצב מהיר (Flash)"}
+                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-all duration-150 ${
+                  modelMode === "pro"
+                    ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-inset ring-violet-300/60 dark:ring-violet-700/60"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                }`}
+              >
+                {modelMode === "pro" ? (
+                  <><Brain className="h-4 w-4" /><span>חושב</span></>
+                ) : (
+                  <><Zap className="h-4 w-4" /><span>מהיר</span></>
+                )}
+              </button>
+
               {/* File upload button — only in non-project mode */}
               {!hasProjectContext && (
                 <button
