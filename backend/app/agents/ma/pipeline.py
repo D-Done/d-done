@@ -112,28 +112,23 @@ def _inject_pdfs_for_ma_classifier(
 
 
 def _build_executive_summary(chapters: list[dict]) -> ExecutiveSummary:
-    """Roll per-chapter summaries into a single report-level summary.
-
-    We deliberately do NOT call an LLM for this — deterministic stitching
-    gives lawyers reproducible output and keeps latency/cost low. The
-    risk_level is the max severity seen across findings; the Hebrew summary
-    concatenates each chapter's summary_he under a short heading.
-    """
+    """Build a brief report-level executive summary (counts + risk level only)."""
     severity_rank = {"critical": 3, "warning": 2, "info": 1}
     max_rank = 0
-    parts: list[str] = []
+    critical_count = 0
+    warning_count = 0
+    follow_up_count = 0
+
     for chapter in chapters:
-        chapter_id = chapter.get("chapter_id")
-        title = chapter.get("chapter_title_he") or CHAPTER_TITLES_HE.get(
-            chapter_id, chapter_id
-        )
-        summary = (chapter.get("summary_he") or "").strip()
-        if summary:
-            parts.append(f"{title}: {summary}")
         for finding in chapter.get("findings") or []:
             rank = severity_rank.get(finding.get("severity") or "info", 1)
             if rank > max_rank:
                 max_rank = rank
+            if finding.get("severity") == "critical":
+                critical_count += 1
+            elif finding.get("severity") == "warning":
+                warning_count += 1
+        follow_up_count += len(chapter.get("follow_ups") or [])
 
     risk_level = "low"
     if max_rank >= 3:
@@ -141,7 +136,18 @@ def _build_executive_summary(chapters: list[dict]) -> ExecutiveSummary:
     elif max_rank >= 2:
         risk_level = "medium"
 
-    narrative = "\n\n".join(parts) if parts else "לא נמצאו ממצאים מהותיים."
+    if critical_count == 0 and warning_count == 0:
+        narrative = "לא נמצאו ממצאים מהותיים בבדיקת הנאותות."
+    else:
+        parts: list[str] = []
+        if critical_count:
+            parts.append(f"{critical_count} ממצאים קריטיים")
+        if warning_count:
+            parts.append(f"{warning_count} אזהרות")
+        narrative = "נמצאו " + " ו-".join(parts) + " בבדיקת הנאותות."
+        if follow_up_count:
+            narrative += f" נדרשות {follow_up_count} השלמות."
+
     return ExecutiveSummary(risk_level=risk_level, summary=narrative)
 
 

@@ -413,10 +413,6 @@ function CorporateGovernanceSection({
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
 
-      {/* Follow-ups */}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -620,9 +616,6 @@ function SupplierObligationsSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -789,9 +782,6 @@ function CustomerObligationsSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -914,9 +904,6 @@ function HrSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -996,9 +983,6 @@ function RegulatorySection({
 
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
-      )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
       )}
     </div>
   );
@@ -1084,9 +1068,6 @@ function LitigationSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -1141,9 +1122,6 @@ function TaxationSection({
 
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
-      )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
       )}
     </div>
   );
@@ -1234,9 +1212,6 @@ function FinancialDebtSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -1297,9 +1272,6 @@ function InsuranceSection({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -1325,9 +1297,6 @@ function GenericChapterBody({
       {chapter.findings.length > 0 && (
         <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />
       )}
-      {chapter.follow_ups.length > 0 && (
-        <FollowUpsList followUps={chapter.follow_ups} />
-      )}
     </div>
   );
 }
@@ -1335,6 +1304,14 @@ function GenericChapterBody({
 // ---------------------------------------------------------------------------
 // Findings list
 // ---------------------------------------------------------------------------
+
+function FindingSeverityIcon({ severity }: { severity: string }) {
+  if (severity === "critical")
+    return <AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0" />;
+  if (severity === "warning")
+    return <Shield className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />;
+  return <Info className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />;
+}
 
 function FindingsList({
   findings,
@@ -1344,46 +1321,28 @@ function FindingsList({
   onOpenSource: (src: SourceRef) => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 mt-3">
       <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
         ממצאים ({findings.length})
       </div>
-      <ul className="space-y-2">
+      <div className="space-y-2">
         {findings.map((f) => (
-          <li
-            key={f.id}
-            className={`rounded-xl border p-3 ${SEVERITY_CLASSES[f.severity] || ""}`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] border-current/30"
-                  >
-                    {f.subsection}
-                  </Badge>
-                  <span className="font-semibold text-sm">{f.title}</span>
-                </div>
-                <p className="text-sm whitespace-pre-wrap">{f.description}</p>
-                {f.sources && f.sources.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {f.sources.map((s, idx) => (
-                      <SourceButton key={idx} source={s} onClick={onOpenSource} />
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Badge
-                variant="outline"
-                className={`shrink-0 text-[10px] ${SEVERITY_BADGE_CLASSES[f.severity] || ""}`}
-              >
-                {SEVERITY_LABELS[f.severity] || f.severity}
-              </Badge>
+          <div key={f.id} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/40">
+            <div className="flex items-center gap-2 mb-2">
+              <FindingSeverityIcon severity={f.severity} />
+              <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{f.title}</span>
             </div>
-          </li>
+            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{f.description}</p>
+            {f.sources && f.sources.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {f.sources.map((s, idx) => (
+                  <SourceButton key={idx} source={s} onClick={onOpenSource} />
+                ))}
+              </div>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -1801,6 +1760,47 @@ export function MaReportViewer({
           );
         })}
       </div>
+
+      {/* ── Consolidated follow-ups list ────────────────────────── */}
+      {(() => {
+        const allFollowUps = (report.chapters || []).flatMap((c) =>
+          (c.follow_ups || []).map((fu) => ({ ...fu, chapter: c.chapter_title_he }))
+        );
+        if (!allFollowUps.length) return null;
+        return (
+          <Card className="rounded-2xl bg-white dark:bg-zinc-900/80 shadow-sm border border-slate-100 dark:border-zinc-700/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Info className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                רשימת השלמות ({allFollowUps.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {allFollowUps.map((fu, i) => (
+                  <li key={fu.id ?? i} className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40">
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{fu.chapter}</div>
+                        <div className="text-sm text-slate-700 dark:text-slate-300">{fu.description}</div>
+                        {fu.suggested_document && (
+                          <div className="mt-1 text-xs opacity-60">מסמך מוצע: {fu.suggested_document}</div>
+                        )}
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`shrink-0 text-[10px] ${SEVERITY_BADGE_CLASSES[fu.severity] || ""}`}
+                      >
+                        {SEVERITY_LABELS[fu.severity] || fu.severity}
+                      </Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* ── Completeness checklist ──────────────────────────────── */}
       {completeness && completeness.items.length > 0 && (
