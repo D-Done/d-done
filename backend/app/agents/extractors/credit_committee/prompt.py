@@ -36,10 +36,19 @@ Extract the following project details as they appear in the credit committee doc
 - `indexation_details`: search the entire document for any mention of indexation, CPI linkage, or base-index date (מדד המחירים לצרכן, מדד תשומות הבנייה, מדד בסיס, הצמדה למדד, תאריך בסיס וכו'). Write a concise Hebrew summary: index name + base date + mechanism. Set to null only if the document contains no mention of indexation whatsoever.
 
 ## TASK 4 -- Mortgage Registration Inputs (לצורך חישוב סך המשכנתא לרישום)
-Extract the following three monetary values **only from this document** (in ILS). Set to null if not explicitly stated:
-- `total_policies_ils`: the total face value of all **insurance policies** (פוליסות ביטוח) listed in the committee decision. Sum all policy amounts if multiple are listed.
-- `total_guarantees_ils`: the total face value of all **guarantees** (ערבויות) listed in the committee decision. Sum all guarantee amounts if multiple are listed (e.g. ערבות חוק המכר, ערבות שכירות, ערבות בדק). **Do not include** items already counted as policies.
-- `equity_completion_ils`: the **equity completion** (השלמת הון עצמי) amount if stated — the amount the borrower commits to inject as additional equity. Null if not mentioned.
+
+Search the **entire document** (all sections: collateral, conditions precedent, guarantees table, budget, covenants) for the following monetary values in ILS.
+
+- `total_policies_ils`: **SUM** of all insurance policy amounts. Look for: פוליסת ביטוח, ביטוח חיים, ביטוח רכוש, ביטוח מבנה, פוליסה, ביטוח. Sum every individual policy amount found. If policies are listed as a combined total, use that total. Set to null only if the document contains **no mention of any insurance policy**.
+
+- `total_guarantees_ils`: **SUM** of all guarantee amounts. Look for: ערבות (of any type: ערבות ביצוע, ערבות חוק המכר, ערבות שכירות, ערבות בדק, ערבות אישית, ערבות בנקאית, ערבות מיסוי). Sum every individual guarantee amount found. **Do not include** amounts already counted in `total_policies_ils`. Set to null only if the document contains **no mention of any guarantee amount**.
+
+- `equity_completion_ils`: the equity completion (השלמת הון עצמי / הון עצמי נדרש / השלמת ה"ע) amount — what the borrower must inject as equity. Look in: conditions precedent, approval conditions, collateral table, LTV section. Set to null only if **not mentioned anywhere**.
+
+**Extraction rules:**
+- Do NOT set to null just because the value is implicit or spread across sections — search the whole document and sum.
+- If an amount appears without a clear category, use context to classify it as policy or guarantee.
+- Report amounts in ILS (if stated in thousands/millions, convert to full ILS: 1M → 1000000).
 
 ## TASK 5 -- Collateral Requirements
 - What security the committee requires (first-rank mortgage, personal guarantees, etc.).

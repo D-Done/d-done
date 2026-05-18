@@ -411,9 +411,9 @@ Use **only** `credit_committee_extraction` (never the zero report or any other s
 - Set to `null` if all three source fields are null (no data available from the credit committee).
 
 **`construction_restrictions` — ALWAYS POPULATE (never return empty):**
-1. Start with all items in `zero_report_extraction.construction_restrictions`.
-2. Also check `credit_committee_extraction` for any planning constraints, antiquities (עתיקות), preservation (שימור), permit status, or engineering constraints not already listed.
-3. Add any additional restrictions found in the credit committee to the list.
+1. Start with all items in `zero_report_extraction.construction_restrictions`. For each item taken from the zero report, append `" — מקור: דו\"ח אפס"` at the end of the string (e.g., `"מגבלות עצים — מקור: דו\"ח אפס"`).
+2. Also check `credit_committee_extraction` for any planning constraints, antiquities (עתיקות), preservation (שימור), permit status, or engineering constraints not already listed. For each item taken from the credit committee, append `" — מקור: ועדת אשראי"` (e.g., `"עתיקות — מקור: ועדת אשראי"`).
+3. De-duplicate: if the same restriction appears in both sources, keep only one entry and append both sources: `" — מקור: דו\"ח אפס, ועדת אשראי"`.
 4. **If neither source contains any restrictions:** return `["לא אותרה התייחסות להגבלות בנייה בדו\"ח האפס ובועדת האשראי"]`. Do NOT return an empty list — this field must always be populated so the reader knows it was checked.
 
 **Cross-reference with agreement addenda:**
