@@ -408,6 +408,7 @@ From `credit_committee_extraction`: identify any **individual persons** (not com
 2. Check `credit_committee_extraction.indexation_details` — this is now a dedicated extracted field. If it is non-null, incorporate it.
 3. Combine findings from both sources into a single summary string (e.g., "מדד תשומות הבניה ומדד המחירים לצרכן, בסיס 06/2025").
 4. Only set to `"אין התייחסות למדד"` after confirming **both** fields are null or contain the "not found" phrase.
+5. **Do NOT include indexation that relates solely to guarantees** (e.g. "ערבות בדק צמודה למדד", "הצמדה לעניין ערבויות"). This field covers project-level price/cost indexation only.
 
 **`total_mortgage_registration` — mortgage-registration amount (from credit committee ONLY):**
 

@@ -33,7 +33,7 @@ Extract the following project details as they appear in the credit committee doc
 - Leave any field null if not stated in the document.
 
 ## TASK 3 -- Indexation (הצמדה למדד)
-- `indexation_details`: search the entire document for any mention of indexation, CPI linkage, or base-index date (מדד המחירים לצרכן, מדד תשומות הבנייה, מדד בסיס, הצמדה למדד, תאריך בסיס וכו'). Write a concise Hebrew summary: index name + base date + mechanism. Set to null only if the document contains no mention of indexation whatsoever.
+- `indexation_details`: search the entire document for indexation of **project costs or prices** (מדד המחירים לצרכן, מדד תשומות הבנייה, מדד בסיס, הצמדה למדד, תאריך בסיס וכו'). Write a concise Hebrew summary: index name + base date + mechanism. **Do NOT include indexation that relates solely to guarantees (ערבויות) — e.g. "ערבות בדק צמודה למדד" is irrelevant here.** Set to null only if the document contains no mention of project-level indexation whatsoever.
 
 ## TASK 4 -- Mortgage Registration Inputs (לצורך חישוב סך המשכנתא לרישום)
 
