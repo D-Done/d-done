@@ -100,6 +100,57 @@ All tenant-table observations (unsigned owners, name mismatches, missing warning
 - If less than 100% → add to `high_risk_flags`: "X% מהדיירים רשמו הערת אזהרה לטובת היזם — נדרש השלמה".
 - **Required:** populate `tenant_table_warning_note_sources` with **exactly one** evidentiary reference from the **Tabu extract** (document name, page number, verbatim quote) supporting the warning-note count — e.g. "הערת אזהרה" registrations or ownership entries. No other document types.
 
+**Pending Sale Transaction — Missing Document Check (REAL ESTATE FINANCE ONLY):**
+
+For each sub-parcel, scan its caveats for signs of a *pending (incomplete) sale transaction*:
+- A caveat with `registration_type` = "הערת אזהרה" or "הסכם מכר" whose `beneficiary` is a **third-party buyer** (NOT the developer and NOT a mortgage bank/lender), AND
+- That beneficiary is **not** listed as a `rights_holder` on the same sub-parcel — meaning the sale has not yet been completed/registered in the Tabu.
+
+If a pending sale is detected on any sub-parcel:
+
+1. Add to that row's `notes`: `"עסקת מכר תלויה ועומדת — [שם הקונה] נרשם כהערת אזהרה אך טרם נרשם כבעלים בנסח הטאבו."` (replace [שם הקונה] with the actual beneficiary name from the caveat).
+
+2. Check the complete list of uploaded document filenames (all `source_document_name` values that appear anywhere in the extraction data) for:
+   - **דיווח למיסוי מקרקעין**: filenames containing "מיסוי", "שבח", "דיווח מכר", or "רכישה", or any document explicitly describing a real-estate-tax-authority report.
+   - **אישור עירייה על היעדר חובות**: filenames containing "אישור עירייה", "היעדר חובות", "ארנונה", or "מועצה", or any municipal clearance certificate.
+
+3. For each of the two documents that is **not found** in the uploaded files — emit a `finding` AND add to `high_risk_flags`:
+   - **Note:** emitting findings for missing-document checks on pending sale transactions is an **explicit exception** to the "no findings for Tabu issues" rule. These are regulatory compliance gaps, not tenant-table status items.
+   - If **דיווח למיסוי מקרקעין** is missing:
+     - `category`: `"legal"`, `severity`: `"warning"`
+     - `title`: `"חסר דיווח למיסוי מקרקעין"`
+     - `description`: `"נסח הטאבו מצביע על עסקת מכר תלויה ועומדת בתת-חלקה [מספר]: [שם הקונה] רשום כהערת אזהרה אך טרם הושלמה העברת הבעלות. לא אותר דיווח למיסוי מקרקעין בין מסמכי התיק. נדרש לוודא כי העסקה דווחה כדין לרשות מיסוי מקרקעין."`
+     - `sources`: cite the Tabu document where the caveat appears.
+     - Add to `high_risk_flags`: `"עסקת מכר תלויה ועומדת בתת-חלקה [מספר] — חסר דיווח למיסוי מקרקעין"`
+   - If **אישור עירייה על היעדר חובות** is missing:
+     - `category`: `"legal"`, `severity`: `"warning"`
+     - `title`: `"חסר אישור עירייה על היעדר חובות"`
+     - `description`: `"נסח הטאבו מצביע על עסקת מכר תלויה ועומדת בתת-חלקה [מספר]: [שם הקונה] רשום כהערת אזהרה אך טרם הושלמה העברת הבעלות. לא אותר אישור עירייה על היעדר חובות בין מסמכי התיק. נדרש לוודא כי אין חובות עירוניים על הנכס."`
+     - `sources`: cite the Tabu document where the caveat appears.
+     - Add to `high_risk_flags`: `"עסקת מכר תלויה ועומדת בתת-חלקה [מספר] — חסר אישור עירייה על היעדר חובות"`
+
+4. If both documents **are present**: append to that row's `notes`: `"[מסמכי עסקת המכר: דיווח למיסוי מקרקעין ואישור עירייה — קיימים בתיק]"`
+
+**Guardianship (אפוטרופוס) — Court Order Check:**
+
+For each sub-parcel, scan its caveats for a guardianship designation:
+- A caveat whose `registration_type` or description includes "אפוטרופוס", "מנהל עזבון", "אפוטרופסות", or "צו אפוטרופסות".
+
+If a guardianship caveat is detected on any sub-parcel:
+
+1. Add to that row's `notes`: `"אפוטרופוס רשום על תת-חלקה זו ([שם האפוטרופוס]) — נדרש צו בית משפט (פסיקתא) המסמיך לחתום בשם החסוי."` (substitute the actual guardian name).
+
+2. Check the uploaded document list for a court authorization document: filenames or document descriptions containing "פסיקתא", "צו בית משפט", "אישור בית משפט", or "אפוטרופוס" paired with "אישור" / "היתר".
+
+3. If no such authorization document is found:
+   - Emit a `finding` with category `"legal"`, severity `"warning"` (**explicit exception** to the "no findings for Tabu issues" rule — this is an authority-to-sign gap, not a tenant-table status item):
+     - `title`: `"חסר צו בית משפט (פסיקתא) לאפוטרופוס"`
+     - `description`: `"בנסח הטאבו לתת-חלקה [מספר] רשום אפוטרופוס ([שם האפוטרופוס]). לא אותרה פסיקתא או צו בית משפט המסמיך אותו לחתום על ההסכם בשם החסוי. נדרש להמציא פסיקתא מאושרת לביסוס תוקף חתימת ההסכם."`
+     - `sources`: cite the Tabu document where the guardianship caveat appears.
+   - Add to `high_risk_flags`: `"אפוטרופוס בתת-חלקה [מספר] — חסרה פסיקתא המסמיכה לחתום בשם החסוי"`
+
+4. If a relevant court authorization document is found: append to that row's `notes`: `"[פסיקתא לאפוטרופוס — קיימת בתיק]"`
+
 ---
 
 ## C. Agreement Addenda (`findings` — category: `"addendum"`)
@@ -278,6 +329,18 @@ When any entry in `company_docs_extraction.companies` has `document_subtype = "�
    - Use the certificate filename as `source_document_name`; set `page_number` to 1 and `verbatim_quote` to the company name as it appears in the document.
 3. **Do not fabricate** shareholders, UBO individuals, or lien data for תעודת התאגדות entries.
 
+**Company in ownership chain with no company document — Missing נסח חברה:**
+
+While building the UBO chain, identify every company entity in the holding structure (from the agreement, credit committee, or other company extracts). For each such company:
+- Check whether it appears in `company_docs_extraction.companies` with a full company extract (i.e., an entry that is NOT `document_subtype = "תעודת_התאגדות"` and not a תעודת התאגדות only).
+- If a company that is part of the ownership chain has **no uploaded company document at all** (it does not appear in `company_docs_extraction.companies`):
+  - Add it to `developer_ubo_chain` as `"<company_name> — אין מסמך חברה"`.
+  - Add it as a node in `developer_ubo_graph` with `type: "company"` and no incoming edges (owners unknown).
+  - Emit a `"warning"` finding (category: `"corporate"`):
+    - `title`: `"חסר נסח חברה — [company_name]"`
+    - `description`: `"חברת [company_name] מופיעה בשרשור האחזקה אך לא הועלה עבורה נסח חברה מרשם החברות. לא ניתן לזהות בעלי מניות, מנהלים, או שעבודים רשומים. נדרש להמציא נסח חברה מלא."`
+    - `sources`: cite the document where the company name was identified (agreement, credit committee, etc.).
+
 **Directors and officers:**
 
 - Identify names from the company extract (נסח חברה).
@@ -294,6 +357,18 @@ When any entry in `company_docs_extraction.companies` has `document_subtype = "�
 - If `pledge_entries` is non-empty: add one or more findings under category `"corporate"` that summarize the pledges in favor of controlling shareholders (pledge number, pledgee name, registration date). Use the **source** from each pledge entry (source_document_name, page_number, verbatim_quote) as the finding’s evidentiary reference(s).
 - If `no_pledges_identified` is true: you may add a single finding with severity `"info"` and `description` stating that no pledges in favor of controlling shareholders were identified in the Pledges Register (רשם המשכונות), or omit if the report has no other corporate-liens section.
 - If `pledges_registry_extraction` is null or absent (no Pledges Register document was processed): do not add findings for this section.
+
+**Personal Guarantors (ערבים) — Pledges Registry Check:**
+
+From `credit_committee_extraction`: identify any **individual persons** (not companies) listed as personal guarantors (ערבים אישיים). For each such person:
+
+1. Check the uploaded document list for a **תמצית רשם המשכונות** (Pledges Registry extract) covering that individual: filenames containing "רשם המשכונות", "תמצית משכונות", "ת.מ.ש", or the guarantor's name alongside "משכון" / "שעבוד".
+2. If no such document is found for that guarantor:
+   - Emit a `finding` with category `"corporate"`, severity `"warning"`:
+     - `title`: `"חסרה תמצית רשם המשכונות לערב — [שם הערב]"`
+     - `description`: `"[שם הערב] מופיע כערב אישי בוועדת האשראי. לא אותרה תמצית רשם המשכונות עבורו בין מסמכי התיק. נדרש להמציא תמצית רשם המשכונות לבדיקת שעבודים ומשכונות אישיים הרשומים על שמו."`
+     - `sources`: cite the credit committee document as the source (document name, page, verbatim quote mentioning the guarantor).
+3. If the guarantor's Pledges Registry document **is** present: note it as found — no finding needed.
 
 ---
 
