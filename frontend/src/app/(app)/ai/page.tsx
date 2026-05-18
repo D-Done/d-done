@@ -1003,7 +1003,7 @@ export default function AiPage() {
               {/* Model toggle — always visible */}
               <button
                 onClick={() => setModelMode((m) => m === "flash" ? "pro" : "flash")}
-                title={modelMode === "flash" ? "עבור למצב חושב (Pro)" : "עבור למצב מהיר (Flash)"}
+                title={modelMode === "flash" ? "Switch to Pro (slower, smarter)" : "Switch to Flash (faster)"}
                 className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-all duration-150 ${
                   modelMode === "pro"
                     ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 ring-1 ring-inset ring-violet-300/60 dark:ring-violet-700/60"
@@ -1011,9 +1011,9 @@ export default function AiPage() {
                 }`}
               >
                 {modelMode === "pro" ? (
-                  <><Brain className="h-4 w-4" /><span>חושב</span></>
+                  <><Brain className="h-4 w-4" /><span>Pro</span></>
                 ) : (
-                  <><Zap className="h-4 w-4" /><span>מהיר</span></>
+                  <><Zap className="h-4 w-4" /><span>Flash</span></>
                 )}
               </button>
 
