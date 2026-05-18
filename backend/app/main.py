@@ -4,6 +4,7 @@ Database migrations are handled by Alembic and run from ``entrypoint.sh``
 *before* uvicorn starts — the app no longer touches the schema at runtime.
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -43,8 +44,18 @@ if os.environ.get("K_SERVICE"):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    from app.agents.session_store import close_session_service
+    # Cancel any live analysis tasks so they can mark themselves as failed in DB.
+    from app.api.analysis import _running_analysis_tasks
+    if _running_analysis_tasks:
+        logger.warning(
+            "Graceful shutdown: cancelling %d running analysis task(s)", len(_running_analysis_tasks)
+        )
+        tasks = list(_running_analysis_tasks)
+        for t in tasks:
+            t.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
+    from app.agents.session_store import close_session_service
     await close_session_service()
 
 

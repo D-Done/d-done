@@ -459,12 +459,19 @@ async def get_file_content(
     import asyncio
     from app.services.gcs import _get_client, _parse_gcs_uri
 
-    project, _ = require_project_access(db, user.id, project_id)
-    file = (
-        db.query(File)
-        .filter(File.id == file_id, File.project_id == project.id)
-        .first()
-    )
+    try:
+        project, _ = require_project_access(db, user.id, project_id)
+        file = (
+            db.query(File)
+            .filter(File.id == file_id, File.project_id == project.id)
+            .first()
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("DB error fetching file %s: %s", file_id, exc)
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
     if file.upload_status != "uploaded":

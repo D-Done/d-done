@@ -51,6 +51,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["analysis"])
 
+# Tracks all live analysis asyncio.Tasks so lifespan shutdown can cancel them gracefully.
+_running_analysis_tasks: set[asyncio.Task] = set()
+
 # Pipeline stages reported to the frontend (when status is "processing")
 PIPELINE_STAGE_DOC_PROCESSING = "doc_processing"
 PIPELINE_STAGE_EXTRACTION = "extraction"
@@ -387,6 +390,25 @@ async def _run_analysis_task(
                 needs_hitl_review=False,
             )
 
+        except asyncio.CancelledError:
+            # Cloud Run sent SIGTERM — mark as failed so the user can re-run.
+            logger.warning("Analysis task cancelled (instance shutdown): check_id=%s", check_id)
+            try:
+                result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
+                dd_check = result.scalar_one_or_none()
+                if dd_check and dd_check.status == "processing":
+                    dd_check.status = "failed"
+                    dd_check.error_message = "ניתוח הופסק עקב הפסקת שרת — אנא הרץ מחדש"
+                    dd_check.completed_at = datetime.now(timezone.utc)
+                result = await db.execute(select(Project).where(Project.id == project_id))
+                project = result.scalar_one_or_none()
+                if project and project.status == "processing":
+                    project.status = "failed"
+                    project.pipeline_stage = None
+                await db.commit()
+            except Exception:
+                pass  # DB may be unavailable during shutdown; best effort
+            raise
         except ExceptionGroup as eg:
             await _handle_analysis_failure(
                 eg, check_id=check_id, project_id=project_id, db=db, user_email=user_email
@@ -470,7 +492,7 @@ async def start_analysis(
         language,
     )
 
-    asyncio.create_task(
+    task = asyncio.create_task(
         _run_analysis_task(
             check_id=check_id,
             project_id=project_id,
@@ -481,6 +503,8 @@ async def start_analysis(
             language=language,
         )
     )
+    _running_analysis_tasks.add(task)
+    task.add_done_callback(_running_analysis_tasks.discard)
 
     return AnalyzeResponse(
         check_id=str(check_id),
