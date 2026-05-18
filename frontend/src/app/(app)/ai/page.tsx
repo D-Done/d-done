@@ -58,6 +58,7 @@ import {
   User,
   X,
 } from "lucide-react";
+// MessageSquare is used in the empty-state welcome screen cards
 
 const PdfCitationViewer = dynamic(
   () =>
@@ -557,26 +558,26 @@ export default function AiPage() {
               className="flex flex-col overflow-hidden rounded-3xl bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-inset ring-white/20 dark:ring-white/10"
             >
               {/* Sidebar header */}
-              <div className="shrink-0 px-4 py-4 border-b border-zinc-200/50 dark:border-zinc-700/40">
+              <div className="shrink-0 px-3 py-3 border-b border-zinc-200/50 dark:border-zinc-700/40">
                 <Button
                   onClick={handleNewConversation}
                   size="sm"
-                  className="w-full rounded-xl bg-zinc-900 hover:bg-zinc-700 text-white gap-2 h-9 font-medium shadow-sm"
+                  className="w-full rounded-xl bg-zinc-900 hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white text-white gap-2 h-9 font-medium shadow-sm transition-colors"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   שיחה חדשה
                 </Button>
               </div>
 
               {/* Conversations list */}
-              <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-1">
+              <div className="flex-1 min-h-0 overflow-y-auto py-2">
                 {convsLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
                   </div>
                 )}
                 {!convsLoading && conversations.length === 0 && (
-                  <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-8 px-3">
+                  <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 py-10 px-4">
                     {t("ai_no_convs", lang)}
                   </p>
                 )}
@@ -592,40 +593,49 @@ export default function AiPage() {
                     { label: lang === "en" ? "Earlier" : "קודם לכן", items: conversations.filter(c => new Date(c.updated_at) < startOfWeek) },
                   ];
                   return groups.map(({ label, items }) => items.length === 0 ? null : (
-                    <div key={label}>
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
-                      {items.map((conv) => (
-                        <button
-                          key={conv.id}
-                          onClick={() => selectConversation(conv.id)}
-                          className={`group w-full text-right rounded-xl px-3 py-2.5 transition-all duration-150 flex flex-col gap-0.5 ${
-                            currentConvId === conv.id
-                              ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 ring-1 ring-inset ring-zinc-200 dark:ring-zinc-600/40"
-                              : "hover:bg-zinc-100/70 dark:hover:bg-zinc-800/40 text-zinc-700 dark:text-zinc-200"
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-zinc-400" />
-                            <span className="flex-1 text-xs font-medium leading-snug line-clamp-1 text-right">
-                              {conv.title || t("ai_new_conv", lang)}
-                            </span>
+                    <div key={label} className="mb-1">
+                      <p className="px-4 pb-1 pt-3 text-[10px] font-medium text-zinc-400/70 dark:text-zinc-600 tracking-wide">{label}</p>
+                      {items.map((conv) => {
+                        const isActive = currentConvId === conv.id;
+                        return (
+                          <div key={conv.id} className="relative px-2">
                             <button
-                              onClick={(e) => handleDeleteConversation(conv.id, e)}
-                              className="opacity-0 group-hover:opacity-100 shrink-0 rounded-md p-0.5 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-500 transition-all"
+                              onClick={() => selectConversation(conv.id)}
+                              className={`group w-full text-right rounded-lg px-3 py-2 transition-all duration-150 flex flex-col gap-1 ${
+                                isActive
+                                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                                  : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 hover:text-zinc-900 dark:hover:text-zinc-100"
+                              }`}
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <div className="flex items-center justify-between gap-1 min-w-0">
+                                <span className={`flex-1 text-[13px] font-medium leading-snug line-clamp-1 text-right truncate ${isActive ? "text-white dark:text-zinc-900" : ""}`}>
+                                  {conv.title || t("ai_new_conv", lang)}
+                                </span>
+                                <button
+                                  onClick={(e) => handleDeleteConversation(conv.id, e)}
+                                  className={`opacity-0 group-hover:opacity-100 shrink-0 rounded p-0.5 transition-all duration-100 ${
+                                    isActive
+                                      ? "hover:bg-white/20 text-white/70 hover:text-white"
+                                      : "hover:bg-red-100 dark:hover:bg-red-500/20 text-zinc-400 hover:text-red-500"
+                                  }`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                              {conv.project_title && (
+                                <span className={`inline-flex items-center gap-1 self-end rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                                  isActive
+                                    ? "bg-white/15 text-white/80 dark:bg-zinc-900/20 dark:text-zinc-900/70"
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                                }`}>
+                                  <FolderOpen className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate max-w-[140px]">{conv.project_title}</span>
+                                </span>
+                              )}
                             </button>
                           </div>
-                          {conv.project_title && (
-                            <div className="flex items-center gap-1 pr-5">
-                              <FolderOpen className="h-3 w-3 text-zinc-400 shrink-0" />
-                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                                {conv.project_title}
-                              </span>
-                            </div>
-                          )}
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   ));
                 })()}
