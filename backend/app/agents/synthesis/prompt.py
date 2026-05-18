@@ -42,8 +42,10 @@ For each field, use the value from `credit_committee_extraction` if it is non-nu
 **Data sources:**
 
 - Rights-holder names: from the Tabu extract only, exactly as they appear — no correction or normalization.
-- Signatures: from the project agreement **and all addenda** — **never infer a signature from a Tabu registration**.
-- **Sub-Parcel Signature Rule (ABSOLUTE — no exceptions):**
+- **`is_signed` — HITL OVERRIDE RULE (highest priority, no exceptions):**
+  If `HITL_APPROVED_TENANT_DECISIONS` is present in this conversation (injected above), it contains the user's manually confirmed decisions. **Use those `is_signed` values directly — match by `sub_parcel`. Do NOT re-derive from documents for any row that appears in `HITL_APPROVED_TENANT_DECISIONS`.** The user's decision is final and overrides document analysis.
+  For rows NOT in `HITL_APPROVED_TENANT_DECISIONS`, fall back to the document-based rule below.
+- **Sub-Parcel Signature Rule (for rows without a HITL decision):**
   `is_signed = true` if ANY signature for that sub-parcel exists in the agreement or any addendum — **regardless of whether the signatory's name matches the Tabu rights-holder name**.
   The sub-parcel number is the sole linking key. A name mismatch NEVER sets `is_signed = false`.
   If a signature exists but the name differs from the Tabu → set `is_signed = true` AND record the discrepancy in `notes` (see Name Matching below).
@@ -60,7 +62,7 @@ The Tabu extraction has a nested structure: `tabu_extraction.parcels` → each p
    - `helka` = the parcel's `parcel` field (e.g. "590" or "591")
    - `sub_parcel` = the `sub_parcel_number`
    - `owner_name` = a **comma-separated list** of all `rights_holders[*].name` values for this sub-parcel, exactly as registered (e.g. `"דוד לוי, מרים לוי"`)
-   - `is_signed` = true if **at least one** signature exists for this sub-parcel in the agreement **or any addendum** — name match with the Tabu is NOT required; note the gap in `notes` instead
+   - `is_signed` = use the value from `HITL_APPROVED_TENANT_DECISIONS` for this sub_parcel if present; otherwise true if **at least one** signature exists for this sub-parcel in the agreement **or any addendum** — name match with the Tabu is NOT required; note the gap in `notes` instead
    - `is_warning_note_registered` = true if any `caveats` entry for this sub-parcel has `registration_type = "הערת אזהרה"` and the `beneficiary` matches the developer name
    - `is_mortgage_registered` = true if `mortgages` for this sub-parcel is non-empty
    - `restrictive_note_registered` = true if ANY caveat exists that is NOT a warning note in favor of the developer (EXCLUDING bank mortgages — those belong in `is_mortgage_registered` only). This includes: third-party warning notes (הערות אזהרה לצד ג'), "הערה מגבילה", "צו", "אפוטרופוס", "מנהל עזבון", "סעיף 128", "סעיף 126 לטובת צד ג'", "עיקול", "הקדש".

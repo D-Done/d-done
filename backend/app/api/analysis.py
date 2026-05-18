@@ -1243,16 +1243,17 @@ def _postprocess_report_dict(report_dict: dict) -> dict:
 
 
 def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]) -> None:
-    """Patch tenant_table in-place with user-approved is_signed values.
+    """Mandatory post-LLM enforcement of user-approved is_signed values.
 
-    The Phase 2 LLM can re-derive is_signed from extraction data and undo the
-    user's manual review. We enforce the approved values deterministically after
-    the LLM runs.
+    The user's HITL decisions are the sole source of truth. This runs after
+    Phase 2 LLM completes and unconditionally overwrites every tenant_table row
+    that matches an approved record. Rows with no HITL match are left as-is
+    (the LLM-derived value acts as a fallback for genuinely new sub-parcels).
 
     HITL records come from agreement_extraction.tenant_records which have
     sub_parcel + owner_name but NO helka (helka is Tabu-only). Phase 2 builds
-    tenant_table from Tabu and assigns helka. So we cannot match on helka when
-    the approved records don't carry it — fall back to sub_parcel-only matching.
+    tenant_table from Tabu and assigns helka. Matching is by sub_parcel alone
+    unless approved records explicitly carry helka/parcel.
     """
     if not approved_records:
         return
@@ -1291,11 +1292,13 @@ def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]
             row["is_signed"] = approved_map[key]
             patched += 1
 
+    # Always recalculate signing_percentage after override (even if patched==0,
+    # the LLM value may already match, so percentage stays valid).
+    signed = sum(1 for r in tenant_table if r.get("is_signed") is True)
+    total = len(tenant_table)
+    report_dict["signing_percentage"] = round(signed / total, 4) if total else 0.0
+
     if patched:
-        # Recalculate signing_percentage to stay consistent
-        signed = sum(1 for r in tenant_table if r.get("is_signed") is True)
-        total = len(tenant_table)
-        report_dict["signing_percentage"] = round(signed / total, 4) if total else 0.0
         logger.info(
             "HITL override: patched %d/%d tenant rows (helka_match=%s); signing_percentage=%.2f",
             patched, total, has_helka, report_dict["signing_percentage"],
@@ -1548,6 +1551,29 @@ async def _run_analysis_phase2(
 
     def _inject_approved_records(callback_context, llm_request):
         callback_context.state["_approved_tenant_records"] = approved_tenant_records
+        if approved_tenant_records:
+            import json as _json
+            from google.genai import types as _types
+            compact = [
+                {"sub_parcel": str(r.get("sub_parcel") or ""), "is_signed": r.get("is_signed")}
+                for r in approved_tenant_records
+                if r.get("sub_parcel") is not None and r.get("is_signed") is not None
+            ]
+            if compact:
+                notice = (
+                    "## HITL_APPROVED_TENANT_DECISIONS\n"
+                    "The user has manually reviewed and confirmed the following is_signed values.\n"
+                    "These are AUTHORITATIVE — use them directly for `is_signed` in every tenant_table row.\n"
+                    "Match by `sub_parcel`. Do NOT re-derive from documents.\n\n"
+                    f"{_json.dumps(compact, ensure_ascii=False)}"
+                )
+                llm_request.contents.insert(
+                    0,
+                    _types.Content(
+                        role="user",
+                        parts=[_types.Part.from_text(text=notice)],
+                    ),
+                )
 
     details_agent.before_model_callback = _inject_approved_records
 
