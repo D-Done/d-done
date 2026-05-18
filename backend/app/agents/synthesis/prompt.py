@@ -42,9 +42,13 @@ For each field, use the value from `credit_committee_extraction` if it is non-nu
 **Data sources:**
 
 - Rights-holder names: from the Tabu extract only, exactly as they appear — no correction or normalization.
-- Signatures: from the project agreement and its addenda only — **never infer a signature from a Tabu registration**.
-- Sub-Parcel Signature Rule: A sub-parcel shall be considered 'signed' (is_signed = true) if any valid signature exists for that specific sub-parcel in the agreement, regardless of whether the name of the signatory matches the owner's name in the Tabu extract exactly. The sub-parcel identity is the primary linker; do not disqualify a signature based on owner-name discrepancies if it is clearly tied to the sub-parcel.
-- Signing date (`date_signed`): use the latest date found for that tenant across all agreement documents.
+- Signatures: from the project agreement **and all addenda** — **never infer a signature from a Tabu registration**.
+- **Sub-Parcel Signature Rule (ABSOLUTE — no exceptions):**
+  `is_signed = true` if ANY signature for that sub-parcel exists in the agreement or any addendum — **regardless of whether the signatory's name matches the Tabu rights-holder name**.
+  The sub-parcel number is the sole linking key. A name mismatch NEVER sets `is_signed = false`.
+  If a signature exists but the name differs from the Tabu → set `is_signed = true` AND record the discrepancy in `notes` (see Name Matching below).
+  **Never leave `is_signed = false` when a signature tied to that sub-parcel exists anywhere in the documents.**
+- Signing date (`date_signed`): use the latest date found for that tenant across all agreement documents and addenda.
 
 **How to build the rows — CRITICAL:**
 
@@ -56,7 +60,7 @@ The Tabu extraction has a nested structure: `tabu_extraction.parcels` → each p
    - `helka` = the parcel's `parcel` field (e.g. "590" or "591")
    - `sub_parcel` = the `sub_parcel_number`
    - `owner_name` = a **comma-separated list** of all `rights_holders[*].name` values for this sub-parcel, exactly as registered (e.g. `"דוד לוי, מרים לוי"`)
-   - `is_signed` = true if **at least one** valid signature exists for this sub-parcel in the agreement
+   - `is_signed` = true if **at least one** signature exists for this sub-parcel in the agreement **or any addendum** — name match with the Tabu is NOT required; note the gap in `notes` instead
    - `is_warning_note_registered` = true if any `caveats` entry for this sub-parcel has `registration_type = "הערת אזהרה"` and the `beneficiary` matches the developer name
    - `is_mortgage_registered` = true if `mortgages` for this sub-parcel is non-empty
    - `restrictive_note_registered` = true if ANY caveat exists that is NOT a warning note in favor of the developer (EXCLUDING bank mortgages — those belong in `is_mortgage_registered` only). This includes: third-party warning notes (הערות אזהרה לצד ג'), "הערה מגבילה", "צו", "אפוטרופוס", "מנהל עזבון", "סעיף 128", "סעיף 126 לטובת צד ג'", "עיקול", "הקדש".
@@ -69,11 +73,13 @@ Consistency Rule (CRITICAL):
 
 **Name Matching:**
 
-1. For each rights-holder in the Tabu, search for their name in the agreement (ignore spaces, punctuation, גרשיים).
-2. If a discrepancy exists — note in `notes`: _"קיים פער מול ההסכם"_.
+1. For each rights-holder in the Tabu, search for their name in the agreement and addenda (ignore spaces, punctuation, גרשיים).
+2. If a discrepancy exists between the signatory name in the agreement and the rights-holder name in the Tabu:
+   - **Keep `is_signed = true`** — a signature exists; the name gap does NOT invalidate it.
+   - Note in `notes`: _"חתום — קיים פער בין שם החותם בהסכם לשם הרשום בטאבו"_.
 3. If a gap was flagged — search for a **bridging document**: power of attorney (ייפוי כוח), assignment of rights, signed addendum.
-   - Found → `notes`: _"פער ניתן לגישור — קיימת אינדיקציה למסמך מגשר"_.
-   - Not found → `notes`: _"פער לא שוקף במסמכים שנבדקו / נדרש אימות"_.
+   - Found → append to `notes`: _"פער ניתן לגישור — קיימת אינדיקציה למסמך מגשר"_.
+   - Not found → append to `notes`: _"מסמך מגשר לא אותר — נדרש אימות"_.
 
 **Legal highlights (field `notes`):**
 
