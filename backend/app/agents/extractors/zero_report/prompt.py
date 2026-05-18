@@ -155,7 +155,7 @@ Your response MUST be a valid JSON matching this structure:
   "equity_amount_ils": 5000000,
   "equity_confirmed": true,
   "equity_confirmation_details": "אושר על ידי רו\\"ח בתעודה מיום 10.2.2024",
-  "construction_restrictions": ["עתיקות — נדרש חפירת הצלה לפי רשות העתיקות"],
+  "construction_restrictions": [],
   "guarantees_mentioned": ["ערבות שכירות", "ערבות חוק המכר", "ערבות ביצוע"],
   "rent_guarantee_duration_months": 33,
   "indexation_details": "הצמדה למדד תשומות הבנייה, בסיס 2023-06",
