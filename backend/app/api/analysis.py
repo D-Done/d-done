@@ -1292,8 +1292,25 @@ def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]
             row["is_signed"] = approved_map[key]
             patched += 1
 
-    # Always recalculate signing_percentage after override (even if patched==0,
-    # the LLM value may already match, so percentage stays valid).
+    # Fallback: if matching failed for some/all rows, apply by position.
+    # This handles cases where sub_parcel values differ between HITL source
+    # and Phase 2 output (e.g. agreement vs Tabu numbering mismatch).
+    if patched < len(tenant_table) and len(approved_records) == len(tenant_table):
+        positional_values = [
+            rec.get("is_signed")
+            for rec in approved_records
+            if rec.get("is_signed") is not None
+        ]
+        if len(positional_values) == len(tenant_table):
+            for i, row in enumerate(tenant_table):
+                sub = str(row.get("sub_parcel") or "").strip()
+                key = (sub,) if not has_helka else (str(row.get("helka") or "").strip(), sub)
+                if key not in approved_map:
+                    row["is_signed"] = positional_values[i]
+                    patched += 1
+            logger.info("HITL override: positional fallback applied for %d rows", patched)
+
+    # Always recalculate signing_percentage after override.
     signed = sum(1 for r in tenant_table if r.get("is_signed") is True)
     total = len(tenant_table)
     report_dict["signing_percentage"] = round(signed / total, 4) if total else 0.0
@@ -1486,7 +1503,32 @@ async def _run_analysis(
     if phase1_only and use_visual_grounding:
         main_output = state.get("synthesis_main_output") or {}
         agreement_extraction = state.get("agreement_extraction") or {}
-        tenant_records = state.get(STATE_HITL_TENANT_DATA) or agreement_extraction.get("tenant_records") or []
+
+        # Use Phase 1 tenant_table (built from Tabu) as the HITL source.
+        # Phase 1 uses the definitive Tabu sub_parcel numbers, which are identical
+        # to what Phase 2 will produce — guaranteeing perfect sub_parcel matching
+        # when the user's decisions are applied after Phase 2.
+        # Fall back to agreement_extraction.tenant_records only if Phase 1 produced
+        # no tenant_table (shouldn't happen in practice).
+        phase1_tenant_table: list[dict] = main_output.get("tenant_table") or []
+        if phase1_tenant_table:
+            tenant_records = [
+                {
+                    "sub_parcel": row.get("sub_parcel"),
+                    "owner_name": row.get("owner_name"),
+                    "is_signed": row.get("is_signed"),
+                    "date_signed": row.get("date_signed"),
+                    "source": None,
+                }
+                for row in phase1_tenant_table
+            ]
+        else:
+            tenant_records = (
+                state.get(STATE_HITL_TENANT_DATA)
+                or agreement_extraction.get("tenant_records")
+                or []
+            )
+
         signing_percentage = main_output.get("signing_percentage") or 0.0
         signing_sources = main_output.get("tenant_table_signing_sources") or []
         hitl_data = {
