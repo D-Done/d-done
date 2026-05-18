@@ -1512,16 +1512,32 @@ async def _run_analysis(
         # no tenant_table (shouldn't happen in practice).
         phase1_tenant_table: list[dict] = main_output.get("tenant_table") or []
         if phase1_tenant_table:
-            tenant_records = [
-                {
+            # Build a lookup from agreement records for source-document attribution
+            # (for HITL UI tab grouping). Match by sub_parcel first, then owner_name.
+            agreement_records: list[dict] = agreement_extraction.get("tenant_records") or []
+            agr_by_sub: dict[str, dict] = {
+                str(r.get("sub_parcel") or "").strip(): r
+                for r in agreement_records
+                if r.get("sub_parcel") is not None
+            }
+            agr_by_owner: dict[str, dict] = {}
+            for r in agreement_records:
+                key = " ".join((r.get("owner_name") or "").split()).lower()
+                if key:
+                    agr_by_owner[key] = r
+
+            tenant_records = []
+            for row in phase1_tenant_table:
+                sub = str(row.get("sub_parcel") or "").strip()
+                owner_key = " ".join((row.get("owner_name") or "").split()).lower()
+                agr = agr_by_sub.get(sub) or agr_by_owner.get(owner_key)
+                tenant_records.append({
                     "sub_parcel": row.get("sub_parcel"),
                     "owner_name": row.get("owner_name"),
                     "is_signed": row.get("is_signed"),
                     "date_signed": row.get("date_signed"),
-                    "source": None,
-                }
-                for row in phase1_tenant_table
-            ]
+                    "source": agr.get("source") if agr else None,
+                })
         else:
             tenant_records = (
                 state.get(STATE_HITL_TENANT_DATA)
