@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <Collapsible open={sidebarOpen} onOpenChange={setOpen} className="contents">
         <CollapsibleContent asChild>
-          <aside className="fixed right-0 top-0 hidden h-screen w-72 flex-col bg-zinc-950 text-zinc-100 data-[state=closed]:hidden lg:flex">
+          <aside className={`fixed top-0 ${dir === "rtl" ? "right-0" : "left-0"} hidden h-screen w-72 flex-col bg-zinc-950 text-zinc-100 data-[state=closed]:hidden lg:flex`}>
             <div className="flex h-16 shrink-0 items-center justify-between gap-3 px-5">
               <Link href="/dashboard" className="flex min-w-0 items-center gap-2 font-semibold">
                 <span className="truncate text-lg">D-Done</span>
@@ -238,7 +238,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </aside>
         </CollapsibleContent>
 
-        <div className={`flex min-h-screen flex-col transition-[padding] duration-200 ease-out ${sidebarOpen ? "lg:pr-72" : ""}`}>
+        <div className={`flex min-h-screen flex-col transition-[padding] duration-200 ease-out ${sidebarOpen ? (dir === "rtl" ? "lg:pr-72" : "lg:pl-72") : ""}`}>
           <header className="sticky top-0 z-40 shrink-0 border-b bg-zinc-50/90 dark:bg-zinc-950/90 backdrop-blur dark:border-zinc-800/50">
             <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
               <div className="relative flex-1">
@@ -248,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onChange={(e) => setGlobalSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitSearch(globalSearch); }}
                   placeholder={t("search_placeholder", lang)}
-                  className="h-10 rounded-2xl bg-white dark:bg-zinc-900/80 dark:border-zinc-800/60 pr-10 shadow-sm"
+                  className="h-10 rounded-2xl bg-white dark:bg-zinc-900/80 dark:border-zinc-800/60 pe-10 shadow-sm"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 </Button>
                 {showNotifications && (
-                  <div className="absolute left-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-950 shadow-xl" dir={dir}>
+                  <div className="absolute start-0 top-12 z-50 w-80 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-950 shadow-xl" dir={dir}>
                     <div className="border-b px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200">
                       {t("notifications", lang)}
                     </div>

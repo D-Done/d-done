@@ -2,6 +2,7 @@
 
 import { AppShell } from "@/components/app-shell";
 import { LanguageProvider } from "@/lib/language-context";
+import { DirectionSync } from "@/components/direction-sync";
 
 export default function AppLayout({
   children,
@@ -10,6 +11,7 @@ export default function AppLayout({
 }) {
   return (
     <LanguageProvider>
+      <DirectionSync />
       <AppShell>{children}</AppShell>
     </LanguageProvider>
   );

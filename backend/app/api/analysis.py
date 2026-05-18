@@ -667,6 +667,11 @@ async def approve_tenant_table(
         await db.commit()
         raise HTTPException(status_code=500, detail=str(exc))
 
+    # Patch the LLM-generated tenant_table with the user's manual overrides.
+    # The LLM sometimes re-derives is_signed from extraction data, overriding
+    # the human review. We enforce the approved values deterministically.
+    _apply_hitl_tenant_overrides(analysis_result.report_dict, body.tenant_records)
+
     result = await db.execute(select(DDCheck).where(DDCheck.id == check_id))
     dd_check = result.scalar_one()
     dd_check.status = "completed"
@@ -1147,7 +1152,67 @@ def _postprocess_report_dict(report_dict: dict) -> dict:
                 zrm["profit_on_cost"] = round(profit / cost, 4)
 
     report_dict["zero_report_metrics"] = zrm
+
+    # construction_restrictions must always be a non-empty list.
+    cr = zrm.get("construction_restrictions")
+    if not cr:
+        zrm["construction_restrictions"] = [
+            'לא אותרה התייחסות להגבלות בנייה בדו"ח האפס ובועדת האשראי'
+        ]
+
+    # Mezzanine must always surface — at minimum a "not found" note.
+    financing = report_dict.get("financing")
+    if isinstance(financing, dict):
+        mez_exists = financing.get("mezzanine_loan_exists")
+        mez_details = financing.get("mezzanine_loan_details")
+        if mez_exists is None and not mez_details:
+            financing["mezzanine_loan_details"] = (
+                "לא אותרה התייחסות למימון מזנין במסמכים שנבדקו"
+            )
+
     return report_dict
+
+
+def _apply_hitl_tenant_overrides(report_dict: dict, approved_records: list[dict]) -> None:
+    """Patch tenant_table in-place with user-approved is_signed values.
+
+    The Phase 2 LLM can re-derive is_signed from extraction data and undo the
+    user's manual review. We enforce the approved values deterministically after
+    the LLM runs, matching on (helka, sub_parcel).
+    """
+    if not approved_records:
+        return
+    tenant_table: list[dict] = report_dict.get("tenant_table") or []
+    if not tenant_table:
+        return
+
+    # Build a lookup: (helka, sub_parcel) -> approved is_signed
+    approved_map: dict[tuple, bool | None] = {}
+    for rec in approved_records:
+        helka = str(rec.get("helka") or rec.get("parcel") or "").strip()
+        sub = str(rec.get("sub_parcel") or "").strip()
+        is_signed = rec.get("is_signed")
+        if is_signed is not None:
+            approved_map[(helka, sub)] = bool(is_signed)
+
+    patched = 0
+    for row in tenant_table:
+        helka = str(row.get("helka") or "").strip()
+        sub = str(row.get("sub_parcel") or "").strip()
+        key = (helka, sub)
+        if key in approved_map:
+            row["is_signed"] = approved_map[key]
+            patched += 1
+
+    if patched:
+        # Recalculate signing_percentage to stay consistent
+        signed = sum(1 for r in tenant_table if r.get("is_signed") is True)
+        total = len(tenant_table)
+        report_dict["signing_percentage"] = round(signed / total, 4) if total else 0.0
+        logger.info(
+            "HITL override: patched %d/%d tenant rows; signing_percentage=%.2f",
+            patched, total, report_dict["signing_percentage"],
+        )
 
 
 class _AnalysisResult:

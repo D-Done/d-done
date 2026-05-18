@@ -168,12 +168,13 @@ Compare the resolved signatory name(s) against `signing_protocol_extraction.auth
     - If the fund acts as the **sole or primary lender** (no bank/insurance co-financer issuing guarantees) → set `lender_compliance_note` to: `"המממן נבחר כקרן, אך הסכם המימון מגדיר את הגוף המממן כבנק או חברת ביטוח. קרן השקעות מוזכרת בהסכם רק בשילוב עם בנק/חברת ביטוח ולא כגוף מממן עצמאי. נדרש לקבל את אישור הדיירים/נציגות לשינוי אופי הגוף המממן."`
 - **Match** — both sides present and compatible: `financing.lender_compliance_note`: "המממן תואם להגדרות ההסכם".
 
-**Mezzanine financing:**
+**Mezzanine financing — ALWAYS POPULATE:**
 
 - Extract from agreement: restriction/prohibition on mezzanine/debt-fund financing.
 - Is tenant/representative consent required?
 - `mezzanine_loan_exists`: whether mezzanine exists in practice.
 - `mezzanine_loan_details`: the restriction wording + consent requirement.
+- **If no mention of mezzanine is found in any document:** set `mezzanine_loan_exists` to `null` and `mezzanine_loan_details` to `"לא אותרה התייחסות למימון מזנין במסמכים שנבדקו"`. Do NOT leave both fields null — one of these two states must be reflected.
 
 ---
 
@@ -262,9 +263,20 @@ Do **not** emit a `findings` entry for this section.
 **Ownership chain (`developer_ubo_chain` and `developer_ubo_graph`):**
 
 - Extract the full chain: signing company → parent companies → ultimate beneficial owners (individuals + ת"ז ID numbers).
-- **UBO graph:** `company_docs_extraction` has a `companies` list; each entry has a `ubo_graph` field (nodes + edges). Locate the developer's company entry (usually the first, or the one matching the signing company name) and copy its `ubo_graph` verbatim to `developer_ubo_graph` for graph display in the UI. If every `ubo_graph` entry in the list is null or missing — leave `developer_ubo_graph` null.
+- **UBO graph:** `company_docs_extraction` has a `companies` list; each entry has a `ubo_graph` field (nodes + edges). Locate the developer’s company entry (usually the first, or the one matching the signing company name) and copy its `ubo_graph` verbatim to `developer_ubo_graph` for graph display in the UI. If every `ubo_graph` entry in the list is null or missing — leave `developer_ubo_graph` null.
 - Cross-reference against company docs + agreement.
 - Chain that does not reach individual level → `high_risk_flags`.
+
+**Handling תעודת התאגדות (Certificate of Incorporation) — IMPORTANT:**
+
+When any entry in `company_docs_extraction.companies` has `document_subtype = "תעודת_התאגדות"`:
+
+1. **Still include the company in the holding tree:** Add the company to `developer_ubo_chain` as a named entity (e.g., `"<company_name> — תעודת התאגדות בלבד"`) at the appropriate position in the chain (based on context from the agreement or credit committee). Add it as a node in `developer_ubo_graph` if a graph is being built — use `type: "company"` with no incoming edges (owners unknown).
+2. **Emit a `"warning"` finding** (category: `"corporate"`) for each such company with:
+   - `title`: `"מסמך חברה חסר — תעודת התאגדות בלבד"`
+   - `description`: `"עבור [company_name] הועלתה תעודת התאגדות בלבד. לא ניתן לזהות את בעלי המניות ולא ניתן לדעת אם קיימים שעבודים רשומים על החברה. נדרש נסח חברה מלא מרשם החברות."`
+   - Use the certificate filename as `source_document_name`; set `page_number` to 1 and `verbatim_quote` to the company name as it appears in the document.
+3. **Do not fabricate** shareholders, UBO individuals, or lien data for תעודת התאגדות entries.
 
 **Directors and officers:**
 
@@ -274,7 +286,7 @@ Do **not** emit a `findings` entry for this section.
 **Company-level liens (נסח חברה):**
 
 - Detail all registered liens (שעבודים).
-- A lien not on the project's assets → include with note: "לידיעה בלבד — רשום על נכס אחר ואינו מהווה חסם לפרויקט".
+- A lien not on the project’s assets → include with note: "לידיעה בלבד — רשום על נכס אחר ואינו מהווה חסם לפרויקט".
 
 **Liens on controlling shareholders (רשם המשכונות — Pledges Registry):**
 
@@ -314,11 +326,11 @@ Do **not** emit a `findings` entry for this section.
 3. Combine findings from both sources into a single summary string (e.g., "מדד תשומות הבניה ומדד המחירים לצרכן, בסיס 06/2025").
 4. Only set to `"אין התייחסות למדד"` after confirming **both** fields are null or contain the "not found" phrase.
 
-**`construction_restrictions` — always populate:**
+**`construction_restrictions` — ALWAYS POPULATE (never return empty):**
 1. Start with all items in `zero_report_extraction.construction_restrictions`.
 2. Also check `credit_committee_extraction` for any planning constraints, antiquities (עתיקות), preservation (שימור), permit status, or engineering constraints not already listed.
 3. Add any additional restrictions found in the credit committee to the list.
-4. Return an empty list only if **both** sources contain no restrictions whatsoever.
+4. **If neither source contains any restrictions:** return `["לא אותרה התייחסות להגבלות בנייה בדו\"ח האפס ובועדת האשראי"]`. Do NOT return an empty list — this field must always be populated so the reader knows it was checked.
 
 **Cross-reference with agreement addenda:**
 

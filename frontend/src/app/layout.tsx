@@ -13,7 +13,7 @@ const rubik = Rubik({
 
 export const metadata: Metadata = {
   title: "D-Done | Smart Due Diligence",
-  description: "פלטפורמת בדיקת נאותות מבוססת AI לעורכי דין בתחום הנדל\"ן",
+  description: "פלטפורמת בדיקת נאותות חכמה מבוססת AI — מימון נדל\"ן, מיזוגים ורכישות ועוד",
 };
 
 const descopeCookieSecure = process.env.NODE_ENV === "production";

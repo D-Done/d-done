@@ -20,6 +20,14 @@ class CompanyDocsExtraction(BaseModel):
     source_document_name: str = Field(
         description="Exact filename of the company document this data was extracted from"
     )
+    document_subtype: str = Field(
+        default="נסח_חברה",
+        description=(
+            "Type of company document: 'נסח_חברה' for a Registrar of Companies extract "
+            "or 'תעודת_התאגדות' for a Certificate of Incorporation. "
+            "Certificates of Incorporation lack shareholder and lien data."
+        ),
+    )
     company_name: str = Field(description="Full registered company name")
     company_number: str | None = Field(
         default=None, description="Company registration number"
