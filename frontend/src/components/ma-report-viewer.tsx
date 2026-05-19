@@ -1319,43 +1319,78 @@ function FindingsList({
   findings: MaFinding[];
   onOpenSource: (src: SourceRef) => void;
 }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div className="mt-3">
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
         ממצאים ({findings.length})
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-zinc-800/60">
-        {findings.map((f) => (
-          <div key={f.id} className="flex gap-3 py-4 first:pt-0">
+      <div className="rounded-xl border border-slate-100 dark:border-zinc-800/50 overflow-hidden">
+        {findings.map((f, idx) => {
+          const isOpen = expanded.has(f.id);
+          const severityStripe =
+            f.severity === "critical"
+              ? "bg-red-400 dark:bg-red-500"
+              : f.severity === "warning"
+                ? "bg-amber-400 dark:bg-amber-500"
+                : "bg-slate-300 dark:bg-zinc-600";
+          const rowBg = idx % 2 === 0
+            ? "bg-white dark:bg-zinc-900/60"
+            : "bg-slate-50/70 dark:bg-zinc-800/30";
+
+          return (
             <div
-              className={`w-0.5 shrink-0 rounded-full ${
-                f.severity === "critical"
-                  ? "bg-red-400 dark:bg-red-500"
-                  : f.severity === "warning"
-                    ? "bg-amber-400 dark:bg-amber-500"
-                    : "bg-slate-300 dark:bg-zinc-600"
-              }`}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-2 mb-1.5">
+              key={f.id}
+              className={`${rowBg} ${idx > 0 ? "border-t border-slate-100 dark:border-zinc-800/50" : ""}`}
+            >
+              <button
+                onClick={() => toggle(f.id)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-right hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors"
+              >
+                <div className={`w-1 self-stretch rounded-full shrink-0 ${severityStripe}`} />
                 <FindingSeverityIcon severity={f.severity} />
-                <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-snug">
+                <span className="flex-1 font-medium text-[13px] text-slate-800 dark:text-slate-100 leading-snug">
                   {f.title}
                 </span>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
-                {f.description}
-              </p>
-              {f.sources && f.sources.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {f.sources.map((s, idx) => (
-                    <SourceButton key={idx} source={s} onClick={onOpenSource} />
-                  ))}
+                {f.sources && f.sources.length > 0 && (
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
+                    {f.sources.length} מקורות
+                  </span>
+                )}
+                <svg
+                  className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isOpen && (
+                <div className="px-4 pb-3 pt-1 border-t border-slate-100/70 dark:border-zinc-800/40">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {f.description}
+                  </p>
+                  {f.sources && f.sources.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {f.sources.map((s, sidx) => (
+                        <SourceButton key={sidx} source={s} onClick={onOpenSource} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
