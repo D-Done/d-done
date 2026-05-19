@@ -1738,7 +1738,7 @@ export function MaReportViewer({
           </div>
         </CardHeader>
 
-        {report.executive_summary?.summary && (
+        {chaptersById.get("transaction_overview")?.summary_he && (
           <CardContent className="pt-0">
             <div className="rounded-xl border border-slate-100 dark:border-zinc-700/50 bg-slate-50/60 dark:bg-zinc-800/40 px-4 py-3">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
@@ -1746,7 +1746,7 @@ export function MaReportViewer({
                 תמצית מנהלים
               </div>
               <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                {report.executive_summary.summary}
+                {chaptersById.get("transaction_overview")!.summary_he}
               </p>
             </div>
           </CardContent>
