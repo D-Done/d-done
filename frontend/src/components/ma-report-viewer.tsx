@@ -61,7 +61,6 @@ const PdfCitationViewer = dynamic(
 // ---------------------------------------------------------------------------
 
 const CHAPTER_ORDER: MaChapterId[] = [
-  "transaction_overview",
   "corporate_governance",
   "customer_obligations",
   "supplier_obligations",
@@ -150,7 +149,7 @@ function findFileIdByDocumentName(
 
 function TableWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
+    <div className="overflow-x-auto">
       <table className="w-full text-sm text-right">{children}</table>
     </div>
   );
@@ -158,7 +157,7 @@ function TableWrapper({ children }: { children: React.ReactNode }) {
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 whitespace-nowrap">
+    <th className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-700/60 whitespace-nowrap">
       {children}
     </th>
   );
@@ -173,7 +172,7 @@ function Td({
 }) {
   return (
     <td
-      className={`px-3 py-2.5 text-slate-700 align-top border-b border-slate-100 last:border-b-0 ${className}`}
+      className={`px-3 py-3 text-slate-700 dark:text-slate-300 align-top border-b border-slate-100 dark:border-zinc-800/50 last:border-b-0 ${className}`}
     >
       {children}
     </td>
