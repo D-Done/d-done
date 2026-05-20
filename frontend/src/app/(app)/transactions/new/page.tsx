@@ -696,13 +696,11 @@ export default function NewTransactionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 overflow-hidden">
-                <div className="px-4 py-3 bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-700/50">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    פרקי חובה (10)
-                  </p>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-zinc-700/30">
+              <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
+                  פרקי חובה (10) — נכללים תמיד
+                </p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                   {[
                     "Transaction Overview",
                     "Corporate Governance",
@@ -715,11 +713,9 @@ export default function NewTransactionPage() {
                     "Financial Debt",
                     "Insurance",
                   ].map((name) => (
-                    <div key={name} className="flex items-center justify-between px-4 py-3 gap-3">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{name}</span>
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-full px-2 py-0.5">
-                        חובה
-                      </span>
+                    <div key={name} className="flex items-center gap-2 min-w-0">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500 flex-none" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{name}</span>
                     </div>
                   ))}
                 </div>
