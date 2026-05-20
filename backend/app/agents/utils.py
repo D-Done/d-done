@@ -27,6 +27,7 @@ def make_generate_config(
     """
     try:
         kwargs: dict = dict(
+            temperature=0.0,
             http_options=genai_types.HttpOptions(
                 retry_options=genai_types.HttpRetryOptions(
                     initial_delay=initial_delay,
@@ -51,4 +52,4 @@ def generate_content_config(
     cfg = make_generate_config(max_output_tokens=max_output_tokens)
     if cfg is not None:
         return cfg
-    return genai_types.GenerateContentConfig(max_output_tokens=max_output_tokens)
+    return genai_types.GenerateContentConfig(temperature=0.0, max_output_tokens=max_output_tokens)
