@@ -21,7 +21,6 @@ from app.agents.constants import FLASH_MODEL
 from app.agents.ma.constants import (
     MA_ALL_CHAPTERS,
     MA_DOC_KINDS,
-    MA_MANDATORY_CHAPTERS,
     STATE_MA_CLASSIFICATION,
 )
 from app.agents.utils import make_generate_config
@@ -86,7 +85,7 @@ chapter tags where possible (an unknown-kind board email is still likely
 
 ## Allowed ``chapter_tags``
 
-{chr(10).join(f"- {cid}" for cid in MA_MANDATORY_CHAPTERS)}
+{chr(10).join(f"- {cid}" for cid in MA_ALL_CHAPTERS)}
 
 Do NOT invent new chapter ids. Return an empty list when nothing applies —
 the document will then be excluded from every chapter.
@@ -108,6 +107,16 @@ the document will then be excluded from every chapter.
 - Financing agreements, loan documents, promissory notes, guarantees,
   pledges / lien registrations -> financial_debt.
 - Insurance policies, declarations, run-off / tail endorsements -> insurance.
+- Patents, trademarks, copyright registrations, trade secret agreements,
+  IP assignments, software licenses -> intellectual_property.
+- Real estate titles, lease agreements, machinery/equipment lists,
+  asset registers, valuation reports -> physical_assets.
+- Privacy policies, data processing agreements, GDPR/Privacy Shield records,
+  cybersecurity audit reports, penetration test results -> privacy_and_cyber.
+- Environmental impact assessments, sustainability reports, ESG policies,
+  waste/emissions records, regulatory environmental filings -> esg_environmental.
+- Brand licensing agreements, customer lists, franchise agreements,
+  non-compete agreements (with goodwill component), know-how licenses -> intangible_assets.
 
 One document can belong to several chapters — tag all that apply.
 

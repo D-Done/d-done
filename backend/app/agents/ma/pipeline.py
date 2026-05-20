@@ -44,7 +44,6 @@ from app.agents.ma.constants import (
     MA_OPTIONAL_CHAPTERS,
     STATE_MA_COMPLETENESS,
     STATE_MA_METADATA,
-    STATE_MA_SELECTED_CHAPTERS,
     chapter_state_key,
 )
 from app.agents.ma.report_schema import (
@@ -148,11 +147,18 @@ def _build_executive_summary(chapters: list[dict]) -> ExecutiveSummary:
 # ---------------------------------------------------------------------------
 
 
-async def _assemble_ma_report(callback_context: CallbackContext) -> None:
+async def _assemble_ma_report(
+    callback_context: CallbackContext,
+    optional_chapters: tuple[str, ...] = (),
+) -> None:
     """Read every chapter + completeness from state and build ``MaDDReport``.
 
     Runs as the SequentialAgent's ``after_agent_callback`` — at this point
     all chapter agents and the completeness agent have written their outputs.
+
+    ``optional_chapters`` is supplied by the ``create_ma_pipeline`` closure so
+    the assembler never has to read STATE_MA_SELECTED_CHAPTERS from session
+    state (which may be unreliable inside after_agent_callback).
     """
     # Anchor chapter IDs mapped to their structured extraction field name.
     # The field is popped from the chapter dict and stored under anchor_extractions.
@@ -174,9 +180,14 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
         "intangible_assets": "intangible_assets_extraction",
     }
 
-    selected_optional: list[str] = callback_context.state.get(STATE_MA_SELECTED_CHAPTERS, []) or []
     chapters_to_assemble: tuple[str, ...] = MA_MANDATORY_CHAPTERS + tuple(
-        c for c in selected_optional if c in MA_ALL_CHAPTERS
+        c for c in optional_chapters if c in MA_ALL_CHAPTERS
+    )
+    logger.info(
+        "ma_pipeline: assembling chapters: mandatory=%d optional=%d → total=%d",
+        len(MA_MANDATORY_CHAPTERS),
+        len(optional_chapters),
+        len(chapters_to_assemble),
     )
 
     chapters: list[dict] = []
@@ -279,14 +290,22 @@ def create_ma_pipeline(
     ``optional_chapters`` — the user-selected optional chapter IDs to run.
     Defaults to all optional chapters when None (backwards-compatible).
     """
-    resolved_optional = optional_chapters if optional_chapters is not None else MA_OPTIONAL_CHAPTERS
+    resolved_optional: tuple[str, ...] = (
+        tuple(optional_chapters) if optional_chapters is not None else MA_OPTIONAL_CHAPTERS
+    )
 
     classifier = create_ma_classifier_agent()
     classifier.before_model_callback = _inject_pdfs_for_ma_classifier
     classifier.after_model_callback = _repair_truncated_json
 
     chapter_agents = create_ma_chapter_agents(optional_chapters=resolved_optional)
-    completeness = create_ma_completeness_agent()
+    completeness = create_ma_completeness_agent(optional_chapters=resolved_optional)
+
+    # Capture resolved_optional in the assembler closure so we never rely on
+    # reading STATE_MA_SELECTED_CHAPTERS from callback_context.state (which may
+    # only expose the sub-agent's own delta, not the full merged session state).
+    async def _assembler(callback_context: CallbackContext) -> None:
+        await _assemble_ma_report(callback_context, optional_chapters=resolved_optional)
 
     return SequentialAgent(
         name="ma_pipeline",
@@ -298,7 +317,7 @@ def create_ma_pipeline(
             ),
             completeness,
         ],
-        after_agent_callback=_assemble_ma_report,
+        after_agent_callback=_assembler,
     )
 
 

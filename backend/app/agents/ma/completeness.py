@@ -18,6 +18,7 @@ from google.adk.agents.readonly_context import ReadonlyContext
 from app.agents.constants import PRO_MODEL
 from app.agents.ma.constants import (
     CHAPTER_TITLES_HE,
+    MA_ALL_CHAPTERS,
     MA_MANDATORY_CHAPTERS,
     STATE_MA_COMPLETENESS,
     chapter_state_key,
@@ -69,30 +70,48 @@ not raised by a chapter.
 """
 
 
-def _build_instruction(ctx: ReadonlyContext) -> str:
-    """Assemble the prompt with every chapter's follow-ups inlined as JSON."""
-    blocks: list[str] = [_PREAMBLE, "# Per-chapter follow-ups"]
+def _make_instruction_builder(
+    chapters_to_review: tuple[str, ...]
+):
+    """Return a dynamic instruction builder that includes all selected chapters."""
+    def _build_instruction(ctx: ReadonlyContext) -> str:
+        blocks: list[str] = [_PREAMBLE, "# Per-chapter follow-ups"]
 
-    for chapter_id in MA_MANDATORY_CHAPTERS:
-        chapter_output = ctx.state.get(chapter_state_key(chapter_id)) or {}
-        follow_ups = chapter_output.get("follow_ups") or []
-        title_he = CHAPTER_TITLES_HE[chapter_id]
-        blocks.append(
-            f"## {chapter_id} — {title_he} ({len(follow_ups)} items)\n\n"
-            + "```json\n"
-            + json.dumps(follow_ups, ensure_ascii=False, indent=2)
-            + "\n```"
-        )
+        for chapter_id in chapters_to_review:
+            chapter_output = ctx.state.get(chapter_state_key(chapter_id)) or {}
+            follow_ups = chapter_output.get("follow_ups") or []
+            title_he = CHAPTER_TITLES_HE.get(chapter_id, chapter_id)
+            blocks.append(
+                f"## {chapter_id} — {title_he} ({len(follow_ups)} items)\n\n"
+                + "```json\n"
+                + json.dumps(follow_ups, ensure_ascii=False, indent=2)
+                + "\n```"
+            )
 
-    return "\n\n".join(blocks)
+        return "\n\n".join(blocks)
+
+    return _build_instruction
 
 
-def create_ma_completeness_agent() -> Agent:
-    """Return the completeness-aggregator agent."""
+def create_ma_completeness_agent(
+    optional_chapters: tuple[str, ...] | list[str] | None = None,
+) -> Agent:
+    """Return the completeness-aggregator agent.
+
+    ``optional_chapters`` — the same selected optional chapters passed to
+    ``create_ma_pipeline``.  When provided, their follow_ups are included in
+    the completeness prompt alongside the mandatory chapters.
+    """
+    selected_optional = tuple(optional_chapters) if optional_chapters is not None else ()
+    chapters_to_review = MA_MANDATORY_CHAPTERS + tuple(
+        c for c in selected_optional if c in MA_ALL_CHAPTERS
+    )
+    instruction = _make_instruction_builder(chapters_to_review)
+
     return Agent(
         name="ma_completeness",
         model=PRO_MODEL,
-        instruction=_build_instruction,
+        instruction=instruction,
         description=(
             "Aggregates every chapter's follow_ups into a single deduped, "
             "prioritized completeness checklist."
