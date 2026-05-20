@@ -136,6 +136,7 @@ MA_DOC_KINDS: Final[tuple[str, ...]] = (
 STATE_MA_CLASSIFICATION = "ma_classification"
 STATE_MA_METADATA = "ma_project_metadata"
 STATE_MA_COMPLETENESS = "ma_completeness"
+STATE_MA_SELECTED_CHAPTERS = "ma_selected_chapters"
 
 
 def chapter_state_key(chapter_id: str) -> str:

@@ -194,6 +194,7 @@ class AnalyzeRequest(BaseModel):
     custom_prompt: str | None = None
     max_qa_retries: int | None = None
     use_visual_grounding: bool = False
+    optional_chapters: list[str] | None = None
 
 
 class TenantTableApproval(BaseModel):
@@ -299,6 +300,7 @@ async def _run_analysis_task(
     transaction_metadata: dict,
     user_email: str,
     language: str = "he",
+    optional_chapters: list[str] | None = None,
 ) -> None:
     """Background coroutine that runs the full pipeline with its own DB session.
 
@@ -319,6 +321,7 @@ async def _run_analysis_task(
                     uploaded_files=uploaded_files,
                     transaction_metadata=transaction_metadata,
                     on_stage_change=on_stage_change,
+                    optional_chapters=optional_chapters,
                 )
             else:
                 analysis_result = await _run_analysis(
@@ -580,6 +583,7 @@ async def start_analysis(
             transaction_metadata=transaction_metadata,
             user_email=user.email,
             language=language,
+            optional_chapters=body.optional_chapters if body else None,
         )
     )
     _running_analysis_tasks.add(task)
@@ -1793,6 +1797,7 @@ async def _run_ma_analysis(
     uploaded_files: list[File],
     transaction_metadata: dict,
     on_stage_change: Callable[[str], Awaitable[None]] | None = None,
+    optional_chapters: list[str] | None = None,
 ) -> _AnalysisResult:
     """Run the M&A v1 DD pipeline to completion and return the report.
 
@@ -1864,6 +1869,9 @@ async def _run_ma_analysis(
     content_types = [m for _, m in gemini_files]
     file_sizes = [f.file_size_bytes or 0 for f, _ in gemini_files]
 
+    from app.agents.ma.constants import STATE_MA_SELECTED_CHAPTERS, MA_OPTIONAL_CHAPTERS
+    resolved_optional = list(optional_chapters) if optional_chapters is not None else list(MA_OPTIONAL_CHAPTERS)
+
     initial_state = {
         STATE_PROJECT_ID: str(project_id),
         STATE_GCS_URIS: gcs_uris,
@@ -1872,6 +1880,7 @@ async def _run_ma_analysis(
         STATE_FILE_SIZES: file_sizes,
         STATE_TEXT_PARTS: text_parts,
         STATE_MA_METADATA: transaction_metadata or {},
+        STATE_MA_SELECTED_CHAPTERS: resolved_optional,
     }
 
     session_service = get_session_service()
@@ -1883,7 +1892,7 @@ async def _run_ma_analysis(
         state=initial_state,
     )
 
-    pipeline = create_ma_pipeline()
+    pipeline = create_ma_pipeline(optional_chapters=optional_chapters)
     # Reuse the VG App wrapper so Gemini context caching kicks in for the
     # chapter agents' prompt payloads.
     app = create_vg_app(pipeline, name=APP_NAME)

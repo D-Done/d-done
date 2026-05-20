@@ -18,6 +18,7 @@ import { setProjectDealType } from "@/lib/deal-type-store";
 
 import {
   CreationStepper,
+  getStepsForType,
   type CreationStepId,
 } from "@/components/creation-stepper";
 import {
@@ -46,8 +47,40 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const STEP_KEYS = ["type", "details", "documents", "analysis"] as const;
+const STEP_KEYS = ["type", "details", "chapters", "documents", "analysis"] as const;
 type Step = CreationStepId;
+
+const OPTIONAL_CHAPTER_DEFS: Array<{
+  id: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "intellectual_property",
+    label: "Intellectual Property (IP)",
+    description: "בעלות IP, שרשרת בעלות, רישיונות, OSS ומחלוקות",
+  },
+  {
+    id: "physical_assets",
+    label: "Physical Assets",
+    description: "נדל\"ן, חכירות מהותיות, ציוד ונכסים פיזיים",
+  },
+  {
+    id: "privacy_and_cyber",
+    label: "Privacy & Cyber",
+    description: "GDPR, מדיניות פרטיות, מחויבויות אבטחה ואירועים",
+  },
+  {
+    id: "esg_environmental",
+    label: "Environmental & ESG",
+    description: "היתרים סביבתיים, ממצאי ביקורת, קנסות ומחויבויות ESG",
+  },
+  {
+    id: "intangible_assets",
+    label: "Intangible Assets",
+    description: "מוניטין, סודות מסחריים, know-how ורשימות לקוחות",
+  },
+];
 
 function playSuccessSound() {
   try {
@@ -125,6 +158,17 @@ export default function NewTransactionPage() {
   const [transactionType, setTransactionType] =
     useState<TransactionType | null>(null);
   const isFinance = transactionType === "real_estate_financing";
+
+  // Step 2.5: Optional chapters (M&A only)
+  const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set());
+  function toggleChapter(id: string) {
+    setSelectedChapters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // Step 1: Details
   const [projectName, setProjectName] = useState("");
@@ -212,6 +256,10 @@ export default function NewTransactionPage() {
     await handleCreateAndContinue();
   }
 
+  async function handleNextFromChapters() {
+    setStep("documents");
+  }
+
   async function handleCreateAndContinue() {
     if (!transactionType) return;
     if (!projectName.trim() || !clientName.trim()) return;
@@ -236,9 +284,15 @@ export default function NewTransactionPage() {
         setProjectDealType(project.id, "company_investment", null);
       }
       setProjectId(project.id);
-      toast.success("הפרויקט נוצר. עכשיו נעלה את המסמכים.");
-      setDetailErrors({});
-      setStep("documents");
+      if (transactionType === "ma") {
+        toast.success("הפרויקט נוצר. בחר את הפרקים הרצויים.");
+        setDetailErrors({});
+        setStep("chapters");
+      } else {
+        toast.success("הפרויקט נוצר. עכשיו נעלה את המסמכים.");
+        setDetailErrors({});
+        setStep("documents");
+      }
     } catch (err) {
       toast.error("שגיאה ביצירת פרויקט", {
         description: err instanceof Error ? err.message : "נסה שנית",
@@ -328,6 +382,8 @@ export default function NewTransactionPage() {
                 real_estate_type: "project_finance" as const,
                 use_visual_grounding: true,
               }
+            : transactionType === "ma"
+            ? { optional_chapters: Array.from(selectedChapters) }
             : undefined;
 
         api.analyzeProjectWithOptions(projectId, options).catch(() => {
@@ -410,6 +466,7 @@ export default function NewTransactionPage() {
 
         <CreationStepper
           currentStep={step}
+          steps={getStepsForType(isMa)}
           onStepClick={(s) => setStep(s)}
           className="mb-2"
         />
@@ -630,6 +687,103 @@ export default function NewTransactionPage() {
               </div>
             </CardContent>
           </Card>
+        ) : step === "chapters" ? (
+          <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl">בחירת פרקים לניתוח</CardTitle>
+              <CardDescription>
+                10 פרקי חובה ינותחו תמיד. בחר אילו פרקים נוספים לכלול בדוח.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-700/50">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    פרקי חובה (10)
+                  </p>
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-zinc-700/30">
+                  {[
+                    "Transaction Overview",
+                    "Corporate Governance",
+                    "Customer Obligations",
+                    "Supplier Obligations",
+                    "Human Resources",
+                    "Regulatory & Licensing",
+                    "Litigation & Risks",
+                    "Taxation",
+                    "Financial Debt",
+                    "Insurance",
+                  ].map((name) => (
+                    <div key={name} className="flex items-center justify-between px-4 py-3 gap-3">
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{name}</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-full px-2 py-0.5">
+                        חובה
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-700/50">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    פרקים לבחירה (5)
+                  </p>
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-zinc-700/30">
+                  {OPTIONAL_CHAPTER_DEFS.map((ch) => {
+                    const selected = selectedChapters.has(ch.id);
+                    return (
+                      <button
+                        key={ch.id}
+                        type="button"
+                        onClick={() => toggleChapter(ch.id)}
+                        className="w-full flex items-center gap-4 px-4 py-3.5 text-right transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/50"
+                      >
+                        <div
+                          className={[
+                            "flex-none flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
+                            selected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900",
+                          ].join(" ")}
+                        >
+                          {selected && (
+                            <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                              <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{ch.label}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{ch.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  variant="outline"
+                  className="rounded-2xl"
+                  onClick={() => setStep("details")}
+                >
+                  חזרה
+                </Button>
+                <Button
+                  type="button"
+                  size="lg"
+                  className="rounded-2xl"
+                  onClick={handleNextFromChapters}
+                >
+                  המשך להעלאת מסמכים
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : step === "documents" ? (
           <Card className="rounded-3xl bg-white dark:bg-zinc-900/80 shadow-sm">
             <>
@@ -655,10 +809,10 @@ export default function NewTransactionPage() {
                   <Button
                     variant="outline"
                     className="rounded-2xl"
-                    onClick={() => setStep("details")}
+                    onClick={() => setStep(isMa ? "chapters" : "details")}
                     disabled={isUploading}
                   >
-                    ערוך פרטים
+                    {isMa ? "ערוך פרקים" : "ערוך פרטים"}
                   </Button>
                   <div className="flex items-center gap-3">
                     {isUploading && (

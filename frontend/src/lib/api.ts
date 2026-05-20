@@ -457,12 +457,14 @@ export async function analyzeProjectWithOptions(
     real_estate_type?: RealEstateType;
     custom_prompt?: string;
     use_visual_grounding?: boolean;
+    optional_chapters?: string[];
   },
 ): Promise<AnalyzeResponse> {
   const hasBody =
     !!options?.deal_type ||
     !!options?.real_estate_type ||
-    !!options?.use_visual_grounding;
+    !!options?.use_visual_grounding ||
+    !!options?.optional_chapters;
   return request<AnalyzeResponse>(`/projects/${projectId}/analyze`, {
     method: "POST",
     ...(hasBody || options?.custom_prompt

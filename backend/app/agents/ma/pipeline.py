@@ -44,6 +44,7 @@ from app.agents.ma.constants import (
     MA_OPTIONAL_CHAPTERS,
     STATE_MA_COMPLETENESS,
     STATE_MA_METADATA,
+    STATE_MA_SELECTED_CHAPTERS,
     chapter_state_key,
 )
 from app.agents.ma.report_schema import (
@@ -173,9 +174,14 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
         "intangible_assets": "intangible_assets_extraction",
     }
 
+    selected_optional: list[str] = callback_context.state.get(STATE_MA_SELECTED_CHAPTERS, []) or []
+    chapters_to_assemble: tuple[str, ...] = MA_MANDATORY_CHAPTERS + tuple(
+        c for c in selected_optional if c in MA_ALL_CHAPTERS
+    )
+
     chapters: list[dict] = []
     anchor_extractions: dict[str, object] = {}
-    for chapter_id in MA_ALL_CHAPTERS:
+    for chapter_id in chapters_to_assemble:
         chapter_dict = callback_context.state.get(chapter_state_key(chapter_id))
         if not chapter_dict:
             logger.warning(
@@ -261,18 +267,25 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
 # ---------------------------------------------------------------------------
 
 
-def create_ma_pipeline() -> SequentialAgent:
+def create_ma_pipeline(
+    optional_chapters: list[str] | tuple[str, ...] | None = None,
+) -> SequentialAgent:
     """Assemble the M&A v1 sequential pipeline.
 
     ``after_agent_callback`` on the outer SequentialAgent runs after every
     sub-agent has finished, so the assembler sees all chapter + completeness
     state at once.
+
+    ``optional_chapters`` — the user-selected optional chapter IDs to run.
+    Defaults to all optional chapters when None (backwards-compatible).
     """
+    resolved_optional = optional_chapters if optional_chapters is not None else MA_OPTIONAL_CHAPTERS
+
     classifier = create_ma_classifier_agent()
     classifier.before_model_callback = _inject_pdfs_for_ma_classifier
     classifier.after_model_callback = _repair_truncated_json
 
-    chapter_agents = create_ma_chapter_agents(optional_chapters=MA_OPTIONAL_CHAPTERS)
+    chapter_agents = create_ma_chapter_agents(optional_chapters=resolved_optional)
     completeness = create_ma_completeness_agent()
 
     return SequentialAgent(

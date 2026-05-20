@@ -2,41 +2,50 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Check, Briefcase, FileText, FileUp, Bot } from "lucide-react";
+import { Check, Briefcase, FileText, FileUp, Bot, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type CreationStepId = "type" | "details" | "documents" | "analysis";
+export type CreationStepId = "type" | "details" | "chapters" | "documents" | "analysis";
 
-export const CREATION_STEPS: Array<{
+const ALL_STEPS: Array<{
   id: CreationStepId;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { id: "type", label: "סוג העסקה", icon: Briefcase },
   { id: "details", label: "פרטי הפרוייקט", icon: FileText },
+  { id: "chapters", label: "בחירת פרקים", icon: ListChecks },
   { id: "documents", label: "העלאת מסמכים", icon: FileUp },
   { id: "analysis", label: "ניתוח AI", icon: Bot },
 ];
 
-const STEP_ORDER: CreationStepId[] = ["type", "details", "documents", "analysis"];
+export const CREATION_STEPS = ALL_STEPS;
 
-function stepIndex(step: CreationStepId): number {
-  const i = STEP_ORDER.indexOf(step);
-  return i >= 0 ? i : 0;
+export function getStepsForType(isMa: boolean): typeof ALL_STEPS {
+  return isMa ? ALL_STEPS : ALL_STEPS.filter((s) => s.id !== "chapters");
 }
 
-const CIRCLE_SIZE = 44; // 44px minimum touch target (WCAG)
+const CIRCLE_SIZE = 44;
 
 export function CreationStepper({
   currentStep,
+  steps,
   onStepClick,
   className,
 }: {
   currentStep: CreationStepId;
+  steps?: typeof ALL_STEPS;
   onStepClick?: (step: CreationStepId) => void;
   className?: string;
 }) {
-  const currentIndex = stepIndex(currentStep);
+  const activeSteps = steps ?? ALL_STEPS;
+  const currentIndex = activeSteps.findIndex((s) => s.id === currentStep);
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+
+  const colCount = activeSteps.length;
+  const gridCols = Array.from({ length: colCount }, (_, i) =>
+    i < colCount - 1 ? "1fr minmax(16px, 2fr)" : "1fr"
+  ).join(" ");
 
   return (
     <div
@@ -45,28 +54,21 @@ export function CreationStepper({
       aria-label="שלבי יצירת פרויקט"
       role="navigation"
     >
-      {/* Row 1: circles + connectors — line runs through circle centers */}
       <div
         className="grid w-full items-center gap-0"
-        style={{
-          gridTemplateColumns: "1fr minmax(16px, 2fr) 1fr minmax(16px, 2fr) 1fr minmax(16px, 2fr) 1fr",
-          gridTemplateRows: "44px",
-        }}
+        style={{ gridTemplateColumns: gridCols, gridTemplateRows: "44px" }}
       >
-        {CREATION_STEPS.map((step, index) => {
-          const isCompleted = index < currentIndex;
-          const isCurrent = index === currentIndex;
+        {activeSteps.map((step, index) => {
+          const isCompleted = index < safeIndex;
+          const isCurrent = index === safeIndex;
           const Icon = step.icon;
-          const canNavigate = onStepClick && index <= currentIndex;
-          const isConnectorFilled = currentIndex >= index;
+          const canNavigate = onStepClick && index <= safeIndex;
+          const isConnectorFilled = safeIndex >= index;
 
           return (
             <React.Fragment key={step.id}>
               {index > 0 && (
-                <div
-                  className="flex items-center justify-center h-full px-0.5"
-                  aria-hidden
-                >
+                <div className="flex items-center justify-center h-full px-0.5" aria-hidden>
                   <div className="relative w-full h-[2px] rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                     <motion.div
                       className="absolute inset-y-0 right-0 bg-primary rounded-full"
@@ -92,13 +94,9 @@ export function CreationStepper({
                     "touch-manipulation select-none",
                     canNavigate && "cursor-pointer hover:opacity-90 active:scale-[0.98]",
                     !canNavigate && "cursor-default",
-                    isCompleted &&
-                      "border-primary bg-primary text-primary-foreground",
-                    isCurrent &&
-                      "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15",
-                    !isCompleted &&
-                      !isCurrent &&
-                      "border-slate-200 dark:border-zinc-700/50 bg-slate-100 dark:bg-zinc-800/70 text-slate-400 dark:text-slate-500",
+                    isCompleted && "border-primary bg-primary text-primary-foreground",
+                    isCurrent && "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15",
+                    !isCompleted && !isCurrent && "border-slate-200 dark:border-zinc-700/50 bg-slate-100 dark:bg-zinc-800/70 text-slate-400 dark:text-slate-500",
                   )}
                   style={{ width: CIRCLE_SIZE, height: CIRCLE_SIZE }}
                   aria-current={isCurrent ? "step" : undefined}
@@ -128,16 +126,13 @@ export function CreationStepper({
         })}
       </div>
 
-      {/* Row 2: labels — aligned under circles */}
       <div
         className="grid w-full gap-0 mt-2"
-        style={{
-          gridTemplateColumns: "1fr minmax(16px, 2fr) 1fr minmax(16px, 2fr) 1fr minmax(16px, 2fr) 1fr",
-        }}
+        style={{ gridTemplateColumns: gridCols }}
       >
-        {CREATION_STEPS.map((step, index) => {
-          const isCompleted = index < currentIndex;
-          const isCurrent = index === currentIndex;
+        {activeSteps.map((step, index) => {
+          const isCompleted = index < safeIndex;
+          const isCurrent = index === safeIndex;
           return (
             <React.Fragment key={`label-${step.id}`}>
               {index > 0 && <div aria-hidden />}
