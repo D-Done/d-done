@@ -48,6 +48,7 @@ from app.agents.ma.constants import (
     CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
+    CHAPTER_ESG_ENVIRONMENTAL,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_HR,
     CHAPTER_INSURANCE,
@@ -55,12 +56,15 @@ from app.agents.ma.constants import (
     CHAPTER_IP_OWNERSHIP,
     CHAPTER_LITIGATION,
     CHAPTER_OSS,
+    CHAPTER_PRIVACY_CYBER,
+    CHAPTER_REAL_ESTATE,
     CHAPTER_REGULATORY,
     CHAPTER_SUPPLIER_OBLIGATIONS,
     CHAPTER_TAXATION,
     CHAPTER_TECHNOLOGY_PRODUCT,
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_TITLES_HE,
+    MA_ALL_CHAPTERS,
     MA_MANDATORY_CHAPTERS,
     STATE_MA_CLASSIFICATION,
     chapter_state_key,
@@ -70,6 +74,7 @@ from app.agents.ma.report_schema import (
     ChannelResellerPartnerChapterOutput,
     CorporateGovernanceChapterOutput,
     CustomerObligationsChapterOutput,
+    EsgEnvironmentalChapterOutput,
     FinancialDebtChapterOutput,
     HrChapterOutput,
     InsuranceChapterOutput,
@@ -77,6 +82,8 @@ from app.agents.ma.report_schema import (
     IpOwnershipChapterOutput,
     LitigationChapterOutput,
     OssChapterOutput,
+    PrivacyAndCyberChapterOutput,
+    RealEstateChapterOutput,
     RegulatoryChapterOutput,
     SupplierObligationsChapterOutput,
     TaxationChapterOutput,
@@ -139,6 +146,9 @@ _CHAPTER_OUTPUT_SCHEMAS: dict[str, type[ChapterOutput]] = {
     CHAPTER_IP_OWNERSHIP: IpOwnershipChapterOutput,       # 32 KB — OK
     CHAPTER_IP_LICENSING: ChapterOutput,                  # 43 KB inlined — too large
     CHAPTER_OSS: OssChapterOutput,                        # 29 KB — OK
+    CHAPTER_ESG_ENVIRONMENTAL: EsgEnvironmentalChapterOutput,
+    CHAPTER_REAL_ESTATE: RealEstateChapterOutput,
+    CHAPTER_PRIVACY_CYBER: PrivacyAndCyberChapterOutput,
 }
 
 
@@ -397,9 +407,21 @@ def _create_chapter_agent(chapter_id: str) -> Agent:
     return agent
 
 
-def create_ma_chapter_agents() -> list[Agent]:
-    """Return one agent per chapter in ``MA_MANDATORY_CHAPTERS``."""
-    return [_create_chapter_agent(cid) for cid in MA_MANDATORY_CHAPTERS]
+def create_ma_chapter_agents(
+    optional_chapters: tuple[str, ...] | list[str] | None = None,
+) -> list[Agent]:
+    """Return one agent per selected chapter.
+
+    Args:
+        optional_chapters: Optional chapter IDs to include on top of the
+            mandatory set.  Defaults to none (mandatory only).
+    """
+    chapter_ids = list(MA_MANDATORY_CHAPTERS)
+    if optional_chapters:
+        for cid in optional_chapters:
+            if cid in MA_ALL_CHAPTERS and cid not in chapter_ids:
+                chapter_ids.append(cid)
+    return [_create_chapter_agent(cid) for cid in chapter_ids]
 
 
 __all__ = ["create_ma_chapter_agents"]

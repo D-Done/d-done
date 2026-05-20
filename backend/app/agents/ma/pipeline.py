@@ -39,7 +39,9 @@ from app.agents.ma.completeness import create_ma_completeness_agent
 from app.agents.visual_grounding_pipeline_agent import _repair_truncated_json
 from app.agents.ma.constants import (
     CHAPTER_TITLES_HE,
+    MA_ALL_CHAPTERS,
     MA_MANDATORY_CHAPTERS,
+    MA_OPTIONAL_CHAPTERS,
     STATE_MA_COMPLETENESS,
     STATE_MA_METADATA,
     chapter_state_key,
@@ -169,11 +171,14 @@ async def _assemble_ma_report(callback_context: CallbackContext) -> None:
         "ip_ownership": "ip_ownership_extraction",
         "ip_licensing": "ip_licensing_extraction",
         "oss": "oss_extraction",
+        "esg_environmental": "esg_environmental_extraction",
+        "real_estate_and_material_leases": "real_estate_extraction",
+        "privacy_and_cyber": "privacy_and_cyber_extraction",
     }
 
     chapters: list[dict] = []
     anchor_extractions: dict[str, object] = {}
-    for chapter_id in MA_MANDATORY_CHAPTERS:
+    for chapter_id in MA_ALL_CHAPTERS:
         chapter_dict = callback_context.state.get(chapter_state_key(chapter_id))
         if not chapter_dict:
             logger.warning(
@@ -270,7 +275,7 @@ def create_ma_pipeline() -> SequentialAgent:
     classifier.before_model_callback = _inject_pdfs_for_ma_classifier
     classifier.after_model_callback = _repair_truncated_json
 
-    chapter_agents = create_ma_chapter_agents()
+    chapter_agents = create_ma_chapter_agents(optional_chapters=MA_OPTIONAL_CHAPTERS)
     completeness = create_ma_completeness_agent()
 
     return SequentialAgent(

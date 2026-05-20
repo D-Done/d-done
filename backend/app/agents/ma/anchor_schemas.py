@@ -2008,6 +2008,330 @@ class InsuranceExtraction(BaseModel):
     missing_information: list[str] = Field(default_factory=list)
 
 
+# ===========================================================================
+# Anchor — ESG / Environmental
+# ===========================================================================
+
+class EsgDocumentProfile(BaseModel):
+    document_type_detected: Literal[
+        "permit", "regulatory_correspondence", "environmental_report",
+        "incident_report", "esg_policy", "sustainability_report",
+        "esg_commitment", "audit_report", "other", "unknown",
+    ] = "unknown"
+    authority_or_issuer: str = "unknown"
+    jurisdiction: str = "unknown"
+    site_or_facility: str = "unknown"
+    title_or_subject: str = "unknown"
+    document_date: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgPermit(BaseModel):
+    permit_name: str = "unknown"
+    permit_id_or_number: str = "unknown"
+    scope_of_activities: str = "unknown"
+    issue_date: str = "unknown"
+    expiry_date: str = "unknown"
+    conditions_or_limits: str = "unknown"
+    monitoring_reporting_obligations: str = "unknown"
+    status_as_stated: Literal["valid", "expired", "suspended", "revoked", "pending", "unknown"] = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgAuditFindingIncident(BaseModel):
+    event_type: Literal[
+        "audit", "inspection", "violation_notice", "spill_release",
+        "contamination", "remediation", "other", "unknown",
+    ] = "unknown"
+    date_or_period: str = "unknown"
+    description: str = "unknown"
+    affected_area_or_media: str = "unknown"
+    corrective_actions_or_remediation: str = "unknown"
+    deadlines: str = "unknown"
+    status_as_stated: Literal["open", "closed", "ongoing", "unknown"] = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgPenalty(BaseModel):
+    penalty_type: Literal["fine", "sanction", "cleanup_cost", "other", "unknown"] = "unknown"
+    amount_as_stated: str = "unknown"
+    date: str = "unknown"
+    basis_or_reason: str = "unknown"
+    payment_or_compliance_status_as_stated: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgCommitment(BaseModel):
+    commitment_type: Literal[
+        "emissions_target", "net_zero", "renewable_energy", "diversity_inclusion",
+        "supply_chain", "product_sustainability", "reporting", "certification",
+        "other", "unknown",
+    ] = "unknown"
+    target_or_commitment_text: str = "unknown"
+    timeline_or_deadline: str = "unknown"
+    measurement_or_reporting_requirements: str = "unknown"
+    audit_or_verification_requirements: str = "unknown"
+    consequences_for_noncompliance_as_stated: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgInternalInconsistency(BaseModel):
+    topic: Literal["permits", "incidents", "penalties", "commitments", "dates", "other", "unknown"] = "unknown"
+    description: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class EsgEnvironmentalExtraction(BaseModel):
+    anchor_id: Literal["esg_environmental"] = "esg_environmental"
+    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+    document_profile: EsgDocumentProfile = Field(default_factory=EsgDocumentProfile)
+    environmental_permits_and_requirements_as_stated: list[EsgPermit] = Field(default_factory=list)
+    audits_findings_incidents_and_remediation_as_stated: list[EsgAuditFindingIncident] = Field(default_factory=list)
+    penalties_and_liabilities_as_stated: list[EsgPenalty] = Field(default_factory=list)
+    material_esg_commitments_as_stated: list[EsgCommitment] = Field(default_factory=list)
+    internal_inconsistencies: list[EsgInternalInconsistency] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor — Real Estate & Material Leases
+# ===========================================================================
+
+class ReRenewalOption(BaseModel):
+    renewal_term: str = "unknown"
+    renewal_notice_window: str = "unknown"
+    renewal_rent_terms: str = "unknown"
+    conditions: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class RePropertyAndLeaseProfile(BaseModel):
+    document_type_detected: Literal[
+        "lease", "sublease", "amendment", "consent", "guaranty",
+        "estoppel", "property_schedule", "other", "unknown",
+    ] = "unknown"
+    property_address: str = "unknown"
+    premises_description: str = "unknown"
+    agreement_title: str = "unknown"
+    landlord_name: str = "unknown"
+    tenant_name: str = "unknown"
+    sublandlord_subtenant_or_guarantor: str = "unknown"
+    base_rent: str = "unknown"
+    additional_rent_or_pass_throughs: str = "unknown"
+    security_deposit_or_loc: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReTermAndRenewal(BaseModel):
+    commencement_date: str = "unknown"
+    rent_commencement_date: str = "unknown"
+    expiration_date: str = "unknown"
+    initial_term: str = "unknown"
+    renewal_options: list[ReRenewalOption] = Field(default_factory=list)
+    auto_renew: BoolOrUnknown = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReConsentGranted(BaseModel):
+    exists: BoolOrUnknown = "unknown"
+    granted_for: str = "unknown"
+    conditions: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReAssignmentSubletConsents(BaseModel):
+    assignment_restricted: BoolOrUnknown = "unknown"
+    subletting_restricted: BoolOrUnknown = "unknown"
+    landlord_consent_required: BoolOrUnknown = "unknown"
+    consent_conditions: str = "unknown"
+    consent_fees_or_profit_sharing: str = "unknown"
+    reasonableness_standard: str = "unknown"
+    change_of_control_treated_as_assignment: BoolOrUnknown = "unknown"
+    change_of_control_clause_summary: str = "unknown"
+    consent_granted_in_this_document: ReConsentGranted = Field(default_factory=ReConsentGranted)
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReEarlyTerminationRight(BaseModel):
+    who_can_terminate: Literal["tenant", "landlord", "both", "unknown"] = "unknown"
+    trigger: str = "unknown"
+    notice_period: str = "unknown"
+    termination_fee_or_conditions: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReDefaultAndCure(BaseModel):
+    defaults_listed_summary: str = "unknown"
+    cure_periods: str = "unknown"
+    remedies_summary: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReEarlyTerminationAndDefault(BaseModel):
+    early_termination_rights: list[ReEarlyTerminationRight] = Field(default_factory=list)
+    default_and_cure: ReDefaultAndCure = Field(default_factory=ReDefaultAndCure)
+
+
+class ReRestorationAlterationsReturn(BaseModel):
+    alterations_approval_required: BoolOrUnknown = "unknown"
+    restoration_obligations: str = "unknown"
+    removal_of_improvements: str = "unknown"
+    reinstatement_requirements: str = "unknown"
+    surrender_conditions: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReOtherKeyTerms(BaseModel):
+    use_restrictions: str = "unknown"
+    relocation_rights: str = "unknown"
+    expansion_or_rofo_rofr_space: str = "unknown"
+    insurance_requirements: str = "unknown"
+    indemnity_terms: str = "unknown"
+    environmental_or_hazardous_materials: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class ReInternalInconsistency(BaseModel):
+    topic: Literal[
+        "property_profile", "term", "rent", "assignment_consent",
+        "termination_default", "restoration", "other", "unknown",
+    ] = "unknown"
+    description: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class RealEstateExtraction(BaseModel):
+    anchor_id: Literal["real_estate_and_material_leases"] = "real_estate_and_material_leases"
+    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+    property_and_lease_profile: RePropertyAndLeaseProfile = Field(default_factory=RePropertyAndLeaseProfile)
+    term_and_renewal: ReTermAndRenewal = Field(default_factory=ReTermAndRenewal)
+    assignment_subletting_and_consents: ReAssignmentSubletConsents = Field(default_factory=ReAssignmentSubletConsents)
+    early_termination_and_default: ReEarlyTerminationAndDefault = Field(default_factory=ReEarlyTerminationAndDefault)
+    restoration_alterations_and_return: ReRestorationAlterationsReturn = Field(default_factory=ReRestorationAlterationsReturn)
+    other_key_terms_as_stated: ReOtherKeyTerms = Field(default_factory=ReOtherKeyTerms)
+    internal_inconsistencies: list[ReInternalInconsistency] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ===========================================================================
+# Anchor — Privacy & Cyber
+# ===========================================================================
+
+class PcDocumentProfile(BaseModel):
+    document_type_detected: Literal[
+        "privacy_policy", "dpa", "dpia", "ropa", "incident_report",
+        "pen_test_report", "soc2_report", "iso_certificate_report",
+        "regulatory_correspondence", "security_addendum", "other", "unknown",
+    ] = "unknown"
+    title_or_subject: str = "unknown"
+    effective_or_report_date: str = "unknown"
+    scope_systems_products: str = "unknown"
+    jurisdictions_referenced: list[str] = Field(default_factory=list)
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcComplianceStatement(BaseModel):
+    framework_or_law: Literal[
+        "gdpr", "ccpa", "israeli_privacy_law", "hipaa", "pci_dss", "other", "unknown"
+    ] = "unknown"
+    statement_type: Literal[
+        "compliant", "non_compliant", "gap_identified", "certified", "assessment_only", "unknown"
+    ] = "unknown"
+    details: str = "unknown"
+    remediation_plan_or_deadline: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcDataProcessingSummary(BaseModel):
+    roles_controller_processor: str = "unknown"
+    categories_of_data_subjects: str = "unknown"
+    categories_of_personal_data: str = "unknown"
+    processing_purposes: str = "unknown"
+    retention_and_deletion: str = "unknown"
+    international_transfers: str = "unknown"
+    subprocessing_rules: str = "unknown"
+    lawful_basis_or_consents_as_stated: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcSecurityCommitments(BaseModel):
+    security_measures_summary: str = "unknown"
+    standards_certifications: str = "unknown"
+    encryption_and_access_controls: str = "unknown"
+    logging_and_monitoring: str = "unknown"
+    vulnerability_management: str = "unknown"
+    pen_test_or_security_testing_obligations: str = "unknown"
+    security_audit_rights_by_customers: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcIncidentOrBreach(BaseModel):
+    incident_date_or_period: str = "unknown"
+    nature_of_incident: str = "unknown"
+    systems_or_data_impacted: str = "unknown"
+    number_of_records_or_impacted_subjects: str = "unknown"
+    notifications_made: str = "unknown"
+    notification_timing_requirements: str = "unknown"
+    regulator_involvement: str = "unknown"
+    customer_impact: str = "unknown"
+    remediation_steps: str = "unknown"
+    fines_penalties_or_claims_as_stated: str = "unknown"
+    status_as_stated: Literal["open", "closed", "ongoing", "unknown"] = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcAssessmentReport(BaseModel):
+    report_type: Literal["pen_test", "soc2", "iso", "risk_assessment", "other", "unknown"] = "unknown"
+    report_date: str = "unknown"
+    scope: str = "unknown"
+    findings_summary: str = "unknown"
+    critical_findings_as_stated: str = "unknown"
+    remediation_status_as_stated: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcUnusualObligation(BaseModel):
+    obligation_type: Literal[
+        "breach_notice_short_window", "broad_audit_rights", "special_indemnity",
+        "unlimited_liability", "data_localization", "other", "unknown",
+    ] = "unknown"
+    details: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcRegulatoryAction(BaseModel):
+    authority: str = "unknown"
+    action_type: Literal["investigation", "audit", "fine", "warning", "order", "other", "unknown"] = "unknown"
+    date: str = "unknown"
+    details: str = "unknown"
+    penalty_amount_as_stated: str = "unknown"
+    status_as_stated: Literal["open", "closed", "ongoing", "unknown"] = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PcInternalInconsistency(BaseModel):
+    topic: Literal[
+        "compliance", "data_processing", "security", "incident", "reports", "other", "unknown"
+    ] = "unknown"
+    description: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class PrivacyAndCyberExtraction(BaseModel):
+    anchor_id: Literal["privacy_and_cyber"] = "privacy_and_cyber"
+    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+    document_profile: PcDocumentProfile = Field(default_factory=PcDocumentProfile)
+    compliance_statements_as_stated: list[PcComplianceStatement] = Field(default_factory=list)
+    data_processing_summary_as_stated: PcDataProcessingSummary = Field(default_factory=PcDataProcessingSummary)
+    security_commitments_as_stated: PcSecurityCommitments = Field(default_factory=PcSecurityCommitments)
+    incidents_and_breaches_as_stated: list[PcIncidentOrBreach] = Field(default_factory=list)
+    assessments_and_reports_as_stated: list[PcAssessmentReport] = Field(default_factory=list)
+    unusual_contractual_obligations_as_stated: list[PcUnusualObligation] = Field(default_factory=list)
+    regulatory_actions_and_penalties_as_stated: list[PcRegulatoryAction] = Field(default_factory=list)
+    internal_inconsistencies: list[PcInternalInconsistency] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Public exports
 # ---------------------------------------------------------------------------
@@ -2041,4 +2365,20 @@ __all__ = [
     "DebtLienItem",
     "InsuranceExtraction",
     "InsurancePolicy",
+    "EsgEnvironmentalExtraction",
+    "EsgPermit",
+    "EsgAuditFindingIncident",
+    "EsgPenalty",
+    "EsgCommitment",
+    "RealEstateExtraction",
+    "RePropertyAndLeaseProfile",
+    "ReTermAndRenewal",
+    "ReAssignmentSubletConsents",
+    "PrivacyAndCyberExtraction",
+    "PcComplianceStatement",
+    "PcDataProcessingSummary",
+    "PcSecurityCommitments",
+    "PcIncidentOrBreach",
+    "PcAssessmentReport",
+    "PcRegulatoryAction",
 ]

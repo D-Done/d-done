@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -1071,34 +1072,38 @@ export default function AiPage() {
 
       {/* ── Project picker dialog ──────────────────────────────────────── */}
       <Dialog open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
-        <DialogContent className="max-w-md" dir={dir}>
-          <DialogHeader>
-            <DialogTitle className="text-right">{t("ai_link_dialog_title", lang)}</DialogTitle>
+        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir={dir}>
+          <DialogHeader className="px-5 pt-5 pb-4 border-b">
+            <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              {t("ai_link_dialog_title", lang)}
+            </DialogTitle>
           </DialogHeader>
           {projectsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
             </div>
           ) : projects.length === 0 ? (
-            <p className="text-center text-sm text-zinc-400 py-8">
+            <p className="text-center text-sm text-zinc-400 py-12">
               {t("ai_no_projects", lang)}
             </p>
           ) : (
-            <div className="space-y-1.5 max-h-80 overflow-y-auto">
-              {projects.map((p) => (
+            <div className="py-2 max-h-72 overflow-y-auto">
+              {projects.map((p, i) => (
                 <button
                   key={p.id}
                   onClick={() => handleLinkProject(p.id, p.title)}
-                  className="w-full text-right rounded-xl px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-700/10 transition-colors group flex items-center gap-3"
+                  className={cn(
+                    "w-full text-right px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors flex items-center gap-3",
+                    i !== projects.length - 1 && "border-b border-zinc-100 dark:border-zinc-800"
+                  )}
                 >
                   <FolderOpen className="h-4 w-4 text-zinc-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                       {p.title}
                     </p>
-                    <p className="text-xs text-zinc-400">
-                      {p.file_count} {t("ai_files_count", lang)} ·{" "}
-                      {new Date(p.created_at).toLocaleDateString(locale)}
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      {p.file_count} {t("ai_files_count", lang)} · {new Date(p.created_at).toLocaleDateString(locale)}
                     </p>
                   </div>
                 </button>

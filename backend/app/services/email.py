@@ -58,29 +58,64 @@ def send_vdr_upload_invitation(
     inviter_display = inviter_name or "D-Done"
     html = f"""
 <!DOCTYPE html>
-<html dir="rtl" lang="he">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="font-family:Arial,sans-serif;background:#f8f9fa;margin:0;padding:20px">
-<div style="max-width:520px;margin:auto;background:#fff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-  <div style="text-align:center;margin-bottom:32px">
-    <span style="font-size:28px;font-weight:700;letter-spacing:-1px;color:#0f172a">D<span style="color:#64748b">-Done</span></span>
+<html lang="he">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f1f5f9;margin:0;padding:40px 16px">
+  <div style="max-width:540px;margin:0 auto">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:24px">
+      <span dir="ltr" style="display:inline-block;font-size:20px;font-weight:700;letter-spacing:-0.5px;color:#0f172a">D<span style="color:#94a3b8">-Done</span></span>
+    </div>
+
+    <!-- Card -->
+    <div style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.07)">
+
+      <!-- Top stripe -->
+      <div style="height:3px;background:#0f172a"></div>
+
+      <!-- Body -->
+      <div style="padding:40px;direction:rtl;text-align:right">
+
+        <p style="margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:0.8px;color:#94a3b8;text-transform:uppercase">VDR</p>
+        <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#0f172a;letter-spacing:-0.3px">הזמנה להעלאת מסמכים</h1>
+
+        <p style="margin:0 0 6px;font-size:15px;color:#475569;line-height:1.7">
+          <strong style="color:#0f172a">{inviter_display}</strong> מזמין/ת אותך להעלות מסמכי VDR עבור הפרויקט:
+        </p>
+
+        <!-- Project name pill -->
+        <div style="display:inline-block;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 14px;margin-bottom:28px">
+          <span style="font-size:15px;font-weight:600;color:#0f172a">{project_name}</span>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;margin:8px 0 28px">
+          <a href="{upload_url}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:14px 44px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:0.1px">
+            העלאת מסמכים
+          </a>
+        </div>
+
+        <!-- Expiry -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 16px;text-align:center">
+          <span style="font-size:13px;color:#64748b">הקישור תקף ל-<strong style="color:#0f172a">{expires_hours} שעות</strong></span>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:16px 40px;background:#f8fafc;border-top:1px solid #f1f5f9;text-align:center">
+        <p style="margin:0;font-size:12px;color:#94a3b8">אם לא ביקשת הזמנה זו, ניתן להתעלם ממייל זה.</p>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <p style="text-align:center;margin:20px 0 0;font-size:11px;color:#94a3b8" dir="ltr">© 2026 D-Done · Secure Document Transfer</p>
+
   </div>
-  <h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">הזמנה להעלאת מסמכים</h2>
-  <p style="color:#475569;line-height:1.6;margin:0 0 8px">
-    {inviter_display} מזמין/ת אותך להעלות מסמכי VDR עבור הפרויקט <strong>{project_name}</strong>.
-  </p>
-  <p style="color:#475569;line-height:1.6;margin:0 0 24px">
-    הקישור תקף ל-{expires_hours} שעות.
-  </p>
-  <div style="text-align:center;margin:32px 0">
-    <a href="{upload_url}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600">
-      העלאת מסמכים
-    </a>
-  </div>
-  <p style="color:#94a3b8;font-size:12px;margin:0;text-align:center">
-    אם לא ביקשת הזמנה זו, ניתן להתעלם ממייל זה.
-  </p>
-</div>
 </body>
 </html>
 """

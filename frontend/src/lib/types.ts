@@ -299,7 +299,10 @@ export type MaChapterId =
   | "technology_product"
   | "ip_ownership"
   | "ip_licensing"
-  | "oss";
+  | "oss"
+  | "esg_environmental"
+  | "real_estate_and_material_leases"
+  | "privacy_and_cyber";
 
 // ---------------------------------------------------------------------------
 // Anchor extraction types (simplified TypeScript mirrors of Python schemas)
@@ -592,6 +595,169 @@ export interface MaInsuranceAnchor {
   missing_information: string[];
 }
 
+// ESG / Environmental
+export interface MaEsgPermit {
+  permit_name: string;
+  permit_id_or_number: string;
+  scope_of_activities: string;
+  expiry_date: string;
+  conditions_or_limits: string;
+  status_as_stated: string;
+}
+
+export interface MaEsgIncident {
+  event_type: string;
+  date_or_period: string;
+  description: string;
+  affected_area_or_media: string;
+  corrective_actions_or_remediation: string;
+  status_as_stated: string;
+}
+
+export interface MaEsgPenalty {
+  penalty_type: string;
+  amount_as_stated: string;
+  basis_or_reason: string;
+  payment_or_compliance_status_as_stated: string;
+}
+
+export interface MaEsgCommitment {
+  commitment_type: string;
+  target_or_commitment_text: string;
+  timeline_or_deadline: string;
+  measurement_or_reporting_requirements: string;
+  consequences_for_noncompliance_as_stated: string;
+}
+
+export interface MaEsgAnchor {
+  anchor_id: "esg_environmental";
+  executed_status: "executed" | "not_executed" | "unknown";
+  document_profile: {
+    document_type_detected: string;
+    authority_or_issuer: string;
+    jurisdiction: string;
+    site_or_facility: string;
+    title_or_subject: string;
+    document_date: string;
+  };
+  environmental_permits_and_requirements_as_stated: MaEsgPermit[];
+  audits_findings_incidents_and_remediation_as_stated: MaEsgIncident[];
+  penalties_and_liabilities_as_stated: MaEsgPenalty[];
+  material_esg_commitments_as_stated: MaEsgCommitment[];
+  missing_information: string[];
+}
+
+// Real Estate & Material Leases
+export interface MaRealEstateRenewalOption {
+  renewal_term: string;
+  renewal_notice_window: string;
+  renewal_rent_terms: string;
+  conditions: string;
+}
+
+export interface MaRealEstateAnchor {
+  anchor_id: "real_estate_and_material_leases";
+  executed_status: "executed" | "not_executed" | "unknown";
+  property_and_lease_profile: {
+    document_type_detected: string;
+    property_address: string;
+    premises_description: string;
+    agreement_title: string;
+    landlord_name: string;
+    tenant_name: string;
+    base_rent: string;
+    additional_rent_or_pass_throughs: string;
+    security_deposit_or_loc: string;
+  };
+  term_and_renewal: {
+    commencement_date: string;
+    expiration_date: string;
+    initial_term: string;
+    renewal_options: MaRealEstateRenewalOption[];
+    auto_renew: boolean | "unknown";
+  };
+  assignment_subletting_and_consents: {
+    assignment_restricted: boolean | "unknown";
+    subletting_restricted: boolean | "unknown";
+    landlord_consent_required: boolean | "unknown";
+    change_of_control_treated_as_assignment: boolean | "unknown";
+    change_of_control_clause_summary: string;
+  };
+  early_termination_and_default: {
+    early_termination_rights: { who_can_terminate: string; trigger: string; notice_period: string; termination_fee_or_conditions: string }[];
+    default_and_cure: { defaults_listed_summary: string; cure_periods: string; remedies_summary: string };
+  };
+  restoration_alterations_and_return: {
+    restoration_obligations: string;
+    removal_of_improvements: string;
+    surrender_conditions: string;
+  };
+  other_key_terms_as_stated: {
+    use_restrictions: string;
+    relocation_rights: string;
+    insurance_requirements: string;
+    environmental_or_hazardous_materials: string;
+  };
+  missing_information: string[];
+}
+
+// Privacy & Cyber
+export interface MaPrivacyComplianceStatement {
+  framework_or_law: string;
+  statement_type: string;
+  details: string;
+  remediation_plan_or_deadline: string;
+}
+
+export interface MaPrivacyIncident {
+  incident_date_or_period: string;
+  nature_of_incident: string;
+  systems_or_data_impacted: string;
+  notifications_made: string;
+  fines_penalties_or_claims_as_stated: string;
+  status_as_stated: string;
+}
+
+export interface MaPrivacyAssessmentReport {
+  report_type: string;
+  report_date: string;
+  scope: string;
+  findings_summary: string;
+  critical_findings_as_stated: string;
+  remediation_status_as_stated: string;
+}
+
+export interface MaPrivacyCyberAnchor {
+  anchor_id: "privacy_and_cyber";
+  executed_status: "executed" | "not_executed" | "unknown";
+  document_profile: {
+    document_type_detected: string;
+    title_or_subject: string;
+    effective_or_report_date: string;
+    scope_systems_products: string;
+    jurisdictions_referenced: string[];
+  };
+  compliance_statements_as_stated: MaPrivacyComplianceStatement[];
+  data_processing_summary_as_stated: {
+    roles_controller_processor: string;
+    categories_of_personal_data: string;
+    processing_purposes: string;
+    international_transfers: string;
+    retention_and_deletion: string;
+  };
+  security_commitments_as_stated: {
+    security_measures_summary: string;
+    standards_certifications: string;
+    encryption_and_access_controls: string;
+    vulnerability_management: string;
+    pen_test_or_security_testing_obligations: string;
+  };
+  incidents_and_breaches_as_stated: MaPrivacyIncident[];
+  assessments_and_reports_as_stated: MaPrivacyAssessmentReport[];
+  regulatory_actions_and_penalties_as_stated: { authority: string; action_type: string; details: string; penalty_amount_as_stated: string; status_as_stated: string }[];
+  missing_information: string[];
+}
+
 export type MaAnchorExtraction =
   | MaCorporateOwnershipAnchor
   | MaCustomerAnchor
@@ -602,6 +768,9 @@ export type MaAnchorExtraction =
   | MaTaxationAnchor
   | MaFinancialDebtAnchor
   | MaInsuranceAnchor
+  | MaEsgAnchor
+  | MaRealEstateAnchor
+  | MaPrivacyCyberAnchor
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | Record<string, any>;
 

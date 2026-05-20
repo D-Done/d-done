@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from app.agents.constants import FLASH_MODEL
 from app.agents.ma.constants import (
+    MA_ALL_CHAPTERS,
     MA_DOC_KINDS,
     MA_MANDATORY_CHAPTERS,
     STATE_MA_CLASSIFICATION,
@@ -40,7 +41,7 @@ class MaDocumentClassification(BaseModel):
         default_factory=list,
         description=(
             "Zero or more chapter ids this document is relevant to. "
-            "Must be a subset of: " + ", ".join(MA_MANDATORY_CHAPTERS)
+            "Must be a subset of: " + ", ".join(MA_ALL_CHAPTERS)
         ),
     )
 

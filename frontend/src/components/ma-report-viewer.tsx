@@ -21,6 +21,9 @@ import type {
   MaTaxationAnchor,
   MaFinancialDebtAnchor,
   MaInsuranceAnchor,
+  MaEsgAnchor,
+  MaRealEstateAnchor,
+  MaPrivacyCyberAnchor,
 } from "@/lib/types";
 import {
   AlertTriangle,
@@ -75,6 +78,9 @@ const CHAPTER_ORDER: MaChapterId[] = [
   "ip_ownership",
   "ip_licensing",
   "oss",
+  "esg_environmental",
+  "real_estate_and_material_leases",
+  "privacy_and_cyber",
 ];
 
 // ---------------------------------------------------------------------------
@@ -361,7 +367,7 @@ function CorporateGovernanceSection({
                 <Th>שם</Th>
                 <Th>תפקיד</Th>
                 <Th>כלל חתימה</Th>
-                <Th>הגבלות / עסקה</Th>
+                <Th>פרוטוקול / עסקה מאפשרת</Th>
               </tr>
             </thead>
             <tbody>
@@ -445,6 +451,43 @@ function ContractGroupHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ExecutionBadge({ status }: { status: "executed" | "not_executed" | "unknown" }) {
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[10px] shrink-0 ${
+        status === "executed"
+          ? "border-emerald-400 bg-emerald-900/40 text-emerald-300"
+          : status === "not_executed"
+            ? "border-red-400 bg-red-900/40 text-red-300"
+            : "border-slate-500 text-slate-400"
+      }`}
+    >
+      {status === "executed" ? "חתום" : status === "not_executed" ? "לא חתום" : "—"}
+    </Badge>
+  );
+}
+
+function FiveColGroup({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="px-3 py-3 border-r border-slate-100 dark:border-zinc-700/40 last:border-r-0 min-w-[170px]">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-2 mb-2 border-b border-slate-100 dark:border-zinc-700/40">
+        {title}
+      </div>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function FiveColRow({ label, value }: { label: string; value: string | React.ReactNode }) {
+  return (
+    <div className="text-[11px]">
+      <span className="text-slate-400 dark:text-slate-500">{label}:</span>{" "}
+      <span className="text-slate-700 dark:text-slate-300">{value}</span>
+    </div>
+  );
+}
+
 function SupplierObligationsSection({
   chapter,
   anchor,
@@ -455,10 +498,13 @@ function SupplierObligationsSection({
   onOpenSource: (s: SourceRef) => void;
 }) {
   const supplierName =
-    anchor?.contract_profile?.parties?.find((p) => p.role === "supplier")
-      ?.name ??
+    anchor?.contract_profile?.parties?.find((p) => p.role === "supplier")?.name ??
     anchor?.contract_profile?.agreement_title ??
     null;
+
+  const minCommitments = (anchor?.commercial_terms?.minimum_commitments ?? [])
+    .map((mc) => `${val(mc.commitment_type)}: ${val(mc.amount_or_volume)}`)
+    .join(" · ");
 
   return (
     <div className="space-y-4">
@@ -470,143 +516,77 @@ function SupplierObligationsSection({
 
       {anchor && (
         <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
-          {/* Card header */}
           <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5 flex items-center justify-between">
             <span className="text-white font-semibold text-sm">
               {val(supplierName) !== "—" ? val(supplierName) : "ספק"}
             </span>
-            <Badge
-              variant="outline"
-              className={`text-[10px] shrink-0 ${
-                anchor.executed_status === "executed"
-                  ? "border-emerald-400 bg-emerald-900/40 text-emerald-300"
-                  : anchor.executed_status === "not_executed"
-                    ? "border-red-400 bg-red-900/40 text-red-300"
-                    : "border-slate-500 text-slate-400"
-              }`}
-            >
-              {anchor.executed_status === "executed"
-                ? "חתום"
-                : anchor.executed_status === "not_executed"
-                  ? "לא חתום"
-                  : "—"}
-            </Badge>
+            <ExecutionBadge status={anchor.executed_status} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-            {/* Left column */}
-            <div className="px-4 py-3">
-              <ContractGroupHeader>Supplier &amp; Scope</ContractGroupHeader>
-              <ContractFieldRow
-                label="Supplier Name"
-                value={val(supplierName)}
-              />
-              <ContractFieldRow
-                label="Services"
-                value={val(anchor.contract_profile?.services_or_goods)}
-              />
-              <ContractFieldRow
-                label="Criticality"
-                value={val(anchor.contract_profile?.criticality_indicators)}
-              />
-              <ContractGroupHeader>Financial Commitments</ContractGroupHeader>
-              <ContractFieldRow
-                label="Pricing"
-                value={`${val(anchor.commercial_terms?.fees_and_pricing?.fee_amounts_or_rate_card)} ${val(anchor.commercial_terms?.fees_and_pricing?.currency) !== "—" ? `(${val(anchor.commercial_terms?.fees_and_pricing?.currency)})` : ""}`.trim()}
-              />
-              <ContractFieldRow
-                label="Payment"
-                value={val(
-                  anchor.commercial_terms?.fees_and_pricing
-                    ?.invoicing_and_payment_terms,
-                )}
-              />
-              <ContractFieldRow
-                label="Late Fees"
-                value={val(
-                  anchor.commercial_terms?.fees_and_pricing?.late_fees_interest,
-                )}
-              />
-              {(anchor.commercial_terms?.minimum_commitments ?? []).length >
-                0 && (
-                <ContractFieldRow
-                  label="Min. Commitments"
-                  value={anchor.commercial_terms!.minimum_commitments
-                    .map(
-                      (mc) =>
-                        `${val(mc.commitment_type)}: ${val(mc.amount_or_volume)}`,
-                    )
-                    .join(" · ")}
-                />
-              )}
-              <ContractFieldRow
-                label="Price Increase"
-                value={val(
-                  anchor.commercial_terms?.price_changes_and_repricing
-                    ?.notice_period,
-                )}
-              />
-            </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[860px]">
+              <FiveColGroup title="Supplier & Scope">
+                <FiveColRow label="Supplier Name" value={val(supplierName)} />
+                <FiveColRow label="Services" value={val(anchor.contract_profile?.services_or_goods)} />
+                <FiveColRow label="Criticality" value={val(anchor.contract_profile?.criticality_indicators)} />
+              </FiveColGroup>
 
-            {/* Right column */}
-            <div className="px-4 py-3">
-              <ContractGroupHeader>Term, Renewal &amp; Termination</ContractGroupHeader>
-              <ContractFieldRow
-                label="Term"
-                value={`${val(anchor.term_and_renewal?.initial_term)} ${anchor.term_and_renewal?.auto_renew === true ? "(מתחדש אוטומטית)" : ""}`.trim()}
-              />
-              <ContractFieldRow
-                label="Convenience"
-                value={val(
-                  anchor.termination_and_continuity?.termination_for_convenience
-                    ?.notice_period,
+              <FiveColGroup title="Financial Commitments">
+                <FiveColRow
+                  label="Pricing"
+                  value={`${val(anchor.commercial_terms?.fees_and_pricing?.fee_amounts_or_rate_card)}${val(anchor.commercial_terms?.fees_and_pricing?.currency) !== "—" ? ` (${val(anchor.commercial_terms?.fees_and_pricing?.currency)})` : ""}`.trim()}
+                />
+                <FiveColRow label="Payment" value={val(anchor.commercial_terms?.fees_and_pricing?.invoicing_and_payment_terms)} />
+                <FiveColRow label="Late Fees" value={val(anchor.commercial_terms?.fees_and_pricing?.late_fees_interest)} />
+                <FiveColRow label="Min. Commitments" value={minCommitments || "—"} />
+                <FiveColRow label="Price Increase" value={val(anchor.commercial_terms?.price_changes_and_repricing?.notice_period)} />
+              </FiveColGroup>
+
+              <FiveColGroup title="Term, Renewal & Termination">
+                <FiveColRow
+                  label="Term"
+                  value={`${val(anchor.term_and_renewal?.initial_term)}${anchor.term_and_renewal?.auto_renew === true ? " (מתחדש אוטומטית)" : ""}`.trim()}
+                />
+                <FiveColRow label="Convenience" value={val(anchor.termination_and_continuity?.termination_for_convenience?.notice_period)} />
+                <FiveColRow
+                  label="Cause"
+                  value={(anchor.termination_and_continuity?.termination_for_cause?.grounds ?? []).join(", ") || "—"}
+                />
+                <FiveColRow label="Continuity" value={val(anchor.termination_and_continuity?.exit_and_transition?.business_continuity_dr)} />
+              </FiveColGroup>
+
+              <FiveColGroup title="CoC & Assignment">
+                <FiveColRow
+                  label="CoC"
+                  value={`${boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists)}${val(anchor.change_of_control_and_assignment?.change_of_control?.effects) !== "—" ? ` — ${val(anchor.change_of_control_and_assignment?.change_of_control?.effects)}` : ""}`.trim()}
+                />
+                <FiveColRow
+                  label="Assignment"
+                  value={
+                    anchor.change_of_control_and_assignment?.assignment?.consent_required === true
+                      ? "דורש הסכמה"
+                      : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
+                        ? "ללא הסכמה"
+                        : "—"
+                  }
+                />
+              </FiveColGroup>
+
+              <FiveColGroup title="Governance & Gaps">
+                <FiveColRow
+                  label="Execution"
+                  value={anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—"}
+                />
+                {(anchor.missing_information ?? []).length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    {anchor.missing_information.map((m, i) => (
+                      <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1">
+                        {m}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              />
-              <ContractFieldRow
-                label="Cause"
-                value={
-                  (anchor.termination_and_continuity?.termination_for_cause?.grounds ?? []).length > 0
-                    ? anchor.termination_and_continuity!.termination_for_cause.grounds.join(", ")
-                    : "—"
-                }
-              />
-              <ContractGroupHeader>CoC &amp; Assignment</ContractGroupHeader>
-              <ContractFieldRow
-                label="CoC"
-                value={`${boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists)} ${val(anchor.change_of_control_and_assignment?.change_of_control?.effects) !== "—" ? `— ${val(anchor.change_of_control_and_assignment?.change_of_control?.effects)}` : ""}`.trim()}
-              />
-              <ContractFieldRow
-                label="Assignment"
-                value={
-                  anchor.change_of_control_and_assignment?.assignment
-                    ?.consent_required === true
-                    ? "דורש הסכמה"
-                    : anchor.change_of_control_and_assignment?.assignment
-                          ?.consent_required === false
-                      ? "ללא הסכמה"
-                      : "—"
-                }
-              />
-              <ContractFieldRow
-                label="Continuity"
-                value={val(
-                  anchor.termination_and_continuity?.exit_and_transition
-                    ?.business_continuity_dr,
-                )}
-              />
-              {anchor.missing_information?.length > 0 && (
-                <>
-                  <ContractGroupHeader>Follow-ups</ContractGroupHeader>
-                  {anchor.missing_information.map((m, i) => (
-                    <div
-                      key={i}
-                      className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1 mb-1"
-                    >
-                      {m}
-                    </div>
-                  ))}
-                </>
-              )}
+              </FiveColGroup>
             </div>
           </div>
         </div>
@@ -629,8 +609,7 @@ function CustomerObligationsSection({
   onOpenSource: (s: SourceRef) => void;
 }) {
   const customerName =
-    anchor?.contract_profile?.parties?.find((p) => p.role === "customer")
-      ?.name ??
+    anchor?.contract_profile?.parties?.find((p) => p.role === "customer")?.name ??
     anchor?.contract_profile?.agreement_title ??
     null;
 
@@ -648,131 +627,87 @@ function CustomerObligationsSection({
             <span className="text-white font-semibold text-sm">
               {val(customerName) !== "—" ? val(customerName) : "לקוח"}
             </span>
-            <Badge
-              variant="outline"
-              className={`text-[10px] shrink-0 ${
-                anchor.executed_status === "executed"
-                  ? "border-emerald-400 bg-emerald-900/40 text-emerald-300"
-                  : anchor.executed_status === "not_executed"
-                    ? "border-red-400 bg-red-900/40 text-red-300"
-                    : "border-indigo-400 text-indigo-200"
-              }`}
-            >
-              {anchor.executed_status === "executed"
-                ? "חתום"
-                : anchor.executed_status === "not_executed"
-                  ? "לא חתום"
-                  : "—"}
-            </Badge>
+            <ExecutionBadge status={anchor.executed_status} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-            <div className="px-4 py-3">
-              <ContractGroupHeader>Customer &amp; Commercials</ContractGroupHeader>
-              <ContractFieldRow label="Customer" value={val(customerName)} />
-              <ContractFieldRow
-                label="Scope"
-                value={val(anchor.contract_profile?.parties?.find(p => p.role === "vendor")?.name ?? anchor.contract_profile?.agreement_title)}
-              />
-              <ContractFieldRow
-                label="Pricing"
-                value={`${val(anchor.commercials?.fees_and_pricing?.fee_amounts_or_rate_card)} ${val(anchor.commercials?.fees_and_pricing?.currency) !== "—" ? `(${val(anchor.commercials?.fees_and_pricing?.currency)})` : ""}`.trim()}
-              />
-              <ContractFieldRow
-                label="Payment"
-                value={val(
-                  anchor.commercials?.fees_and_pricing
-                    ?.invoicing_and_payment_terms,
-                )}
-              />
-              <ContractFieldRow
-                label="Min. Commitments"
-                value={val(
-                  anchor.commercials?.fees_and_pricing?.minimum_commitments,
-                )}
-              />
-              <ContractFieldRow
-                label="MFN"
-                value={`${boolLabel(anchor.commercials?.mfn_and_benchmarking?.mfn_exists)} ${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered) !== "—" ? `— ${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered)}` : ""}`.trim()}
-              />
-              <ContractGroupHeader>Service Levels &amp; Commitments</ContractGroupHeader>
-              <ContractFieldRow
-                label="SLA"
-                value={`${boolLabel(anchor.sla_and_credits?.sla_exists)} ${val(anchor.sla_and_credits?.sla_summary) !== "—" ? `— ${val(anchor.sla_and_credits?.sla_summary)}` : ""}`.trim()}
-              />
-              <ContractFieldRow
-                label="Suspension"
-                value={`${boolLabel(anchor.termination_and_suspension?.suspension_rights?.exists)} ${val(anchor.termination_and_suspension?.suspension_rights?.triggers) !== "—" ? `— ${val(anchor.termination_and_suspension?.suspension_rights?.triggers)}` : ""}`.trim()}
-              />
-            </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[860px]">
+              <FiveColGroup title="Customer & Commercials">
+                <FiveColRow label="Customer" value={val(customerName)} />
+                <FiveColRow
+                  label="Scope"
+                  value={val(anchor.contract_profile?.parties?.find((p) => p.role === "vendor")?.name ?? anchor.contract_profile?.agreement_title)}
+                />
+                <FiveColRow
+                  label="Pricing"
+                  value={`${val(anchor.commercials?.fees_and_pricing?.fee_amounts_or_rate_card)}${val(anchor.commercials?.fees_and_pricing?.currency) !== "—" ? ` (${val(anchor.commercials?.fees_and_pricing?.currency)})` : ""}`.trim()}
+                />
+                <FiveColRow label="Payment" value={val(anchor.commercials?.fees_and_pricing?.invoicing_and_payment_terms)} />
+                <FiveColRow label="Min. Commitments" value={val(anchor.commercials?.fees_and_pricing?.minimum_commitments)} />
+                <FiveColRow
+                  label="MFN"
+                  value={`${boolLabel(anchor.commercials?.mfn_and_benchmarking?.mfn_exists)}${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered) !== "—" ? ` — ${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered)}` : ""}`.trim()}
+                />
+              </FiveColGroup>
 
-            <div className="px-4 py-3">
-              <ContractGroupHeader>Term, Renewal &amp; Exit</ContractGroupHeader>
-              <ContractFieldRow
-                label="Term"
-                value={val(anchor.term_and_renewal?.initial_term)}
-              />
-              <ContractFieldRow
-                label="Auto-renew Trap"
-                value={
-                  anchor.term_and_renewal?.auto_renew === true
-                    ? `כן — חלון: ${val(anchor.term_and_renewal?.non_renewal_notice_window)}`
-                    : boolLabel(anchor.term_and_renewal?.auto_renew)
-                }
-              />
-              <ContractFieldRow
-                label="Termination"
-                value={`נוחות: ${val(anchor.termination_and_suspension?.termination_for_convenience?.notice_period)} | עילה: ${(anchor.termination_and_suspension?.termination_for_cause?.grounds ?? []).join(", ") || "—"}`}
-              />
-              <ContractGroupHeader>CoC &amp; Assignment</ContractGroupHeader>
-              <ContractFieldRow
-                label="CoC Trigger"
-                value={boolLabel(
-                  anchor.change_of_control_and_assignment?.change_of_control
-                    ?.exists,
+              <FiveColGroup title="Service Levels & Commitments">
+                <FiveColRow
+                  label="SLA"
+                  value={`${boolLabel(anchor.sla_and_credits?.sla_exists)}${val(anchor.sla_and_credits?.sla_summary) !== "—" ? ` — ${val(anchor.sla_and_credits?.sla_summary)}` : ""}`.trim()}
+                />
+                <FiveColRow
+                  label="Suspension"
+                  value={`${boolLabel(anchor.termination_and_suspension?.suspension_rights?.exists)}${val(anchor.termination_and_suspension?.suspension_rights?.triggers) !== "—" ? ` — ${val(anchor.termination_and_suspension?.suspension_rights?.triggers)}` : ""}`.trim()}
+                />
+              </FiveColGroup>
+
+              <FiveColGroup title="Term, Renewal & Exit">
+                <FiveColRow label="Term" value={val(anchor.term_and_renewal?.initial_term)} />
+                <FiveColRow
+                  label="Auto-renew Trap"
+                  value={
+                    anchor.term_and_renewal?.auto_renew === true
+                      ? `כן — חלון: ${val(anchor.term_and_renewal?.non_renewal_notice_window)}`
+                      : boolLabel(anchor.term_and_renewal?.auto_renew)
+                  }
+                />
+                <FiveColRow
+                  label="Termination"
+                  value={`נוחות: ${val(anchor.termination_and_suspension?.termination_for_convenience?.notice_period)} | עילה: ${(anchor.termination_and_suspension?.termination_for_cause?.grounds ?? []).join(", ") || "—"}`}
+                />
+              </FiveColGroup>
+
+              <FiveColGroup title="CoC & Assignment">
+                <FiveColRow label="CoC Trigger" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists)} />
+                <FiveColRow label="Consent" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.consent_required)} />
+                <FiveColRow label="Termination Right" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.termination_right_triggered)} />
+                <FiveColRow
+                  label="Assignment"
+                  value={
+                    anchor.change_of_control_and_assignment?.assignment?.consent_required === true
+                      ? "דורש הסכמה"
+                      : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
+                        ? "ללא הסכמה"
+                        : "—"
+                  }
+                />
+              </FiveColGroup>
+
+              <FiveColGroup title="Governance & Missing Docs">
+                <FiveColRow
+                  label="Execution"
+                  value={anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—"}
+                />
+                {(anchor.missing_information ?? []).length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    {anchor.missing_information.map((m, i) => (
+                      <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1">
+                        {m}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              />
-              <ContractFieldRow
-                label="Consent"
-                value={boolLabel(
-                  anchor.change_of_control_and_assignment?.change_of_control
-                    ?.consent_required,
-                )}
-              />
-              <ContractFieldRow
-                label="Termination Right"
-                value={boolLabel(
-                  anchor.change_of_control_and_assignment?.change_of_control
-                    ?.termination_right_triggered,
-                )}
-              />
-              <ContractFieldRow
-                label="Assignment"
-                value={
-                  anchor.change_of_control_and_assignment?.assignment
-                    ?.consent_required === true
-                    ? "דורש הסכמה"
-                    : anchor.change_of_control_and_assignment?.assignment
-                          ?.consent_required === false
-                      ? "ללא הסכמה"
-                      : "—"
-                }
-              />
-              {anchor.missing_information?.length > 0 && (
-                <>
-                  <ContractGroupHeader>
-                    Governance &amp; Missing Docs
-                  </ContractGroupHeader>
-                  {anchor.missing_information.map((m, i) => (
-                    <div
-                      key={i}
-                      className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1 mb-1"
-                    >
-                      {m}
-                    </div>
-                  ))}
-                </>
-              )}
+              </FiveColGroup>
             </div>
           </div>
         </div>
@@ -1276,6 +1211,357 @@ function InsuranceSection({
 }
 
 // ---------------------------------------------------------------------------
+// ESG / Environmental
+// ---------------------------------------------------------------------------
+
+function EsgSection({
+  chapter,
+  anchor,
+  onOpenSource,
+}: {
+  chapter: MaChapterOutput;
+  anchor: MaEsgAnchor | null;
+  onOpenSource: (s: SourceRef) => void;
+}) {
+  const permits = anchor?.environmental_permits_and_requirements_as_stated ?? [];
+  const incidents = anchor?.audits_findings_incidents_and_remediation_as_stated ?? [];
+  const penalties = anchor?.penalties_and_liabilities_as_stated ?? [];
+  const commitments = anchor?.material_esg_commitments_as_stated ?? [];
+
+  return (
+    <div className="space-y-5">
+      {chapter.summary_he && (
+        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {chapter.summary_he}
+        </p>
+      )}
+
+      {anchor?.document_profile && val(anchor.document_profile.title_or_subject) !== "—" && (
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3 text-sm space-y-1">
+          <div className="flex gap-3 flex-wrap text-xs text-slate-500">
+            {val(anchor.document_profile.document_type_detected) !== "—" && <span className="font-medium text-slate-700 dark:text-slate-300">{val(anchor.document_profile.document_type_detected)}</span>}
+            {val(anchor.document_profile.authority_or_issuer) !== "—" && <span>· {val(anchor.document_profile.authority_or_issuer)}</span>}
+            {val(anchor.document_profile.jurisdiction) !== "—" && <span>· {val(anchor.document_profile.jurisdiction)}</span>}
+            {val(anchor.document_profile.document_date) !== "—" && <span>· {val(anchor.document_profile.document_date)}</span>}
+          </div>
+        </div>
+      )}
+
+      {permits.length > 0 && (
+        <div>
+          <SectionLabel>רישיונות והיתרים סביבתיים</SectionLabel>
+          <TableWrapper>
+            <thead><tr>
+              <Th>רישיון / היתר</Th><Th>מספר</Th><Th>תוקף</Th><Th>תנאים</Th><Th>סטטוס</Th>
+            </tr></thead>
+            <tbody>
+              {permits.map((p, i) => (
+                <tr key={i}>
+                  <Td className="font-medium">{val(p.permit_name)}</Td>
+                  <Td>{val(p.permit_id_or_number)}</Td>
+                  <Td>{val(p.expiry_date)}</Td>
+                  <Td>{val(p.conditions_or_limits)}</Td>
+                  <Td>{val(p.status_as_stated)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {incidents.length > 0 && (
+        <div>
+          <SectionLabel>ממצאים, אירועים ותיקונים</SectionLabel>
+          <div className="space-y-2">
+            {incidents.map((inc, i) => (
+              <div key={i} className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3 text-sm space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">{val(inc.event_type)}</span>
+                  {val(inc.date_or_period) !== "—" && <span className="text-xs text-slate-400">· {val(inc.date_or_period)}</span>}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${inc.status_as_stated === "open" ? "bg-red-100 text-red-700" : inc.status_as_stated === "closed" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{val(inc.status_as_stated)}</span>
+                </div>
+                {val(inc.description) !== "—" && <p className="text-xs text-slate-600 dark:text-slate-300">{val(inc.description)}</p>}
+                {val(inc.corrective_actions_or_remediation) !== "—" && <p className="text-xs text-slate-500">תיקון: {val(inc.corrective_actions_or_remediation)}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {penalties.length > 0 && (
+        <div>
+          <SectionLabel>קנסות וחבויות</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>סוג</Th><Th>סכום</Th><Th>עילה</Th><Th>סטטוס תשלום</Th></tr></thead>
+            <tbody>
+              {penalties.map((p, i) => (
+                <tr key={i}>
+                  <Td className="font-medium">{val(p.penalty_type)}</Td>
+                  <Td>{val(p.amount_as_stated)}</Td>
+                  <Td>{val(p.basis_or_reason)}</Td>
+                  <Td>{val(p.payment_or_compliance_status_as_stated)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {commitments.length > 0 && (
+        <div>
+          <SectionLabel>מחויבויות ESG מהותיות</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>סוג</Th><Th>יעד / מחויבות</Th><Th>לוח זמנים</Th><Th>דיווח / בדיקה</Th></tr></thead>
+            <tbody>
+              {commitments.map((c, i) => (
+                <tr key={i}>
+                  <Td className="font-medium whitespace-nowrap">{val(c.commitment_type)}</Td>
+                  <Td>{val(c.target_or_commitment_text)}</Td>
+                  <Td>{val(c.timeline_or_deadline)}</Td>
+                  <Td>{val(c.measurement_or_reporting_requirements)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {chapter.findings.length > 0 && <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Real Estate & Material Leases
+// ---------------------------------------------------------------------------
+
+function RealEstateSection({
+  chapter,
+  anchor,
+  onOpenSource,
+}: {
+  chapter: MaChapterOutput;
+  anchor: MaRealEstateAnchor | null;
+  onOpenSource: (s: SourceRef) => void;
+}) {
+  const p = anchor?.property_and_lease_profile;
+  const t = anchor?.term_and_renewal;
+  const a = anchor?.assignment_subletting_and_consents;
+  const etd = anchor?.early_termination_and_default;
+  const other = anchor?.other_key_terms_as_stated;
+
+  return (
+    <div className="space-y-5">
+      {chapter.summary_he && (
+        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {chapter.summary_he}
+        </p>
+      )}
+
+      {anchor && (
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
+          <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5 flex items-center justify-between">
+            <span className="text-white font-semibold text-sm">{val(p?.property_address) !== "—" ? val(p?.property_address) : val(p?.agreement_title)}</span>
+            <ExecutionBadge status={anchor.executed_status} />
+          </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[680px]">
+              <FiveColGroup title="פרטי הנכס והשכירות">
+                <FiveColRow label="כתובת" value={val(p?.property_address)} />
+                <FiveColRow label="שוכר" value={val(p?.tenant_name)} />
+                <FiveColRow label="משכיר" value={val(p?.landlord_name)} />
+                <FiveColRow label="שכר דירה" value={val(p?.base_rent)} />
+                <FiveColRow label="פיקדון / LC" value={val(p?.security_deposit_or_loc)} />
+              </FiveColGroup>
+              <FiveColGroup title="תקופה וחידוש">
+                <FiveColRow label="תחילה" value={val(t?.commencement_date)} />
+                <FiveColRow label="סיום" value={val(t?.expiration_date)} />
+                <FiveColRow label="תקופה" value={val(t?.initial_term)} />
+                <FiveColRow label="חידוש אוטומטי" value={t?.auto_renew === true ? "כן" : t?.auto_renew === false ? "לא" : "—"} />
+                {(t?.renewal_options ?? []).length > 0 && (
+                  <FiveColRow label="אופציות" value={(t?.renewal_options ?? []).map(r => `${val(r.renewal_term)} (${val(r.renewal_notice_window)})`).join(", ")} />
+                )}
+              </FiveColGroup>
+              <FiveColGroup title="המחאה ושכירות משנה">
+                <FiveColRow label="המחאה מוגבלת" value={a?.assignment_restricted === true ? "כן" : a?.assignment_restricted === false ? "לא" : "—"} />
+                <FiveColRow label="שכירות משנה מוגבלת" value={a?.subletting_restricted === true ? "כן" : a?.subletting_restricted === false ? "לא" : "—"} />
+                <FiveColRow label="הסכמת משכיר" value={a?.landlord_consent_required === true ? "נדרשת" : a?.landlord_consent_required === false ? "לא נדרשת" : "—"} />
+                <FiveColRow label="CoC = המחאה" value={a?.change_of_control_treated_as_assignment === true ? "כן" : a?.change_of_control_treated_as_assignment === false ? "לא" : "—"} />
+              </FiveColGroup>
+              <FiveColGroup title="סיום מוקדם וכשל">
+                {(etd?.early_termination_rights ?? []).map((r, i) => (
+                  <FiveColRow key={i} label={`סיום (${val(r.who_can_terminate)})`} value={`${val(r.trigger)} — הודעה: ${val(r.notice_period)}`} />
+                ))}
+                <FiveColRow label="כשל ותיקון" value={val(etd?.default_and_cure?.cure_periods)} />
+              </FiveColGroup>
+              <FiveColGroup title="תנאים נוספים">
+                <FiveColRow label="שימוש מורשה" value={val(other?.use_restrictions)} />
+                <FiveColRow label="ביטוח" value={val(other?.insurance_requirements)} />
+                <FiveColRow label="סביבה / חומרים מסוכנים" value={val(other?.environmental_or_hazardous_materials)} />
+                {(anchor.missing_information ?? []).length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    {anchor.missing_information.map((m, i) => (
+                      <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1">{m}</div>
+                    ))}
+                  </div>
+                )}
+              </FiveColGroup>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {chapter.findings.length > 0 && <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Privacy & Cyber
+// ---------------------------------------------------------------------------
+
+function PrivacyCyberSection({
+  chapter,
+  anchor,
+  onOpenSource,
+}: {
+  chapter: MaChapterOutput;
+  anchor: MaPrivacyCyberAnchor | null;
+  onOpenSource: (s: SourceRef) => void;
+}) {
+  const compliance = anchor?.compliance_statements_as_stated ?? [];
+  const incidents = anchor?.incidents_and_breaches_as_stated ?? [];
+  const reports = anchor?.assessments_and_reports_as_stated ?? [];
+  const regulatory = anchor?.regulatory_actions_and_penalties_as_stated ?? [];
+  const dp = anchor?.data_processing_summary_as_stated;
+  const sec = anchor?.security_commitments_as_stated;
+
+  return (
+    <div className="space-y-5">
+      {chapter.summary_he && (
+        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {chapter.summary_he}
+        </p>
+      )}
+
+      {(dp || sec) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {dp && (
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3">
+              <SectionLabel>עיבוד נתונים ותפקידים</SectionLabel>
+              <ContractFieldRow label="תפקידים" value={val(dp.roles_controller_processor)} />
+              <ContractFieldRow label="קטגוריות מידע" value={val(dp.categories_of_personal_data)} />
+              <ContractFieldRow label="מטרות עיבוד" value={val(dp.processing_purposes)} />
+              <ContractFieldRow label="העברות בינ״ל" value={val(dp.international_transfers)} />
+              <ContractFieldRow label="שמירה ומחיקה" value={val(dp.retention_and_deletion)} />
+            </div>
+          )}
+          {sec && (
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50/50 dark:bg-zinc-800/40 px-4 py-3">
+              <SectionLabel>מחויבויות אבטחה</SectionLabel>
+              <ContractFieldRow label="אמצעי אבטחה" value={val(sec.security_measures_summary)} />
+              <ContractFieldRow label="תקנים / תעודות" value={val(sec.standards_certifications)} />
+              <ContractFieldRow label="הצפנה / גישה" value={val(sec.encryption_and_access_controls)} />
+              <ContractFieldRow label="ניהול פגיעויות" value={val(sec.vulnerability_management)} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {compliance.length > 0 && (
+        <div>
+          <SectionLabel>ציות לרגולציה</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>מסגרת / חוק</Th><Th>סטטוס</Th><Th>פרטים</Th><Th>תוכנית תיקון</Th></tr></thead>
+            <tbody>
+              {compliance.map((c, i) => (
+                <tr key={i}>
+                  <Td className="font-medium whitespace-nowrap">{val(c.framework_or_law)}</Td>
+                  <Td>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c.statement_type === "compliant" ? "bg-emerald-100 text-emerald-700" : c.statement_type === "non_compliant" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                      {val(c.statement_type)}
+                    </span>
+                  </Td>
+                  <Td>{val(c.details)}</Td>
+                  <Td>{val(c.remediation_plan_or_deadline)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {incidents.length > 0 && (
+        <div>
+          <SectionLabel>אירועי אבטחה והפרות</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>תאריך</Th><Th>אופי האירוע</Th><Th>מה נפגע</Th><Th>הודעות</Th><Th>קנסות</Th><Th>סטטוס</Th></tr></thead>
+            <tbody>
+              {incidents.map((inc, i) => (
+                <tr key={i}>
+                  <Td className="whitespace-nowrap">{val(inc.incident_date_or_period)}</Td>
+                  <Td>{val(inc.nature_of_incident)}</Td>
+                  <Td>{val(inc.systems_or_data_impacted)}</Td>
+                  <Td>{val(inc.notifications_made)}</Td>
+                  <Td>{val(inc.fines_penalties_or_claims_as_stated)}</Td>
+                  <Td>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${inc.status_as_stated === "closed" ? "bg-emerald-100 text-emerald-700" : inc.status_as_stated === "open" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-500"}`}>
+                      {val(inc.status_as_stated)}
+                    </span>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {reports.length > 0 && (
+        <div>
+          <SectionLabel>דוחות הערכה (Pen Test / SOC2 / ISO)</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>סוג</Th><Th>תאריך</Th><Th>היקף</Th><Th>ממצאים קריטיים</Th><Th>סטטוס תיקון</Th></tr></thead>
+            <tbody>
+              {reports.map((r, i) => (
+                <tr key={i}>
+                  <Td className="font-medium">{val(r.report_type)}</Td>
+                  <Td>{val(r.report_date)}</Td>
+                  <Td>{val(r.scope)}</Td>
+                  <Td>{val(r.critical_findings_as_stated)}</Td>
+                  <Td>{val(r.remediation_status_as_stated)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {regulatory.length > 0 && (
+        <div>
+          <SectionLabel>פעולות רגולטוריות וקנסות</SectionLabel>
+          <TableWrapper>
+            <thead><tr><Th>רשות</Th><Th>סוג</Th><Th>פרטים</Th><Th>קנס</Th><Th>סטטוס</Th></tr></thead>
+            <tbody>
+              {regulatory.map((r, i) => (
+                <tr key={i}>
+                  <Td className="font-medium">{val(r.authority)}</Td>
+                  <Td>{val(r.action_type)}</Td>
+                  <Td>{val(r.details)}</Td>
+                  <Td>{val(r.penalty_amount_as_stated)}</Td>
+                  <Td>{val(r.status_as_stated)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+        </div>
+      )}
+
+      {chapter.findings.length > 0 && <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Generic chapter section (for chapters without custom renderers)
 // ---------------------------------------------------------------------------
 
@@ -1538,6 +1824,30 @@ function ChapterAccordion({
           <InsuranceSection
             chapter={chapter}
             anchor={anchor as MaInsuranceAnchor | null}
+            onOpenSource={onOpenSource}
+          />
+        );
+      case "esg_environmental":
+        return (
+          <EsgSection
+            chapter={chapter}
+            anchor={anchor as MaEsgAnchor | null}
+            onOpenSource={onOpenSource}
+          />
+        );
+      case "real_estate_and_material_leases":
+        return (
+          <RealEstateSection
+            chapter={chapter}
+            anchor={anchor as MaRealEstateAnchor | null}
+            onOpenSource={onOpenSource}
+          />
+        );
+      case "privacy_and_cyber":
+        return (
+          <PrivacyCyberSection
+            chapter={chapter}
+            anchor={anchor as MaPrivacyCyberAnchor | null}
             onOpenSource={onOpenSource}
           />
         );

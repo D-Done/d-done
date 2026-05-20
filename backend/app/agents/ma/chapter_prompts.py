@@ -24,6 +24,7 @@ from app.agents.ma.constants import (
     CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
+    CHAPTER_ESG_ENVIRONMENTAL,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_HR,
     CHAPTER_INSURANCE,
@@ -31,6 +32,8 @@ from app.agents.ma.constants import (
     CHAPTER_IP_OWNERSHIP,
     CHAPTER_LITIGATION,
     CHAPTER_OSS,
+    CHAPTER_PRIVACY_CYBER,
+    CHAPTER_REAL_ESTATE,
     CHAPTER_REGULATORY,
     CHAPTER_SUPPLIER_OBLIGATIONS,
     CHAPTER_TAXATION,
@@ -714,6 +717,139 @@ F) Source code escrow — existence, escrow agent, release triggers, update
 In addition to the standard summary_he / findings / follow_ups fields, also
 populate the ``ip_licensing_extraction`` field with the structured extraction
 object matching the IpLicensingExtraction schema.
+""",
+    },
+    CHAPTER_ESG_ENVIRONMENTAL: {
+        "subsections": """\
+Subsections:
+- Document Profile
+- Environmental Permits and Requirements (as stated)
+- Audits, Findings, Incidents and Remediation (as stated)
+- Penalties and Liabilities (as stated)
+- Material ESG Commitments (as stated)
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (ESG / Environmental anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not use external knowledge.
+Do not infer environmental risk or liability beyond what is explicitly stated.
+Do not infer the existence of contamination unless explicitly stated.
+Evidence is mandatory for every material item: include source_document_name,
+page_number, and box_2d. Return "unknown" for any field not explicitly stated.
+
+Extract under the following categories:
+A) Document profile — document type (permit, regulatory correspondence,
+   environmental report, incident report, ESG policy, sustainability report,
+   ESG commitment, audit report, other); authority/issuer; jurisdiction;
+   site/facility; date.
+B) Environmental permits and compliance (as stated) — permit names/IDs,
+   scope, expiry, conditions, monitoring/reporting obligations, status.
+C) Pollution/contamination/incidents (as stated) — spills/releases/
+   contamination, affected media, remediation measures, regulator notices,
+   responsible party.
+D) Penalties, fines, and liabilities (as stated) — fines/penalties amounts,
+   sanctions, cleanup costs, payment/compliance status.
+E) Material ESG commitments (as stated) — ESG policies, targets (net zero,
+   emissions reduction, diversity goals), supplier codes; investor/customer-
+   required commitments; reporting/audit requirements.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``esg_environmental_extraction`` field with the structured
+extraction object matching the EsgEnvironmentalExtraction schema.
+""",
+    },
+    CHAPTER_REAL_ESTATE: {
+        "subsections": """\
+Subsections:
+- Property and Lease Profile
+- Term and Renewal
+- Assignment, Subletting and Consents
+- Early Termination and Default
+- Restoration, Alterations and Return
+- Other Key Terms (as stated)
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (Real Estate & Material Leases anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not use external knowledge.
+Do not infer or assume missing values — output "unknown" for anything not
+explicitly stated. Evidence is mandatory for every material item.
+If the document is a consent/estoppel/guaranty referencing a lease without
+including the full lease terms, extract only the terms present in the text.
+
+Extract under the following categories:
+A) Property and lease profile — property address/premises; lease type
+   (lease/sublease/amendment/consent/guaranty/estoppel); parties
+   (landlord/tenant/guarantor); base rent; security deposit/LC.
+B) Term and renewal — commencement date, expiration date, initial term,
+   renewal options (notice windows, rent at renewal), auto-renew.
+C) Assignment, subletting and consents — assignment/subletting restrictions;
+   landlord consent requirements (conditions, fees, reasonableness);
+   change-of-control treated as assignment; any consent granted herein.
+D) Early termination and default — early termination rights (who, trigger,
+   notice, fees); default and cure periods; remedies.
+E) Restoration/return obligations — restoration obligations at end of term;
+   alteration approval requirements; reinstatement; surrender conditions.
+F) Other key real estate risks (document-driven) — use restrictions; relocation
+   rights; expansion/ROFO/ROFR rights; insurance/indemnity requirements;
+   environmental/hazardous materials obligations.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``real_estate_extraction`` field with the structured extraction
+object matching the RealEstateExtraction schema.
+""",
+    },
+    CHAPTER_PRIVACY_CYBER: {
+        "subsections": """\
+Subsections:
+- Document Profile
+- Compliance Statements (as stated)
+- Data Processing and Roles (as stated)
+- Security Commitments (as stated)
+- Incidents and Breaches (as stated)
+- Assessments and Reports (as stated)
+- Unusual Contractual Obligations (as stated)
+- Regulatory Actions and Penalties (as stated)
+- Internal Inconsistencies and Gaps
+""",
+        "focus": """\
+# Extraction scope (Privacy & Cyber anchor)
+
+HARD RULES: Use ONLY the provided documents. Do not use external knowledge.
+Do not infer compliance — only record statements, gaps, or requirements that
+are explicitly stated. Do not infer severity of breaches beyond what is
+explicitly stated. Evidence is mandatory for every material item.
+If the document is a technical report (pen test/SOC2/ISO), extract only what
+is stated: dates, scope, findings summaries, remediation status, obligations.
+
+Extract under the following categories:
+A) Document profile — document type (privacy policy, DPA, DPIA, ROPA,
+   incident report, pen test, SOC2/ISO, regulator correspondence, security
+   addendum, other); effective/report date; scope; jurisdictions referenced.
+B) Compliance statements (as stated) — GDPR/CCPA/Israeli privacy law/other
+   framework references; statements of compliance or non-compliance; gaps;
+   remediation plans.
+C) Data processing and roles (as stated) — controller/processor roles;
+   categories of personal data; data subjects; processing purposes;
+   subprocessor rules; international transfers; retention/deletion.
+D) Security commitments (contractual or policy) — security measures;
+   standards/certifications; encryption/access controls; logging/monitoring;
+   vulnerability management; audit rights.
+E) Breaches and incidents (as stated) — incident dates, nature, impacted
+   data/systems, notifications, remediation steps, fines/penalties/exposure.
+F) Assessment reports (as stated) — pen test, SOC2, ISO; report date; scope;
+   findings summary; critical findings; remediation status.
+G) Unusual contractual obligations — very short breach notification windows,
+   broad audit rights, unlimited liability, special indemnities, data
+   localization — only if explicitly described.
+H) Regulatory actions and penalties (as stated) — authority, action type,
+   date, details, penalty amounts, status.
+
+In addition to the standard summary_he / findings / follow_ups fields, also
+populate the ``privacy_and_cyber_extraction`` field with the structured
+extraction object matching the PrivacyAndCyberExtraction schema.
 """,
     },
     CHAPTER_OSS: {

@@ -27,6 +27,12 @@ CHAPTER_IP_OWNERSHIP: Final = "ip_ownership"
 CHAPTER_IP_LICENSING: Final = "ip_licensing"
 CHAPTER_OSS: Final = "oss"
 
+# --- Optional chapters (user-selectable) ------------------------------------
+
+CHAPTER_ESG_ENVIRONMENTAL: Final = "esg_environmental"
+CHAPTER_REAL_ESTATE: Final = "real_estate_and_material_leases"
+CHAPTER_PRIVACY_CYBER: Final = "privacy_and_cyber"
+
 MA_MANDATORY_CHAPTERS: Final[tuple[str, ...]] = (
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_CORPORATE_GOVERNANCE,
@@ -45,6 +51,14 @@ MA_MANDATORY_CHAPTERS: Final[tuple[str, ...]] = (
     CHAPTER_OSS,
 )
 
+MA_OPTIONAL_CHAPTERS: Final[tuple[str, ...]] = (
+    CHAPTER_ESG_ENVIRONMENTAL,
+    CHAPTER_REAL_ESTATE,
+    CHAPTER_PRIVACY_CYBER,
+)
+
+MA_ALL_CHAPTERS: Final[tuple[str, ...]] = MA_MANDATORY_CHAPTERS + MA_OPTIONAL_CHAPTERS
+
 CHAPTER_TITLES_HE: Final[dict[str, str]] = {
     CHAPTER_TRANSACTION_OVERVIEW: "סקירת העסקה",
     CHAPTER_CORPORATE_GOVERNANCE: "ממשל תאגידי",
@@ -61,6 +75,9 @@ CHAPTER_TITLES_HE: Final[dict[str, str]] = {
     CHAPTER_IP_OWNERSHIP: "בעלות על קניין רוחני",
     CHAPTER_IP_LICENSING: "רישיונות קניין רוחני",
     CHAPTER_OSS: "קוד פתוח ורכיבי צד שלישי",
+    CHAPTER_ESG_ENVIRONMENTAL: "ESG וסביבה",
+    CHAPTER_REAL_ESTATE: "נדל\"ן וחכירות מהותיות",
+    CHAPTER_PRIVACY_CYBER: "פרטיות וסייבר",
 }
 
 

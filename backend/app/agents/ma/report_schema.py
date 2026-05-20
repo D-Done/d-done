@@ -45,6 +45,9 @@ from app.agents.ma.anchor_schemas import (
     TaxationExtraction,
     FinancialDebtExtraction,
     InsuranceExtraction,
+    EsgEnvironmentalExtraction,
+    RealEstateExtraction,
+    PrivacyAndCyberExtraction,
 )
 
 
@@ -256,6 +259,18 @@ class InsuranceChapterOutput(ChapterOutput):
     insurance_extraction: InsuranceExtraction | None = None
 
 
+class EsgEnvironmentalChapterOutput(ChapterOutput):
+    esg_environmental_extraction: EsgEnvironmentalExtraction | None = None
+
+
+class RealEstateChapterOutput(ChapterOutput):
+    real_estate_extraction: RealEstateExtraction | None = None
+
+
+class PrivacyAndCyberChapterOutput(ChapterOutput):
+    privacy_and_cyber_extraction: PrivacyAndCyberExtraction | None = None
+
+
 # ---------------------------------------------------------------------------
 # Completeness checklist (cross-chapter aggregation)
 # ---------------------------------------------------------------------------
@@ -374,6 +389,9 @@ __all__ = [
     "TaxationChapterOutput",
     "FinancialDebtChapterOutput",
     "InsuranceChapterOutput",
+    "EsgEnvironmentalChapterOutput",
+    "RealEstateChapterOutput",
+    "PrivacyAndCyberChapterOutput",
     "MaDDReport",
     "MaFinding",
     "MaFollowUp",
