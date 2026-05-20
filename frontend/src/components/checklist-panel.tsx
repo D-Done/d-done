@@ -487,7 +487,7 @@ function CategorySection({
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: string; onFileUploaded?: () => void }) {
+export function ChecklistPanel({ projectId, onFileUploaded, hideGenerate }: { projectId: string; onFileUploaded?: () => void; hideGenerate?: boolean }) {
   const { lang } = useLanguage();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -582,20 +582,22 @@ export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: strin
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={generating}
-            className="gap-1.5"
-          >
-            {generating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" />
-            )}
-            {generating ? "" : t("checklist_refresh", lang)}
-          </Button>
+          {!hideGenerate && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={generating}
+              className="gap-1.5"
+            >
+              {generating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              {generating ? "" : t("checklist_refresh", lang)}
+            </Button>
+          )}
           {items.length > 0 && (
             <>
               <Button
@@ -669,14 +671,16 @@ export function ChecklistPanel({ projectId, onFileUploaded }: { projectId: strin
               {t("checklist_empty", lang)}
             </p>
           </div>
-          <Button onClick={handleGenerate} disabled={generating} className="gap-2">
-            {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {t("checklist_refresh", lang)}
-          </Button>
+          {!hideGenerate && (
+            <Button onClick={handleGenerate} disabled={generating} className="gap-2">
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {t("checklist_refresh", lang)}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

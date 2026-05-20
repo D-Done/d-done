@@ -49,6 +49,19 @@ file.
 - Leave ``items`` empty (with a short Hebrew ``summary_he``) when there are
   no open items across all chapters.
 
+## CRITICAL — What NOT to flag
+
+This is a due-diligence review of the TARGET COMPANY's existing documents.
+The transaction has not been signed yet. DO NOT raise follow-ups for:
+- Missing SPA (מניות הסכם מכר), term sheet, NDA between buyer and seller,
+  or any other transaction document that is part of the deal being negotiated.
+- Missing board resolutions or shareholder approvals approving the transaction
+  itself (those are signed at closing, not before DD).
+- Any document that by definition does not yet exist because the deal is
+  still in the DD phase.
+Flag only gaps in the TARGET COMPANY's own corporate, operational, and legal
+documentation that a prudent buyer would expect to receive in a data room.
+
 ## Output
 
 Strict ``CompletenessChecklist`` JSON. Do not invent follow-ups that were

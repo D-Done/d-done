@@ -573,6 +573,11 @@ export default function TransactionPage() {
     dealMeta?.dealType === "real_estate" &&
     dealMeta?.realEstateType === "project_finance";
   const report = reportData?.report ?? null;
+  const isMaProject =
+    dealMeta?.dealType === "ma" ||
+    (report != null &&
+      "transaction_type" in report &&
+      (report as { transaction_type?: string }).transaction_type === "ma");
 
   // Use check_id from results, or fall back to the latest dd_check on the project.
   const latestCheckId =
@@ -706,6 +711,18 @@ export default function TransactionPage() {
                   ) && (
                     <TabsTrigger
                       value="checklist"
+                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
+                    >
+                      <ClipboardList className="h-4 w-4 ml-2" />
+                      רשימת השלמות
+                    </TabsTrigger>
+                  )}
+                {isMaProject &&
+                  ["completed", "partial", "needs_review"].includes(
+                    project.status,
+                  ) && (
+                    <TabsTrigger
+                      value="ma-checklist"
                       className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm text-slate-600 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100"
                     >
                       <ClipboardList className="h-4 w-4 ml-2" />
@@ -1387,6 +1404,14 @@ export default function TransactionPage() {
               ) && (
                 <TabsContent value="checklist" className="p-5 m-0">
                   <ChecklistPanel projectId={project.id} onFileUploaded={fetchData} />
+                </TabsContent>
+              )}
+            {isMaProject &&
+              ["completed", "partial", "needs_review"].includes(
+                project.status,
+              ) && (
+                <TabsContent value="ma-checklist" className="p-5 m-0">
+                  <ChecklistPanel projectId={project.id} onFileUploaded={fetchData} hideGenerate />
                 </TabsContent>
               )}
           </Tabs>

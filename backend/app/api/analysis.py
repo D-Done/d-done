@@ -244,6 +244,71 @@ class AgentSessionEventsResponse(BaseModel):
 # ---- Checklist auto-generation ----
 
 
+async def _auto_populate_ma_checklist(
+    db: AsyncSession,
+    project_id: UUID,
+    check_id: UUID,
+    report_dict: dict,
+) -> None:
+    """Sync M&A completeness items into the checklist_items table."""
+    try:
+        from sqlalchemy import delete as sa_delete
+        from app.db.models import ChecklistItem
+
+        completeness = report_dict.get("completeness") or {}
+        items = completeness.get("items") or []
+
+        # Also collect per-chapter follow_ups not already in completeness
+        follow_up_ids_in_completeness = {it.get("id") for it in items}
+        for chapter in report_dict.get("chapters") or []:
+            for fu in chapter.get("follow_ups") or []:
+                fu_id = fu.get("id", "")
+                if fu_id not in follow_up_ids_in_completeness:
+                    items.append({
+                        "id": fu_id,
+                        "description": fu.get("description", ""),
+                        "severity": fu.get("severity", "info"),
+                        "suggested_document": fu.get("suggested_document"),
+                        "chapter_ids": [chapter.get("chapter_id", "")],
+                    })
+                    follow_up_ids_in_completeness.add(fu_id)
+
+        if not items:
+            return
+
+        _SEVERITY_TO_CATEGORY = {
+            "critical": "missing_doc",
+            "warning": "warning_note",
+            "info": "other",
+        }
+
+        await db.execute(
+            sa_delete(ChecklistItem).where(
+                ChecklistItem.project_id == project_id,
+                ChecklistItem.is_completed == False,
+            )
+        )
+
+        for i, item in enumerate(items):
+            severity = item.get("severity") or "info"
+            title = (item.get("description") or "").strip()[:500]
+            if not title:
+                continue
+            db.add(ChecklistItem(
+                project_id=project_id,
+                check_id=check_id,
+                category=_SEVERITY_TO_CATEGORY.get(severity, "other"),
+                title=title,
+                description=(item.get("suggested_document") or None),
+                sort_order=i,
+            ))
+
+        await db.commit()
+        logger.info("Auto-populated %d MA checklist items for project %s", len(items), project_id)
+    except Exception as exc:
+        logger.error("MA checklist population failed for project %s: %s", project_id, exc, exc_info=True)
+
+
 async def _auto_generate_checklist(
     db: AsyncSession,
     project_id: UUID,
@@ -384,6 +449,10 @@ async def _run_analysis_task(
             # Auto-generate completeness checklist for finance projects
             if "tenant_table" in (analysis_result.report_dict or {}):
                 await _auto_generate_checklist(db, project_id, check_id, analysis_result.report_dict, language=language)
+
+            # Auto-populate completeness checklist for M&A projects
+            if transaction_type == "ma":
+                await _auto_populate_ma_checklist(db, project_id, check_id, analysis_result.report_dict)
 
             project_url = f"{settings.frontend_base_url.rstrip('/')}/transactions/{project_id}"
             send_report_ready_notification(
