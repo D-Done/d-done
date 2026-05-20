@@ -713,239 +713,6 @@ class CustomerRevenueContractsExtraction(BaseModel):
     missing_information: list[str] = Field(default_factory=list)
 
 
-# ===========================================================================
-# Anchor 4 — Channel/Reseller/Partner Contracts
-# ===========================================================================
-
-
-class ChAmendsOrSupplements(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    amended_document_reference: str = "unknown"
-    summary_of_changes: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChPrecedence(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    order_of_priority: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChParty(BaseModel):
-    name: str = "unknown"
-    role: Literal[
-        "company", "reseller", "distributor", "partner", "oem",
-        "marketplace_operator", "platform", "affiliate", "other", "unknown",
-    ] = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChContractProfile(BaseModel):
-    document_type_detected: Literal[
-        "reseller", "distributor", "referral", "oem",
-        "strategic_partnership", "marketplace", "other", "unknown",
-    ] = "unknown"
-    agreement_title: str = "unknown"
-    effective_date: str = "unknown"
-    term_start_date: str = "unknown"
-    term_end_date: str = "unknown"
-    products_or_services: str = "unknown"
-    territory: str = "unknown"
-    channel_scope: str = "unknown"
-    amends_or_supplements: ChAmendsOrSupplements = Field(default_factory=ChAmendsOrSupplements)
-    precedence: ChPrecedence = Field(default_factory=ChPrecedence)
-    parties: list[ChParty] = Field(default_factory=list)
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChPricingAndCompensation(BaseModel):
-    model: Literal[
-        "discount_margin", "commission", "referral_fee", "revenue_share",
-        "wholesale", "agency", "other", "unknown",
-    ] = "unknown"
-    discounts_margins_or_fees: str = "unknown"
-    payment_terms: str = "unknown"
-    minimum_commitments: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChKpiAndTarget(BaseModel):
-    kpi_type: Literal[
-        "sales_target", "quota", "minimum_purchases", "pipeline_reporting",
-        "certification_training", "marketing_spend", "other", "unknown",
-    ] = "unknown"
-    details: str = "unknown"
-    measurement_period: str = "unknown"
-    consequences_of_failure: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChReportingAndAudit(BaseModel):
-    reporting_obligations: str = "unknown"
-    audit_rights_exist: BoolOrUnknown = "unknown"
-    audit_details: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChCommercialModel(BaseModel):
-    pricing_and_compensation: ChPricingAndCompensation = Field(
-        default_factory=ChPricingAndCompensation
-    )
-    kpis_and_targets: list[ChKpiAndTarget] = Field(default_factory=list)
-    reporting_and_audit: ChReportingAndAudit = Field(default_factory=ChReportingAndAudit)
-
-
-class ChExclusivity(BaseModel):
-    is_exclusive: BoolOrUnknown = "unknown"
-    scope: str = "unknown"
-    exceptions: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChPriceRestrictions(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    restriction_type: Literal[
-        "map", "price_floor", "price_ceiling", "price_parity",
-        "discount_controls", "other", "unknown",
-    ] = "unknown"
-    details: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChNonCompete(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    details: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChExclusivityAndRestrictions(BaseModel):
-    exclusivity: ChExclusivity = Field(default_factory=ChExclusivity)
-    territory_or_customer_restrictions: str = "unknown"
-    price_restrictions: ChPriceRestrictions = Field(default_factory=ChPriceRestrictions)
-    non_compete_or_channel_conflict: ChNonCompete = Field(default_factory=ChNonCompete)
-
-
-class ChTermAndRenewal(BaseModel):
-    initial_term: str = "unknown"
-    auto_renew: BoolOrUnknown = "unknown"
-    renewal_term: str = "unknown"
-    non_renewal_notice_window: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChTerminationForConvenience(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    who_can_terminate: Literal["company", "partner", "both", "unknown"] = "unknown"
-    notice_period: str = "unknown"
-    early_termination_fee: str = "unknown"
-    post_termination_obligations: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChTerminationForCause(BaseModel):
-    grounds: list[str] = Field(default_factory=list)
-    cure_period: str = "unknown"
-    notice_requirements: str = "unknown"
-    kpi_failure_termination_or_downgrade: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChTermRenewalTermination(BaseModel):
-    term_and_renewal: ChTermAndRenewal = Field(default_factory=ChTermAndRenewal)
-    termination_for_convenience: ChTerminationForConvenience = Field(
-        default_factory=ChTerminationForConvenience
-    )
-    termination_for_cause: ChTerminationForCause = Field(default_factory=ChTerminationForCause)
-
-
-class ChChangeOfControl(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    definition: str = "unknown"
-    effects: str = "unknown"
-    consent_required: BoolOrUnknown = "unknown"
-    notice_required: BoolOrUnknown = "unknown"
-    termination_right_triggered: BoolOrUnknown = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChAssignment(BaseModel):
-    restricted: BoolOrUnknown = "unknown"
-    consent_required: BoolOrUnknown = "unknown"
-    by_operation_of_law_included: BoolOrUnknown = "unknown"
-    merger_or_change_of_control_treated_as_assignment: BoolOrUnknown = "unknown"
-    sale_of_substantially_all_assets_captured: BoolOrUnknown = "unknown"
-    permitted_assignments_exceptions: str = "unknown"
-    process_and_notice: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChChangeOfControlAndAssignment(BaseModel):
-    change_of_control: ChChangeOfControl = Field(default_factory=ChChangeOfControl)
-    assignment: ChAssignment = Field(default_factory=ChAssignment)
-
-
-class ChBrandTrademark(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    scope_and_limits: str = "unknown"
-    approval_requirements: str = "unknown"
-    brand_guidelines_reference: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChMarketingAndPublicity(BaseModel):
-    marketing_obligations: str = "unknown"
-    use_of_logos_and_publicity_approvals: str = "unknown"
-    co_marketing_terms: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChBrandingIpAndMarketing(BaseModel):
-    brand_trademark_license: ChBrandTrademark = Field(default_factory=ChBrandTrademark)
-    marketing_and_publicity: ChMarketingAndPublicity = Field(
-        default_factory=ChMarketingAndPublicity
-    )
-    ip_ownership_joint_development: str = "unknown"
-
-
-class ChComplianceAndRegulatory(BaseModel):
-    compliance_obligations: str = "unknown"
-    anti_bribery_sanctions_export: str = "unknown"
-    data_privacy_obligations: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChInternalInconsistency(BaseModel):
-    topic: Literal[
-        "commercial_model", "exclusivity", "term", "termination",
-        "change_of_control", "assignment", "branding", "compliance", "other", "unknown",
-    ] = "unknown"
-    description: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class ChannelResellerPartnerExtraction(BaseModel):
-    anchor_id: Literal["channel_reseller_partner_contracts"] = "channel_reseller_partner_contracts"
-    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
-    contract_profile: ChContractProfile = Field(default_factory=ChContractProfile)
-    commercial_model: ChCommercialModel = Field(default_factory=ChCommercialModel)
-    exclusivity_and_restrictions: ChExclusivityAndRestrictions = Field(
-        default_factory=ChExclusivityAndRestrictions
-    )
-    term_renewal_termination: ChTermRenewalTermination = Field(
-        default_factory=ChTermRenewalTermination
-    )
-    change_of_control_and_assignment: ChChangeOfControlAndAssignment = Field(
-        default_factory=ChChangeOfControlAndAssignment
-    )
-    branding_ip_and_marketing: ChBrandingIpAndMarketing = Field(
-        default_factory=ChBrandingIpAndMarketing
-    )
-    compliance_and_regulatory: ChComplianceAndRegulatory = Field(
-        default_factory=ChComplianceAndRegulatory
-    )
-    internal_inconsistencies: list[ChInternalInconsistency] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
-
 
 # ===========================================================================
 # Anchor 5 — Supplier & Critical Vendor Contracts
@@ -1180,132 +947,6 @@ class SupplierCriticalVendorExtraction(BaseModel):
     missing_information: list[str] = Field(default_factory=list)
 
 
-# ===========================================================================
-# Anchor 6 — Technology & Product Commitments
-# ===========================================================================
-
-
-class TpPrecedence(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    order_of_priority: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpDocumentProfile(BaseModel):
-    document_type_detected: Literal[
-        "roadmap_commitment", "sow_deliverables", "support_policy",
-        "eol_eos_commitment", "warranty_terms", "security_commitment",
-        "other", "unknown",
-    ] = "unknown"
-    title: str = "unknown"
-    effective_date: str = "unknown"
-    products_services_covered: str = "unknown"
-    linked_master_agreement_reference: str = "unknown"
-    precedence: TpPrecedence = Field(default_factory=TpPrecedence)
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpDeliverable(BaseModel):
-    deliverable_description: str = "unknown"
-    milestones_or_due_dates: str = "unknown"
-    dependencies_or_assumptions: str = "unknown"
-    customer_inputs_required: str = "unknown"
-    acceptance_criteria: str = "unknown"
-    acceptance_process: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpServiceLevelsAndSupport(BaseModel):
-    support_hours: str = "unknown"
-    response_time_commitments: str = "unknown"
-    escalation_process: str = "unknown"
-    availability_or_sla: str = "unknown"
-    maintenance_windows: str = "unknown"
-    dedicated_resources: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpPenaltiesCreditsAndRemedies(BaseModel):
-    service_credits: str = "unknown"
-    liquidated_damages_or_penalties: str = "unknown"
-    fee_reductions: str = "unknown"
-    performance_based_termination_rights: str = "unknown"
-    caps_or_limits: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpWarrantiesAndAssurances(BaseModel):
-    warranties_summary: str = "unknown"
-    warranty_period: str = "unknown"
-    remedies: str = "unknown"
-    disclaimers_exclusions: str = "unknown"
-    performance_assurances: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpSecurityAndCompliance(BaseModel):
-    security_measures: str = "unknown"
-    standards_certifications: str = "unknown"
-    vulnerability_remediation_timelines: str = "unknown"
-    breach_notification_timing: str = "unknown"
-    security_audit_rights: str = "unknown"
-    compliance_commitments: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpEolEos(BaseModel):
-    eol_eos_terms_exist: BoolOrUnknown = "unknown"
-    notice_period: str = "unknown"
-    support_continuation: str = "unknown"
-    migration_assistance: str = "unknown"
-    backward_compatibility: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpKeyPersonnelCommitments(BaseModel):
-    exists: BoolOrUnknown = "unknown"
-    details: str = "unknown"
-    replacement_rights: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TpInternalInconsistency(BaseModel):
-    topic: Literal[
-        "deliverables", "sla_support", "penalties", "warranties",
-        "security", "eol_eos", "other", "unknown",
-    ] = "unknown"
-    description: str = "unknown"
-    evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class TechnologyProductCommitmentsExtraction(BaseModel):
-    anchor_id: Literal["technology_product_commitments"] = "technology_product_commitments"
-    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
-    document_profile: TpDocumentProfile = Field(default_factory=TpDocumentProfile)
-    deliverables_and_milestones: list[TpDeliverable] = Field(default_factory=list)
-    service_levels_and_support: TpServiceLevelsAndSupport = Field(
-        default_factory=TpServiceLevelsAndSupport
-    )
-    penalties_credits_and_remedies: TpPenaltiesCreditsAndRemedies = Field(
-        default_factory=TpPenaltiesCreditsAndRemedies
-    )
-    warranties_and_assurances: TpWarrantiesAndAssurances = Field(
-        default_factory=TpWarrantiesAndAssurances
-    )
-    security_and_compliance_commitments: TpSecurityAndCompliance = Field(
-        default_factory=TpSecurityAndCompliance
-    )
-    eol_eos_and_sunsetting: TpEolEos = Field(default_factory=TpEolEos)
-    key_personnel_commitments: TpKeyPersonnelCommitments = Field(
-        default_factory=TpKeyPersonnelCommitments
-    )
-    internal_inconsistencies: list[TpInternalInconsistency] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
-
-
-# ===========================================================================
-# Anchor 7 — IP Ownership & Transfers
-# ===========================================================================
 
 
 class IpParty(BaseModel):
@@ -1401,34 +1042,6 @@ class IpInternalInconsistency(BaseModel):
     ] = "unknown"
     description: str = "unknown"
     evidence: list[EvidentiaryReference] = Field(default_factory=list)
-
-
-class IpOwnershipTransfersExtraction(BaseModel):
-    anchor_id: Literal["ip_ownership_and_transfers"] = "ip_ownership_and_transfers"
-    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
-    document_profile: IpDocumentProfile = Field(default_factory=IpDocumentProfile)
-    ip_assets_covered: list[IpAsset] = Field(default_factory=list)
-    ownership_and_assignment_mechanics: IpOwnershipMechanics = Field(
-        default_factory=IpOwnershipMechanics
-    )
-    license_backs_and_retained_rights: list[IpLicenseBack] = Field(default_factory=list)
-    third_party_and_background_ip: IpThirdPartyAndBackground = Field(
-        default_factory=IpThirdPartyAndBackground
-    )
-    moral_rights: IpMoralRights = Field(default_factory=IpMoralRights)
-    confidentiality_and_trade_secrets: IpConfidentiality = Field(
-        default_factory=IpConfidentiality
-    )
-    joint_development_or_joint_ownership: IpJointDevelopment = Field(
-        default_factory=IpJointDevelopment
-    )
-    internal_inconsistencies: list[IpInternalInconsistency] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
-
-
-# ===========================================================================
-# Anchor 8 — IP Licensing (Inbound/Outbound)
-# ===========================================================================
 
 
 class IlIncorporationByReference(BaseModel):
@@ -1591,32 +1204,6 @@ class IlInternalInconsistency(BaseModel):
     evidence: list[EvidentiaryReference] = Field(default_factory=list)
 
 
-class IpLicensingExtraction(BaseModel):
-    anchor_id: Literal["ip_licensing"] = "ip_licensing"
-    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
-    license_profile: IlLicenseProfile = Field(default_factory=IlLicenseProfile)
-    scope_and_restrictions: IlScopeAndRestrictions = Field(
-        default_factory=IlScopeAndRestrictions
-    )
-    commercials_and_royalties: IlCommercialsAndRoyalties = Field(
-        default_factory=IlCommercialsAndRoyalties
-    )
-    change_of_control_and_assignment: IlChangeOfControlAndAssignment = Field(
-        default_factory=IlChangeOfControlAndAssignment
-    )
-    termination_and_effects: IlTerminationAndEffects = Field(
-        default_factory=IlTerminationAndEffects
-    )
-    source_code_escrow: IlSourceCodeEscrow = Field(default_factory=IlSourceCodeEscrow)
-    internal_inconsistencies: list[IlInternalInconsistency] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
-
-
-# ===========================================================================
-# Anchor 9 — Open Source & Third-Party Components (OSS)
-# ===========================================================================
-
-
 class OsComponentObligations(BaseModel):
     disclosure_source_code: str = "unknown"
     attribution_notices: str = "unknown"
@@ -1708,22 +1295,38 @@ class OsInternalInconsistency(BaseModel):
     evidence: list[EvidentiaryReference] = Field(default_factory=list)
 
 
-class OssExtraction(BaseModel):
-    anchor_id: Literal["open_source_and_third_party_components"] = (
-        "open_source_and_third_party_components"
-    )
-    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
-    document_profile: OsDocumentProfile = Field(default_factory=OsDocumentProfile)
-    components: list[OsComponent] = Field(default_factory=list)
-    copyleft_summary_as_stated: OsCopyleftSummary = Field(default_factory=OsCopyleftSummary)
-    oss_policy_and_process: OsPolicyAndProcess = Field(default_factory=OsPolicyAndProcess)
-    obligations_and_notices_as_stated: OsObligationsAndNotices = Field(
-        default_factory=OsObligationsAndNotices
-    )
-    risks_and_issues_as_stated: list[OsRiskOrIssue] = Field(default_factory=list)
-    internal_inconsistencies: list[OsInternalInconsistency] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
 
+# ===========================================================================
+# Anchor — Intellectual Property (IP)
+# ===========================================================================
+
+
+class IpDisputeOrClaim(BaseModel):
+    dispute_type: Literal[
+        "infringement_claim", "opposition", "invalidation", "ownership_dispute",
+        "trade_secret_misappropriation", "other", "unknown",
+    ] = "unknown"
+    description: str = "unknown"
+    parties: str = "unknown"
+    status_as_stated: Literal["threatened", "filed", "pending", "settled", "closed", "unknown"] = "unknown"
+    financial_exposure_as_stated: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class IpExtraction(BaseModel):
+    anchor_id: Literal["intellectual_property"] = "intellectual_property"
+    ip_assets: list[IpAsset] = Field(default_factory=list)
+    chain_of_title: IpOwnershipMechanics = Field(default_factory=IpOwnershipMechanics)
+    license_backs_and_retained_rights: list[IpLicenseBack] = Field(default_factory=list)
+    third_party_and_background_ip: IpThirdPartyAndBackground = Field(default_factory=IpThirdPartyAndBackground)
+    inbound_licenses: list[IlLicenseProfile] = Field(default_factory=list)
+    outbound_licenses: list[IlLicenseProfile] = Field(default_factory=list)
+    source_code_escrow: IlSourceCodeEscrow = Field(default_factory=IlSourceCodeEscrow)
+    oss_components: list[OsComponent] = Field(default_factory=list)
+    oss_copyleft_summary: OsCopyleftSummary = Field(default_factory=OsCopyleftSummary)
+    ip_disputes_and_claims: list[IpDisputeOrClaim] = Field(default_factory=list)
+    internal_inconsistencies: list[IpInternalInconsistency] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
 
 # ===========================================================================
 # Anchor 10 — Employment & Management
@@ -2094,7 +1697,7 @@ class EsgEnvironmentalExtraction(BaseModel):
 
 
 # ===========================================================================
-# Anchor — Real Estate & Material Leases
+# Anchor — Physical Assets
 # ===========================================================================
 
 class ReRenewalOption(BaseModel):
@@ -2200,8 +1803,8 @@ class ReInternalInconsistency(BaseModel):
     evidence: list[EvidentiaryReference] = Field(default_factory=list)
 
 
-class RealEstateExtraction(BaseModel):
-    anchor_id: Literal["real_estate_and_material_leases"] = "real_estate_and_material_leases"
+class PhysicalAssetsExtraction(BaseModel):
+    anchor_id: Literal["physical_assets"] = "physical_assets"
     executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
     property_and_lease_profile: RePropertyAndLeaseProfile = Field(default_factory=RePropertyAndLeaseProfile)
     term_and_renewal: ReTermAndRenewal = Field(default_factory=ReTermAndRenewal)
@@ -2332,6 +1935,31 @@ class PrivacyAndCyberExtraction(BaseModel):
     missing_information: list[str] = Field(default_factory=list)
 
 
+# ===========================================================================
+# Anchor — Intangible Assets
+# ===========================================================================
+
+
+class IaAssetItem(BaseModel):
+    asset_type: Literal[
+        "goodwill", "trade_secret", "know_how", "customer_list",
+        "brand_value", "other", "unknown",
+    ] = "unknown"
+    description: str = "unknown"
+    protection_measures: str = "unknown"
+    confidentiality_obligations: str = "unknown"
+    return_or_destruction_obligations: str = "unknown"
+    access_restrictions: str = "unknown"
+    evidence: list[EvidentiaryReference] = Field(default_factory=list)
+
+
+class IntangibleAssetsExtraction(BaseModel):
+    anchor_id: Literal["intangible_assets"] = "intangible_assets"
+    assets: list[IaAssetItem] = Field(default_factory=list)
+    gaps_and_unknowns: list[str] = Field(default_factory=list)
+    missing_information: list[str] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Public exports
 # ---------------------------------------------------------------------------
@@ -2342,14 +1970,8 @@ __all__ = [
     "CorporateOwnershipExtraction",
     "TransactionDocumentsExtraction",
     "CustomerRevenueContractsExtraction",
-    "ChannelResellerPartnerExtraction",
     "SupplierCriticalVendorExtraction",
-    "TechnologyProductCommitmentsExtraction",
-    "IpOwnershipTransfersExtraction",
-    "IpLicensingExtraction",
-    "OssExtraction",
     "EmploymentManagementExtraction",
-    # New UI-focused schemas
     "HrAggregateExtraction",
     "HrKeyEmployee",
     "RegulatoryExtraction",
@@ -2365,12 +1987,12 @@ __all__ = [
     "DebtLienItem",
     "InsuranceExtraction",
     "InsurancePolicy",
-    "EsgEnvironmentalExtraction",
-    "EsgPermit",
-    "EsgAuditFindingIncident",
-    "EsgPenalty",
-    "EsgCommitment",
-    "RealEstateExtraction",
+    "IpExtraction",
+    "IpAsset",
+    "IpDisputeOrClaim",
+    "IlLicenseProfile",
+    "OsComponent",
+    "PhysicalAssetsExtraction",
     "RePropertyAndLeaseProfile",
     "ReTermAndRenewal",
     "ReAssignmentSubletConsents",
@@ -2379,6 +2001,13 @@ __all__ = [
     "PcDataProcessingSummary",
     "PcSecurityCommitments",
     "PcIncidentOrBreach",
+    "IntangibleAssetsExtraction",
+    "IaAssetItem",
+    "EsgEnvironmentalExtraction",
+    "EsgPermit",
+    "EsgAuditFindingIncident",
+    "EsgPenalty",
+    "EsgCommitment",
     "PcAssessmentReport",
     "PcRegulatoryAction",
 ]

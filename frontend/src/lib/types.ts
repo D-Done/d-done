@@ -289,20 +289,17 @@ export type MaChapterId =
   | "corporate_governance"
   | "customer_obligations"
   | "supplier_obligations"
-  | "channel_reseller_partner"
   | "hr"
   | "regulatory"
   | "litigation"
   | "taxation"
   | "financial_debt"
   | "insurance"
-  | "technology_product"
-  | "ip_ownership"
-  | "ip_licensing"
-  | "oss"
+  | "intellectual_property"
+  | "physical_assets"
+  | "privacy_and_cyber"
   | "esg_environmental"
-  | "real_estate_and_material_leases"
-  | "privacy_and_cyber";
+  | "intangible_assets";
 
 // ---------------------------------------------------------------------------
 // Anchor extraction types (simplified TypeScript mirrors of Python schemas)
@@ -647,16 +644,16 @@ export interface MaEsgAnchor {
   missing_information: string[];
 }
 
-// Real Estate & Material Leases
-export interface MaRealEstateRenewalOption {
+// Physical Assets
+export interface MaPhysicalAssetsRenewalOption {
   renewal_term: string;
   renewal_notice_window: string;
   renewal_rent_terms: string;
   conditions: string;
 }
 
-export interface MaRealEstateAnchor {
-  anchor_id: "real_estate_and_material_leases";
+export interface MaPhysicalAssetsAnchor {
+  anchor_id: "physical_assets";
   executed_status: "executed" | "not_executed" | "unknown";
   property_and_lease_profile: {
     document_type_detected: string;
@@ -673,7 +670,7 @@ export interface MaRealEstateAnchor {
     commencement_date: string;
     expiration_date: string;
     initial_term: string;
-    renewal_options: MaRealEstateRenewalOption[];
+    renewal_options: MaPhysicalAssetsRenewalOption[];
     auto_renew: boolean | "unknown";
   };
   assignment_subletting_and_consents: {
@@ -698,6 +695,74 @@ export interface MaRealEstateAnchor {
     insurance_requirements: string;
     environmental_or_hazardous_materials: string;
   };
+  missing_information: string[];
+}
+
+// Intellectual Property (IP)
+export interface MaIpAsset {
+  ip_type: string;
+  asset_name_or_title: string;
+  identifier_numbers: string;
+  jurisdiction: string;
+  filing_or_registration_date: string;
+  scope_description: string;
+}
+
+export interface MaIpLicenseProfile {
+  license_direction: "inbound" | "outbound" | "mixed" | "unknown";
+  document_type_detected: string;
+  agreement_title: string;
+  effective_date: string;
+  licensed_subject_matter: string;
+  auto_renew: boolean | "unknown";
+}
+
+export interface MaIpOssComponent {
+  component_name: string;
+  license_names_as_listed: string[];
+  license_category_as_stated: "copyleft" | "permissive" | "proprietary" | "unknown";
+  compliance_status_as_stated: string;
+}
+
+export interface MaIpDisputeOrClaim {
+  dispute_type: string;
+  description: string;
+  parties: string;
+  status_as_stated: string;
+  financial_exposure_as_stated: string;
+}
+
+export interface MaIpAnchor {
+  anchor_id: "intellectual_property";
+  ip_assets: MaIpAsset[];
+  chain_of_title: {
+    assignment_language_type: string;
+    assignment_scope: string;
+    works_made_for_hire_language: boolean | "unknown";
+    further_assurances_obligation: boolean | "unknown";
+  };
+  license_backs_and_retained_rights: { exists: boolean | "unknown"; retained_rights_holder: string; license_scope: string }[];
+  inbound_licenses: MaIpLicenseProfile[];
+  outbound_licenses: MaIpLicenseProfile[];
+  oss_components: MaIpOssComponent[];
+  ip_disputes_and_claims: MaIpDisputeOrClaim[];
+  missing_information: string[];
+}
+
+// Intangible Assets
+export interface MaIntangibleAssetItem {
+  asset_type: string;
+  description: string;
+  protection_measures: string;
+  confidentiality_obligations: string;
+  return_or_destruction_obligations: string;
+  access_restrictions: string;
+}
+
+export interface MaIntangibleAssetsAnchor {
+  anchor_id: "intangible_assets";
+  assets: MaIntangibleAssetItem[];
+  gaps_and_unknowns: string[];
   missing_information: string[];
 }
 
@@ -768,9 +833,11 @@ export type MaAnchorExtraction =
   | MaTaxationAnchor
   | MaFinancialDebtAnchor
   | MaInsuranceAnchor
-  | MaEsgAnchor
-  | MaRealEstateAnchor
+  | MaIpAnchor
+  | MaPhysicalAssetsAnchor
   | MaPrivacyCyberAnchor
+  | MaEsgAnchor
+  | MaIntangibleAssetsAnchor
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | Record<string, any>;
 

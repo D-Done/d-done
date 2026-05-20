@@ -45,23 +45,20 @@ from app.agents.constants import (
 )
 from app.agents.ma.chapter_prompts import build_chapter_prompt
 from app.agents.ma.constants import (
-    CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
     CHAPTER_ESG_ENVIRONMENTAL,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_HR,
     CHAPTER_INSURANCE,
-    CHAPTER_IP_LICENSING,
-    CHAPTER_IP_OWNERSHIP,
+    CHAPTER_INTANGIBLE_ASSETS,
+    CHAPTER_IP,
     CHAPTER_LITIGATION,
-    CHAPTER_OSS,
+    CHAPTER_PHYSICAL_ASSETS,
     CHAPTER_PRIVACY_CYBER,
-    CHAPTER_REAL_ESTATE,
     CHAPTER_REGULATORY,
     CHAPTER_SUPPLIER_OBLIGATIONS,
     CHAPTER_TAXATION,
-    CHAPTER_TECHNOLOGY_PRODUCT,
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_TITLES_HE,
     MA_ALL_CHAPTERS,
@@ -71,23 +68,20 @@ from app.agents.ma.constants import (
 )
 from app.agents.ma.report_schema import (
     ChapterOutput,
-    ChannelResellerPartnerChapterOutput,
     CorporateGovernanceChapterOutput,
     CustomerObligationsChapterOutput,
     EsgEnvironmentalChapterOutput,
     FinancialDebtChapterOutput,
     HrChapterOutput,
     InsuranceChapterOutput,
-    IpLicensingChapterOutput,
-    IpOwnershipChapterOutput,
+    IntangibleAssetsChapterOutput,
+    IpChapterOutput,
     LitigationChapterOutput,
-    OssChapterOutput,
+    PhysicalAssetsChapterOutput,
     PrivacyAndCyberChapterOutput,
-    RealEstateChapterOutput,
     RegulatoryChapterOutput,
     SupplierObligationsChapterOutput,
     TaxationChapterOutput,
-    TechnologyProductChapterOutput,
     TransactionOverviewChapterOutput,
 )
 from app.agents.utils import make_generate_config
@@ -131,24 +125,21 @@ _MAX_CHARS_PER_FILE = 10_000
 # (~35 KB after $ref expansion) fall back to the plain ChapterOutput.
 # Anchor extraction for those chapters is intentionally skipped for now.
 _CHAPTER_OUTPUT_SCHEMAS: dict[str, type[ChapterOutput]] = {
-    CHAPTER_TRANSACTION_OVERVIEW: ChapterOutput,          # 57 KB inlined — too large
-    CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,  # 34 KB — OK
-    CHAPTER_CUSTOMER_OBLIGATIONS: ChapterOutput,          # 58 KB inlined — too large
-    CHAPTER_SUPPLIER_OBLIGATIONS: ChapterOutput,          # 53 KB inlined — too large
-    CHAPTER_CHANNEL_RESELLER_PARTNER: ChapterOutput,      # 51 KB inlined — too large
-    CHAPTER_HR: HrChapterOutput,                          # ~14 KB after fix — OK
-    CHAPTER_REGULATORY: RegulatoryChapterOutput,          # 14 KB — OK
-    CHAPTER_LITIGATION: LitigationChapterOutput,          # 14 KB — OK
-    CHAPTER_TAXATION: TaxationChapterOutput,              # 12 KB — OK
-    CHAPTER_FINANCIAL_DEBT: FinancialDebtChapterOutput,   # 15 KB — OK
-    CHAPTER_INSURANCE: InsuranceChapterOutput,            # 12 KB — OK
-    CHAPTER_TECHNOLOGY_PRODUCT: TechnologyProductChapterOutput,  # 32 KB — OK
-    CHAPTER_IP_OWNERSHIP: IpOwnershipChapterOutput,       # 32 KB — OK
-    CHAPTER_IP_LICENSING: ChapterOutput,                  # 43 KB inlined — too large
-    CHAPTER_OSS: OssChapterOutput,                        # 29 KB — OK
-    CHAPTER_ESG_ENVIRONMENTAL: EsgEnvironmentalChapterOutput,
-    CHAPTER_REAL_ESTATE: RealEstateChapterOutput,
+    CHAPTER_TRANSACTION_OVERVIEW: ChapterOutput,
+    CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,
+    CHAPTER_CUSTOMER_OBLIGATIONS: ChapterOutput,
+    CHAPTER_SUPPLIER_OBLIGATIONS: ChapterOutput,
+    CHAPTER_HR: HrChapterOutput,
+    CHAPTER_REGULATORY: RegulatoryChapterOutput,
+    CHAPTER_LITIGATION: LitigationChapterOutput,
+    CHAPTER_TAXATION: TaxationChapterOutput,
+    CHAPTER_FINANCIAL_DEBT: FinancialDebtChapterOutput,
+    CHAPTER_INSURANCE: InsuranceChapterOutput,
+    CHAPTER_IP: IpChapterOutput,
+    CHAPTER_PHYSICAL_ASSETS: PhysicalAssetsChapterOutput,
     CHAPTER_PRIVACY_CYBER: PrivacyAndCyberChapterOutput,
+    CHAPTER_ESG_ENVIRONMENTAL: EsgEnvironmentalChapterOutput,
+    CHAPTER_INTANGIBLE_ASSETS: IntangibleAssetsChapterOutput,
 }
 
 

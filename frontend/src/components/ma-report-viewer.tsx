@@ -22,8 +22,10 @@ import type {
   MaFinancialDebtAnchor,
   MaInsuranceAnchor,
   MaEsgAnchor,
-  MaRealEstateAnchor,
+  MaPhysicalAssetsAnchor,
   MaPrivacyCyberAnchor,
+  MaIpAnchor,
+  MaIntangibleAssetsAnchor,
 } from "@/lib/types";
 import {
   AlertTriangle,
@@ -67,20 +69,17 @@ const CHAPTER_ORDER: MaChapterId[] = [
   "corporate_governance",
   "customer_obligations",
   "supplier_obligations",
-  "channel_reseller_partner",
   "hr",
   "regulatory",
   "litigation",
   "taxation",
   "financial_debt",
   "insurance",
-  "technology_product",
-  "ip_ownership",
-  "ip_licensing",
-  "oss",
-  "esg_environmental",
-  "real_estate_and_material_leases",
+  "intellectual_property",
+  "physical_assets",
   "privacy_and_cyber",
+  "esg_environmental",
+  "intangible_assets",
 ];
 
 // ---------------------------------------------------------------------------
@@ -1332,16 +1331,16 @@ function EsgSection({
 }
 
 // ---------------------------------------------------------------------------
-// Real Estate & Material Leases
+// Physical Assets
 // ---------------------------------------------------------------------------
 
-function RealEstateSection({
+function PhysicalAssetsSection({
   chapter,
   anchor,
   onOpenSource,
 }: {
   chapter: MaChapterOutput;
-  anchor: MaRealEstateAnchor | null;
+  anchor: MaPhysicalAssetsAnchor | null;
   onOpenSource: (s: SourceRef) => void;
 }) {
   const p = anchor?.property_and_lease_profile;
@@ -1553,6 +1552,138 @@ function PrivacyCyberSection({
               ))}
             </tbody>
           </TableWrapper>
+        </div>
+      )}
+
+      {chapter.findings.length > 0 && <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Intellectual Property (IP)
+// ---------------------------------------------------------------------------
+
+function IpSection({
+  chapter,
+  anchor,
+  onOpenSource,
+}: {
+  chapter: MaChapterOutput;
+  anchor: MaIpAnchor | null;
+  onOpenSource: (s: SourceRef) => void;
+}) {
+  return (
+    <div className="space-y-5">
+      {chapter.summary_he && (
+        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {chapter.summary_he}
+        </p>
+      )}
+
+      {anchor && (anchor.ip_assets ?? []).length > 0 && (
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
+          <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5">
+            <span className="text-white font-semibold text-sm">נכסי קניין רוחני</span>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[680px]">
+              <FiveColGroup title="סוג הנכס">
+                {(anchor.ip_assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label={a.ip_type} value={val(a.asset_name_or_title)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="מזהה / מספר">
+                {(anchor.ip_assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.identifier_numbers)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="תחום שיפוט">
+                {(anchor.ip_assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.jurisdiction)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="שרשרת בעלות">
+                <FiveColRow label="שפה" value={val(anchor.chain_of_title?.assignment_language_type)} />
+                <FiveColRow label="WFH" value={anchor.chain_of_title?.works_made_for_hire_language === true ? "כן" : anchor.chain_of_title?.works_made_for_hire_language === false ? "לא" : "—"} />
+                <FiveColRow label="further assurances" value={anchor.chain_of_title?.further_assurances_obligation === true ? "כן" : anchor.chain_of_title?.further_assurances_obligation === false ? "לא" : "—"} />
+              </FiveColGroup>
+              <FiveColGroup title="OSS ומחלוקות">
+                {(anchor.oss_components ?? []).map((c, i) => (
+                  <FiveColRow key={i} label={c.component_name} value={c.license_names_as_listed?.join(", ") ?? "—"} />
+                ))}
+                {(anchor.ip_disputes_and_claims ?? []).map((d, i) => (
+                  <FiveColRow key={i} label={`מחלוקת: ${d.dispute_type}`} value={val(d.status_as_stated)} />
+                ))}
+              </FiveColGroup>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {chapter.findings.length > 0 && <FindingsList findings={chapter.findings} onOpenSource={onOpenSource} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Intangible Assets
+// ---------------------------------------------------------------------------
+
+function IntangibleAssetsSection({
+  chapter,
+  anchor,
+  onOpenSource,
+}: {
+  chapter: MaChapterOutput;
+  anchor: MaIntangibleAssetsAnchor | null;
+  onOpenSource: (s: SourceRef) => void;
+}) {
+  return (
+    <div className="space-y-5">
+      {chapter.summary_he && (
+        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {chapter.summary_he}
+        </p>
+      )}
+
+      {anchor && (anchor.assets ?? []).length > 0 && (
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
+          <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5">
+            <span className="text-white font-semibold text-sm">נכסים בלתי מוחשיים</span>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[680px]">
+              <FiveColGroup title="סוג הנכס">
+                {(anchor.assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label={a.asset_type} value={val(a.description)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="הגנות וסודיות">
+                {(anchor.assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.protection_measures)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="חובות סודיות">
+                {(anchor.assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.confidentiality_obligations)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="החזרה / השמדה">
+                {(anchor.assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.return_or_destruction_obligations)} />
+                ))}
+              </FiveColGroup>
+              <FiveColGroup title="הגבלות גישה / פערים">
+                {(anchor.assets ?? []).map((a, i) => (
+                  <FiveColRow key={i} label="" value={val(a.access_restrictions)} />
+                ))}
+                {(anchor.gaps_and_unknowns ?? []).map((g, i) => (
+                  <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1 mt-1">{g}</div>
+                ))}
+              </FiveColGroup>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1827,19 +1958,19 @@ function ChapterAccordion({
             onOpenSource={onOpenSource}
           />
         );
-      case "esg_environmental":
+      case "intellectual_property":
         return (
-          <EsgSection
+          <IpSection
             chapter={chapter}
-            anchor={anchor as MaEsgAnchor | null}
+            anchor={anchor as MaIpAnchor | null}
             onOpenSource={onOpenSource}
           />
         );
-      case "real_estate_and_material_leases":
+      case "physical_assets":
         return (
-          <RealEstateSection
+          <PhysicalAssetsSection
             chapter={chapter}
-            anchor={anchor as MaRealEstateAnchor | null}
+            anchor={anchor as MaPhysicalAssetsAnchor | null}
             onOpenSource={onOpenSource}
           />
         );
@@ -1848,6 +1979,22 @@ function ChapterAccordion({
           <PrivacyCyberSection
             chapter={chapter}
             anchor={anchor as MaPrivacyCyberAnchor | null}
+            onOpenSource={onOpenSource}
+          />
+        );
+      case "esg_environmental":
+        return (
+          <EsgSection
+            chapter={chapter}
+            anchor={anchor as MaEsgAnchor | null}
+            onOpenSource={onOpenSource}
+          />
+        );
+      case "intangible_assets":
+        return (
+          <IntangibleAssetsSection
+            chapter={chapter}
+            anchor={anchor as MaIntangibleAssetsAnchor | null}
             onOpenSource={onOpenSource}
           />
         );

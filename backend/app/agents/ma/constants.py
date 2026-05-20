@@ -9,52 +9,46 @@ from __future__ import annotations
 from typing import Final
 
 
-# --- Mandatory chapters (v1 scope) ----------------------------------------
+# --- Mandatory chapters (10) -----------------------------------------------
 
 CHAPTER_TRANSACTION_OVERVIEW: Final = "transaction_overview"
 CHAPTER_CORPORATE_GOVERNANCE: Final = "corporate_governance"
 CHAPTER_CUSTOMER_OBLIGATIONS: Final = "customer_obligations"
 CHAPTER_SUPPLIER_OBLIGATIONS: Final = "supplier_obligations"
-CHAPTER_CHANNEL_RESELLER_PARTNER: Final = "channel_reseller_partner"
 CHAPTER_HR: Final = "hr"
 CHAPTER_REGULATORY: Final = "regulatory"
 CHAPTER_LITIGATION: Final = "litigation"
 CHAPTER_TAXATION: Final = "taxation"
 CHAPTER_FINANCIAL_DEBT: Final = "financial_debt"
 CHAPTER_INSURANCE: Final = "insurance"
-CHAPTER_TECHNOLOGY_PRODUCT: Final = "technology_product"
-CHAPTER_IP_OWNERSHIP: Final = "ip_ownership"
-CHAPTER_IP_LICENSING: Final = "ip_licensing"
-CHAPTER_OSS: Final = "oss"
 
-# --- Optional chapters (user-selectable) ------------------------------------
+# --- Optional chapters (user-selectable, 5) ---------------------------------
 
-CHAPTER_ESG_ENVIRONMENTAL: Final = "esg_environmental"
-CHAPTER_REAL_ESTATE: Final = "real_estate_and_material_leases"
+CHAPTER_IP: Final = "intellectual_property"
+CHAPTER_PHYSICAL_ASSETS: Final = "physical_assets"
 CHAPTER_PRIVACY_CYBER: Final = "privacy_and_cyber"
+CHAPTER_ESG_ENVIRONMENTAL: Final = "esg_environmental"
+CHAPTER_INTANGIBLE_ASSETS: Final = "intangible_assets"
 
 MA_MANDATORY_CHAPTERS: Final[tuple[str, ...]] = (
     CHAPTER_TRANSACTION_OVERVIEW,
     CHAPTER_CORPORATE_GOVERNANCE,
     CHAPTER_CUSTOMER_OBLIGATIONS,
     CHAPTER_SUPPLIER_OBLIGATIONS,
-    CHAPTER_CHANNEL_RESELLER_PARTNER,
     CHAPTER_HR,
     CHAPTER_REGULATORY,
     CHAPTER_LITIGATION,
     CHAPTER_TAXATION,
     CHAPTER_FINANCIAL_DEBT,
     CHAPTER_INSURANCE,
-    CHAPTER_TECHNOLOGY_PRODUCT,
-    CHAPTER_IP_OWNERSHIP,
-    CHAPTER_IP_LICENSING,
-    CHAPTER_OSS,
 )
 
 MA_OPTIONAL_CHAPTERS: Final[tuple[str, ...]] = (
-    CHAPTER_ESG_ENVIRONMENTAL,
-    CHAPTER_REAL_ESTATE,
+    CHAPTER_IP,
+    CHAPTER_PHYSICAL_ASSETS,
     CHAPTER_PRIVACY_CYBER,
+    CHAPTER_ESG_ENVIRONMENTAL,
+    CHAPTER_INTANGIBLE_ASSETS,
 )
 
 MA_ALL_CHAPTERS: Final[tuple[str, ...]] = MA_MANDATORY_CHAPTERS + MA_OPTIONAL_CHAPTERS
@@ -64,20 +58,17 @@ CHAPTER_TITLES_HE: Final[dict[str, str]] = {
     CHAPTER_CORPORATE_GOVERNANCE: "ממשל תאגידי",
     CHAPTER_CUSTOMER_OBLIGATIONS: "התחייבויות ללקוחות",
     CHAPTER_SUPPLIER_OBLIGATIONS: "התחייבויות לספקים",
-    CHAPTER_CHANNEL_RESELLER_PARTNER: "ערוצי הפצה ושותפים",
     CHAPTER_HR: "משאבי אנוש",
     CHAPTER_REGULATORY: "רגולציה ורישוי",
     CHAPTER_LITIGATION: "התדיינויות וסיכונים",
     CHAPTER_TAXATION: "מיסוי",
     CHAPTER_FINANCIAL_DEBT: "חוב פיננסי",
     CHAPTER_INSURANCE: "ביטוח",
-    CHAPTER_TECHNOLOGY_PRODUCT: "מחויבויות טכנולוגיה ומוצר",
-    CHAPTER_IP_OWNERSHIP: "בעלות על קניין רוחני",
-    CHAPTER_IP_LICENSING: "רישיונות קניין רוחני",
-    CHAPTER_OSS: "קוד פתוח ורכיבי צד שלישי",
-    CHAPTER_ESG_ENVIRONMENTAL: "ESG וסביבה",
-    CHAPTER_REAL_ESTATE: "נדל\"ן וחכירות מהותיות",
+    CHAPTER_IP: "קניין רוחני (IP)",
+    CHAPTER_PHYSICAL_ASSETS: "נכסים פיזיים",
     CHAPTER_PRIVACY_CYBER: "פרטיות וסייבר",
+    CHAPTER_ESG_ENVIRONMENTAL: "ESG וסביבה",
+    CHAPTER_INTANGIBLE_ASSETS: "נכסים בלתי מוחשיים",
 }
 
 

@@ -32,22 +32,18 @@ from app.agents.ma.anchor_schemas import (
     CorporateOwnershipExtraction,
     TransactionDocumentsExtraction,
     CustomerRevenueContractsExtraction,
-    ChannelResellerPartnerExtraction,
     SupplierCriticalVendorExtraction,
-    TechnologyProductCommitmentsExtraction,
-    IpOwnershipTransfersExtraction,
-    IpLicensingExtraction,
-    OssExtraction,
-    EmploymentManagementExtraction,
     HrAggregateExtraction,
     RegulatoryExtraction,
     LitigationExtraction,
     TaxationExtraction,
     FinancialDebtExtraction,
     InsuranceExtraction,
-    EsgEnvironmentalExtraction,
-    RealEstateExtraction,
+    IpExtraction,
+    PhysicalAssetsExtraction,
     PrivacyAndCyberExtraction,
+    EsgEnvironmentalExtraction,
+    IntangibleAssetsExtraction,
 )
 
 
@@ -215,28 +211,8 @@ class SupplierObligationsChapterOutput(ChapterOutput):
     supplier_critical_vendor_extraction: SupplierCriticalVendorExtraction | None = None
 
 
-class ChannelResellerPartnerChapterOutput(ChapterOutput):
-    channel_reseller_partner_extraction: ChannelResellerPartnerExtraction | None = None
-
-
 class HrChapterOutput(ChapterOutput):
     hr_aggregate_extraction: HrAggregateExtraction | None = None
-
-
-class TechnologyProductChapterOutput(ChapterOutput):
-    technology_product_extraction: TechnologyProductCommitmentsExtraction | None = None
-
-
-class IpOwnershipChapterOutput(ChapterOutput):
-    ip_ownership_extraction: IpOwnershipTransfersExtraction | None = None
-
-
-class IpLicensingChapterOutput(ChapterOutput):
-    ip_licensing_extraction: IpLicensingExtraction | None = None
-
-
-class OssChapterOutput(ChapterOutput):
-    oss_extraction: OssExtraction | None = None
 
 
 class RegulatoryChapterOutput(ChapterOutput):
@@ -259,16 +235,24 @@ class InsuranceChapterOutput(ChapterOutput):
     insurance_extraction: InsuranceExtraction | None = None
 
 
-class EsgEnvironmentalChapterOutput(ChapterOutput):
-    esg_environmental_extraction: EsgEnvironmentalExtraction | None = None
+class IpChapterOutput(ChapterOutput):
+    ip_extraction: IpExtraction | None = None
 
 
-class RealEstateChapterOutput(ChapterOutput):
-    real_estate_extraction: RealEstateExtraction | None = None
+class PhysicalAssetsChapterOutput(ChapterOutput):
+    physical_assets_extraction: PhysicalAssetsExtraction | None = None
 
 
 class PrivacyAndCyberChapterOutput(ChapterOutput):
     privacy_and_cyber_extraction: PrivacyAndCyberExtraction | None = None
+
+
+class EsgEnvironmentalChapterOutput(ChapterOutput):
+    esg_environmental_extraction: EsgEnvironmentalExtraction | None = None
+
+
+class IntangibleAssetsChapterOutput(ChapterOutput):
+    intangible_assets_extraction: IntangibleAssetsExtraction | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -378,20 +362,17 @@ __all__ = [
     "TransactionOverviewChapterOutput",
     "CustomerObligationsChapterOutput",
     "SupplierObligationsChapterOutput",
-    "ChannelResellerPartnerChapterOutput",
     "HrChapterOutput",
-    "TechnologyProductChapterOutput",
-    "IpOwnershipChapterOutput",
-    "IpLicensingChapterOutput",
-    "OssChapterOutput",
     "RegulatoryChapterOutput",
     "LitigationChapterOutput",
     "TaxationChapterOutput",
     "FinancialDebtChapterOutput",
     "InsuranceChapterOutput",
-    "EsgEnvironmentalChapterOutput",
-    "RealEstateChapterOutput",
+    "IpChapterOutput",
+    "PhysicalAssetsChapterOutput",
     "PrivacyAndCyberChapterOutput",
+    "EsgEnvironmentalChapterOutput",
+    "IntangibleAssetsChapterOutput",
     "MaDDReport",
     "MaFinding",
     "MaFollowUp",
