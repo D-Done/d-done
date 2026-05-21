@@ -436,7 +436,7 @@ export default function NewTransactionPage() {
     return () => {
       cancelled = true;
     };
-  }, [step, projectId, transactionType]);
+  }, [step, projectId, transactionType, selectedChapters]);
 
   // While analyzing, poll project so progress (pipeline_stage) updates in the UI
   useEffect(() => {

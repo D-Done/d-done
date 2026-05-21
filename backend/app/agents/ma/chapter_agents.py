@@ -127,8 +127,8 @@ _MAX_CHARS_PER_FILE = 10_000
 _CHAPTER_OUTPUT_SCHEMAS: dict[str, type[ChapterOutput]] = {
     CHAPTER_TRANSACTION_OVERVIEW: ChapterOutput,
     CHAPTER_CORPORATE_GOVERNANCE: CorporateGovernanceChapterOutput,
-    CHAPTER_CUSTOMER_OBLIGATIONS: ChapterOutput,
-    CHAPTER_SUPPLIER_OBLIGATIONS: ChapterOutput,
+    CHAPTER_CUSTOMER_OBLIGATIONS: CustomerObligationsChapterOutput,
+    CHAPTER_SUPPLIER_OBLIGATIONS: SupplierObligationsChapterOutput,
     CHAPTER_HR: HrChapterOutput,
     CHAPTER_REGULATORY: RegulatoryChapterOutput,
     CHAPTER_LITIGATION: LitigationChapterOutput,

@@ -1961,6 +1961,168 @@ class IntangibleAssetsExtraction(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Slim anchors — evidence-free versions for Vertex AI structured output
+# (full anchors expand to >35 KB after $ref resolution, exceeding the limit)
+# ---------------------------------------------------------------------------
+
+class _SlimParty(BaseModel):
+    name: str = "unknown"
+    role: str = "unknown"
+
+
+class SlimCustomerAnchor(BaseModel):
+    anchor_id: Literal["customer_revenue_contracts"] = "customer_revenue_contracts"
+    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+
+    class ContractProfile(BaseModel):
+        agreement_title: str = "unknown"
+        parties: list[_SlimParty] = Field(default_factory=list)
+        effective_date: str = "unknown"
+        term_start_date: str = "unknown"
+        term_end_date: str = "unknown"
+
+    class Commercials(BaseModel):
+        class FeesAndPricing(BaseModel):
+            pricing_model: str = "unknown"
+            fee_amounts_or_rate_card: str = "unknown"
+            currency: str = "unknown"
+            invoicing_and_payment_terms: str = "unknown"
+            minimum_commitments: str = "unknown"
+
+        class MfnAndBenchmarking(BaseModel):
+            mfn_exists: BoolOrUnknown = "unknown"
+            remedy_if_triggered: str = "unknown"
+
+        fees_and_pricing: FeesAndPricing = Field(default_factory=FeesAndPricing)
+        mfn_and_benchmarking: MfnAndBenchmarking = Field(default_factory=MfnAndBenchmarking)
+
+    class TermAndRenewal(BaseModel):
+        initial_term: str = "unknown"
+        auto_renew: BoolOrUnknown = "unknown"
+        renewal_term: str = "unknown"
+        non_renewal_notice_window: str = "unknown"
+
+    class TerminationAndSuspension(BaseModel):
+        class Convenience(BaseModel):
+            by_customer: BoolOrUnknown = "unknown"
+            notice_period: str = "unknown"
+            early_termination_fees_or_charges: str = "unknown"
+
+        class Cause(BaseModel):
+            grounds: list[str] = Field(default_factory=list)
+            cure_period: str = "unknown"
+
+        class Suspension(BaseModel):
+            exists: BoolOrUnknown = "unknown"
+            triggers: str = "unknown"
+
+        termination_for_convenience: Convenience = Field(default_factory=Convenience)
+        termination_for_cause: Cause = Field(default_factory=Cause)
+        suspension_rights: Suspension = Field(default_factory=Suspension)
+
+    class ChangeOfControlAndAssignment(BaseModel):
+        class CoC(BaseModel):
+            exists: BoolOrUnknown = "unknown"
+            effects: str = "unknown"
+            consent_required: BoolOrUnknown = "unknown"
+            termination_right_triggered: BoolOrUnknown = "unknown"
+
+        class Assignment(BaseModel):
+            restricted: BoolOrUnknown = "unknown"
+            consent_required: BoolOrUnknown = "unknown"
+
+        change_of_control: CoC = Field(default_factory=CoC)
+        assignment: Assignment = Field(default_factory=Assignment)
+
+    class SlaAndCredits(BaseModel):
+        sla_exists: BoolOrUnknown = "unknown"
+        sla_summary: str = "unknown"
+
+    contract_profile: ContractProfile = Field(default_factory=ContractProfile)
+    commercials: Commercials = Field(default_factory=Commercials)
+    term_and_renewal: TermAndRenewal = Field(default_factory=TermAndRenewal)
+    termination_and_suspension: TerminationAndSuspension = Field(default_factory=TerminationAndSuspension)
+    change_of_control_and_assignment: ChangeOfControlAndAssignment = Field(default_factory=ChangeOfControlAndAssignment)
+    sla_and_credits: SlaAndCredits = Field(default_factory=SlaAndCredits)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+class SlimSupplierAnchor(BaseModel):
+    anchor_id: Literal["supplier_critical_vendor_contracts"] = "supplier_critical_vendor_contracts"
+    executed_status: Literal["executed", "not_executed", "unknown"] = "unknown"
+
+    class ContractProfile(BaseModel):
+        agreement_title: str = "unknown"
+        parties: list[_SlimParty] = Field(default_factory=list)
+        services_or_goods: str = "unknown"
+        criticality_indicators: str = "unknown"
+        effective_date: str = "unknown"
+        term_start_date: str = "unknown"
+        term_end_date: str = "unknown"
+
+    class CommercialTerms(BaseModel):
+        class FeesAndPricing(BaseModel):
+            fee_amounts_or_rate_card: str = "unknown"
+            currency: str = "unknown"
+            invoicing_and_payment_terms: str = "unknown"
+            late_fees_interest: str = "unknown"
+
+        class PriceChanges(BaseModel):
+            notice_period: str = "unknown"
+
+        class MinCommitment(BaseModel):
+            commitment_type: str = "unknown"
+            amount_or_volume: str = "unknown"
+            penalties_or_consequences: str = "unknown"
+
+        fees_and_pricing: FeesAndPricing = Field(default_factory=FeesAndPricing)
+        price_changes_and_repricing: PriceChanges = Field(default_factory=PriceChanges)
+        minimum_commitments: list[MinCommitment] = Field(default_factory=list)
+
+    class TermAndRenewal(BaseModel):
+        initial_term: str = "unknown"
+        auto_renew: BoolOrUnknown = "unknown"
+        non_renewal_notice_window: str = "unknown"
+
+    class TerminationAndContinuity(BaseModel):
+        class Convenience(BaseModel):
+            exists: BoolOrUnknown = "unknown"
+            notice_period: str = "unknown"
+
+        class Cause(BaseModel):
+            grounds: list[str] = Field(default_factory=list)
+            cure_period: str = "unknown"
+
+        class ExitAndTransition(BaseModel):
+            business_continuity_dr: str = "unknown"
+            transition_assistance: str = "unknown"
+
+        termination_for_convenience: Convenience = Field(default_factory=Convenience)
+        termination_for_cause: Cause = Field(default_factory=Cause)
+        exit_and_transition: ExitAndTransition = Field(default_factory=ExitAndTransition)
+
+    class ChangeOfControlAndAssignment(BaseModel):
+        class CoC(BaseModel):
+            exists: BoolOrUnknown = "unknown"
+            effects: str = "unknown"
+            consent_required: BoolOrUnknown = "unknown"
+            termination_right_triggered: BoolOrUnknown = "unknown"
+
+        class Assignment(BaseModel):
+            consent_required: BoolOrUnknown = "unknown"
+
+        change_of_control: CoC = Field(default_factory=CoC)
+        assignment: Assignment = Field(default_factory=Assignment)
+
+    contract_profile: ContractProfile = Field(default_factory=ContractProfile)
+    commercial_terms: CommercialTerms = Field(default_factory=CommercialTerms)
+    term_and_renewal: TermAndRenewal = Field(default_factory=TermAndRenewal)
+    termination_and_continuity: TerminationAndContinuity = Field(default_factory=TerminationAndContinuity)
+    change_of_control_and_assignment: ChangeOfControlAndAssignment = Field(default_factory=ChangeOfControlAndAssignment)
+    missing_information: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Public exports
 # ---------------------------------------------------------------------------
 
@@ -1971,6 +2133,8 @@ __all__ = [
     "TransactionDocumentsExtraction",
     "CustomerRevenueContractsExtraction",
     "SupplierCriticalVendorExtraction",
+    "SlimCustomerAnchor",
+    "SlimSupplierAnchor",
     "EmploymentManagementExtraction",
     "HrAggregateExtraction",
     "HrKeyEmployee",

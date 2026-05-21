@@ -487,6 +487,74 @@ function FiveColRow({ label, value }: { label: string; value: string | React.Rea
   );
 }
 
+type ContractTableColumn = {
+  title: string;
+  rows: ({ label: string; value: React.ReactNode } | null)[];
+};
+
+function ContractTable({
+  accentClass,
+  title,
+  badge,
+  columns,
+}: {
+  accentClass: string;
+  title: string;
+  badge: React.ReactNode;
+  columns: ContractTableColumn[];
+}) {
+  const maxRows = Math.max(...columns.map((c) => c.rows.length), 1);
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 overflow-hidden">
+      <div className={`${accentClass} px-4 py-2.5 flex items-center justify-between`}>
+        <span className="text-white font-semibold text-sm">{title}</span>
+        {badge}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr className="bg-slate-50 dark:bg-zinc-800/60">
+              {columns.map((col, i) => (
+                <th
+                  key={i}
+                  className="px-3 py-2 text-left font-bold text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-r border-slate-200 dark:border-zinc-700/50 last:border-r-0 whitespace-nowrap"
+                >
+                  {col.title}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: maxRows }, (_, rowIdx) => (
+              <tr
+                key={rowIdx}
+                className="border-b border-slate-100 dark:border-zinc-800/50 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors"
+              >
+                {columns.map((col, colIdx) => {
+                  const cell = col.rows[rowIdx] ?? null;
+                  return (
+                    <td
+                      key={colIdx}
+                      className="px-3 py-2 text-[11px] align-top border-r border-slate-100 dark:border-zinc-800/40 last:border-r-0 min-w-[160px]"
+                    >
+                      {cell && (
+                        <>
+                          <span className="text-slate-400 dark:text-slate-500 font-medium">{cell.label}:</span>{" "}
+                          <span className="text-slate-700 dark:text-slate-300">{cell.value}</span>
+                        </>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function SupplierObligationsSection({
   chapter,
   anchor,
@@ -514,81 +582,86 @@ function SupplierObligationsSection({
       )}
 
       {anchor && (
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
-          <div className="bg-slate-800 dark:bg-slate-700 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-white font-semibold text-sm">
-              {val(supplierName) !== "—" ? val(supplierName) : "ספק"}
-            </span>
-            <ExecutionBadge status={anchor.executed_status} />
-          </div>
-
-          <div className="overflow-x-auto">
-            <div className="flex min-w-[860px]">
-              <FiveColGroup title="Supplier & Scope">
-                <FiveColRow label="Supplier Name" value={val(supplierName)} />
-                <FiveColRow label="Services" value={val(anchor.contract_profile?.services_or_goods)} />
-                <FiveColRow label="Criticality" value={val(anchor.contract_profile?.criticality_indicators)} />
-              </FiveColGroup>
-
-              <FiveColGroup title="Financial Commitments">
-                <FiveColRow
-                  label="Pricing"
-                  value={`${val(anchor.commercial_terms?.fees_and_pricing?.fee_amounts_or_rate_card)}${val(anchor.commercial_terms?.fees_and_pricing?.currency) !== "—" ? ` (${val(anchor.commercial_terms?.fees_and_pricing?.currency)})` : ""}`.trim()}
-                />
-                <FiveColRow label="Payment" value={val(anchor.commercial_terms?.fees_and_pricing?.invoicing_and_payment_terms)} />
-                <FiveColRow label="Late Fees" value={val(anchor.commercial_terms?.fees_and_pricing?.late_fees_interest)} />
-                <FiveColRow label="Min. Commitments" value={minCommitments || "—"} />
-                <FiveColRow label="Price Increase" value={val(anchor.commercial_terms?.price_changes_and_repricing?.notice_period)} />
-              </FiveColGroup>
-
-              <FiveColGroup title="Term, Renewal & Termination">
-                <FiveColRow
-                  label="Term"
-                  value={`${val(anchor.term_and_renewal?.initial_term)}${anchor.term_and_renewal?.auto_renew === true ? " (מתחדש אוטומטית)" : ""}`.trim()}
-                />
-                <FiveColRow label="Convenience" value={val(anchor.termination_and_continuity?.termination_for_convenience?.notice_period)} />
-                <FiveColRow
-                  label="Cause"
-                  value={(anchor.termination_and_continuity?.termination_for_cause?.grounds ?? []).join(", ") || "—"}
-                />
-                <FiveColRow label="Continuity" value={val(anchor.termination_and_continuity?.exit_and_transition?.business_continuity_dr)} />
-              </FiveColGroup>
-
-              <FiveColGroup title="CoC & Assignment">
-                <FiveColRow
-                  label="CoC"
-                  value={`${boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists)}${val(anchor.change_of_control_and_assignment?.change_of_control?.effects) !== "—" ? ` — ${val(anchor.change_of_control_and_assignment?.change_of_control?.effects)}` : ""}`.trim()}
-                />
-                <FiveColRow
-                  label="Assignment"
-                  value={
-                    anchor.change_of_control_and_assignment?.assignment?.consent_required === true
-                      ? "דורש הסכמה"
-                      : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
-                        ? "ללא הסכמה"
-                        : "—"
-                  }
-                />
-              </FiveColGroup>
-
-              <FiveColGroup title="Governance & Gaps">
-                <FiveColRow
-                  label="Execution"
-                  value={anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—"}
-                />
-                {(anchor.missing_information ?? []).length > 0 && (
-                  <div className="mt-1 space-y-1">
-                    {anchor.missing_information.map((m, i) => (
-                      <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1">
-                        {m}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </FiveColGroup>
-            </div>
-          </div>
-        </div>
+        <ContractTable
+          accentClass="bg-slate-800 dark:bg-slate-700"
+          title={val(supplierName) !== "—" ? val(supplierName) : "ספק"}
+          badge={<ExecutionBadge status={anchor.executed_status} />}
+          columns={[
+            {
+              title: "Supplier & Scope",
+              rows: [
+                { label: "Supplier Name", value: val(supplierName) },
+                { label: "Services", value: val(anchor.contract_profile?.services_or_goods) },
+                { label: "Criticality", value: val(anchor.contract_profile?.criticality_indicators) },
+              ],
+            },
+            {
+              title: "Financial Commitments",
+              rows: [
+                {
+                  label: "Pricing",
+                  value: [
+                    val(anchor.commercial_terms?.fees_and_pricing?.fee_amounts_or_rate_card),
+                    val(anchor.commercial_terms?.fees_and_pricing?.currency) !== "—"
+                      ? `(${val(anchor.commercial_terms?.fees_and_pricing?.currency)})`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+                { label: "Payment", value: val(anchor.commercial_terms?.fees_and_pricing?.invoicing_and_payment_terms) },
+                { label: "Late Fees", value: val(anchor.commercial_terms?.fees_and_pricing?.late_fees_interest) },
+                { label: "Min. Commitments", value: minCommitments || "—" },
+                { label: "Price Increase", value: val(anchor.commercial_terms?.price_changes_and_repricing?.notice_period) },
+              ],
+            },
+            {
+              title: "Term, Renewal & Termination",
+              rows: [
+                {
+                  label: "Term",
+                  value: [
+                    val(anchor.term_and_renewal?.initial_term),
+                    anchor.term_and_renewal?.auto_renew === true ? "(מתחדש אוטומטית)" : "",
+                  ].filter(Boolean).join(" "),
+                },
+                { label: "Convenience", value: val(anchor.termination_and_continuity?.termination_for_convenience?.notice_period) },
+                { label: "Cause", value: (anchor.termination_and_continuity?.termination_for_cause?.grounds ?? []).join(", ") || "—" },
+                { label: "Continuity", value: val(anchor.termination_and_continuity?.exit_and_transition?.business_continuity_dr) },
+              ],
+            },
+            {
+              title: "CoC & Assignment",
+              rows: [
+                {
+                  label: "CoC",
+                  value: [
+                    boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists),
+                    val(anchor.change_of_control_and_assignment?.change_of_control?.effects) !== "—"
+                      ? `— ${val(anchor.change_of_control_and_assignment?.change_of_control?.effects)}`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+                {
+                  label: "Assignment",
+                  value: anchor.change_of_control_and_assignment?.assignment?.consent_required === true
+                    ? "דורש הסכמה"
+                    : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
+                      ? "ללא הסכמה"
+                      : "—",
+                },
+              ],
+            },
+            {
+              title: "Governance, Disputes & Gaps",
+              rows: [
+                {
+                  label: "Execution",
+                  value: anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—",
+                },
+                ...(anchor.missing_information ?? []).map((m) => ({ label: "Follow-up", value: m })),
+              ],
+            },
+          ]}
+        />
       )}
 
       {chapter.findings.length > 0 && (
@@ -621,95 +694,111 @@ function CustomerObligationsSection({
       )}
 
       {anchor && (
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 overflow-hidden">
-          <div className="bg-indigo-700 dark:bg-indigo-800 px-4 py-2.5 flex items-center justify-between">
-            <span className="text-white font-semibold text-sm">
-              {val(customerName) !== "—" ? val(customerName) : "לקוח"}
-            </span>
-            <ExecutionBadge status={anchor.executed_status} />
-          </div>
-
-          <div className="overflow-x-auto">
-            <div className="flex min-w-[860px]">
-              <FiveColGroup title="Customer & Commercials">
-                <FiveColRow label="Customer" value={val(customerName)} />
-                <FiveColRow
-                  label="Scope"
-                  value={val(anchor.contract_profile?.parties?.find((p) => p.role === "vendor")?.name ?? anchor.contract_profile?.agreement_title)}
-                />
-                <FiveColRow
-                  label="Pricing"
-                  value={`${val(anchor.commercials?.fees_and_pricing?.fee_amounts_or_rate_card)}${val(anchor.commercials?.fees_and_pricing?.currency) !== "—" ? ` (${val(anchor.commercials?.fees_and_pricing?.currency)})` : ""}`.trim()}
-                />
-                <FiveColRow label="Payment" value={val(anchor.commercials?.fees_and_pricing?.invoicing_and_payment_terms)} />
-                <FiveColRow label="Min. Commitments" value={val(anchor.commercials?.fees_and_pricing?.minimum_commitments)} />
-                <FiveColRow
-                  label="MFN"
-                  value={`${boolLabel(anchor.commercials?.mfn_and_benchmarking?.mfn_exists)}${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered) !== "—" ? ` — ${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered)}` : ""}`.trim()}
-                />
-              </FiveColGroup>
-
-              <FiveColGroup title="Service Levels & Commitments">
-                <FiveColRow
-                  label="SLA"
-                  value={`${boolLabel(anchor.sla_and_credits?.sla_exists)}${val(anchor.sla_and_credits?.sla_summary) !== "—" ? ` — ${val(anchor.sla_and_credits?.sla_summary)}` : ""}`.trim()}
-                />
-                <FiveColRow
-                  label="Suspension"
-                  value={`${boolLabel(anchor.termination_and_suspension?.suspension_rights?.exists)}${val(anchor.termination_and_suspension?.suspension_rights?.triggers) !== "—" ? ` — ${val(anchor.termination_and_suspension?.suspension_rights?.triggers)}` : ""}`.trim()}
-                />
-              </FiveColGroup>
-
-              <FiveColGroup title="Term, Renewal & Exit">
-                <FiveColRow label="Term" value={val(anchor.term_and_renewal?.initial_term)} />
-                <FiveColRow
-                  label="Auto-renew Trap"
-                  value={
-                    anchor.term_and_renewal?.auto_renew === true
-                      ? `כן — חלון: ${val(anchor.term_and_renewal?.non_renewal_notice_window)}`
-                      : boolLabel(anchor.term_and_renewal?.auto_renew)
-                  }
-                />
-                <FiveColRow
-                  label="Termination"
-                  value={`נוחות: ${val(anchor.termination_and_suspension?.termination_for_convenience?.notice_period)} | עילה: ${(anchor.termination_and_suspension?.termination_for_cause?.grounds ?? []).join(", ") || "—"}`}
-                />
-              </FiveColGroup>
-
-              <FiveColGroup title="CoC & Assignment">
-                <FiveColRow label="CoC Trigger" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists)} />
-                <FiveColRow label="Consent" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.consent_required)} />
-                <FiveColRow label="Termination Right" value={boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.termination_right_triggered)} />
-                <FiveColRow
-                  label="Assignment"
-                  value={
-                    anchor.change_of_control_and_assignment?.assignment?.consent_required === true
-                      ? "דורש הסכמה"
-                      : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
-                        ? "ללא הסכמה"
-                        : "—"
-                  }
-                />
-              </FiveColGroup>
-
-              <FiveColGroup title="Governance & Missing Docs">
-                <FiveColRow
-                  label="Execution"
-                  value={anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—"}
-                />
-                {(anchor.missing_information ?? []).length > 0 && (
-                  <div className="mt-1 space-y-1">
-                    {anchor.missing_information.map((m, i) => (
-                      <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-1.5 py-1">
-                        {m}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </FiveColGroup>
-            </div>
-          </div>
-        </div>
+        <ContractTable
+          accentClass="bg-indigo-700 dark:bg-indigo-800"
+          title={val(customerName) !== "—" ? val(customerName) : "לקוח"}
+          badge={<ExecutionBadge status={anchor.executed_status} />}
+          columns={[
+            {
+              title: "Customer & Commercials",
+              rows: [
+                { label: "Customer", value: val(customerName) },
+                {
+                  label: "Scope",
+                  value: val(
+                    anchor.contract_profile?.parties?.find((p) => p.role === "vendor")?.name ??
+                    anchor.contract_profile?.agreement_title
+                  ),
+                },
+                {
+                  label: "Pricing",
+                  value: [
+                    val(anchor.commercials?.fees_and_pricing?.fee_amounts_or_rate_card),
+                    val(anchor.commercials?.fees_and_pricing?.currency) !== "—"
+                      ? `(${val(anchor.commercials?.fees_and_pricing?.currency)})`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+                { label: "Payment", value: val(anchor.commercials?.fees_and_pricing?.invoicing_and_payment_terms) },
+                { label: "Min. Commitments", value: val(anchor.commercials?.fees_and_pricing?.minimum_commitments) },
+                {
+                  label: "MFN",
+                  value: [
+                    boolLabel(anchor.commercials?.mfn_and_benchmarking?.mfn_exists),
+                    val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered) !== "—"
+                      ? `— ${val(anchor.commercials?.mfn_and_benchmarking?.remedy_if_triggered)}`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+              ],
+            },
+            {
+              title: "Service Levels & Commitments",
+              rows: [
+                {
+                  label: "SLA",
+                  value: [
+                    boolLabel(anchor.sla_and_credits?.sla_exists),
+                    val(anchor.sla_and_credits?.sla_summary) !== "—"
+                      ? `— ${val(anchor.sla_and_credits?.sla_summary)}`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+                {
+                  label: "Suspension",
+                  value: [
+                    boolLabel(anchor.termination_and_suspension?.suspension_rights?.exists),
+                    val(anchor.termination_and_suspension?.suspension_rights?.triggers) !== "—"
+                      ? `— ${val(anchor.termination_and_suspension?.suspension_rights?.triggers)}`
+                      : "",
+                  ].filter(Boolean).join(" "),
+                },
+              ],
+            },
+            {
+              title: "Term, Renewal & Exit",
+              rows: [
+                { label: "Term", value: val(anchor.term_and_renewal?.initial_term) },
+                {
+                  label: "Auto-renew Trap",
+                  value: anchor.term_and_renewal?.auto_renew === true
+                    ? `כן — חלון: ${val(anchor.term_and_renewal?.non_renewal_notice_window)}`
+                    : boolLabel(anchor.term_and_renewal?.auto_renew),
+                },
+                {
+                  label: "Termination",
+                  value: `נוחות: ${val(anchor.termination_and_suspension?.termination_for_convenience?.notice_period)} | עילה: ${(anchor.termination_and_suspension?.termination_for_cause?.grounds ?? []).join(", ") || "—"}`,
+                },
+              ],
+            },
+            {
+              title: "CoC & Assignment",
+              rows: [
+                { label: "CoC Trigger", value: boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.exists) },
+                { label: "Consent", value: boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.consent_required) },
+                { label: "Termination Right", value: boolLabel(anchor.change_of_control_and_assignment?.change_of_control?.termination_right_triggered) },
+                {
+                  label: "Assignment",
+                  value: anchor.change_of_control_and_assignment?.assignment?.consent_required === true
+                    ? "דורש הסכמה"
+                    : anchor.change_of_control_and_assignment?.assignment?.consent_required === false
+                      ? "ללא הסכמה"
+                      : "—",
+                },
+              ],
+            },
+            {
+              title: "Governance & Missing Docs",
+              rows: [
+                {
+                  label: "Execution",
+                  value: anchor.executed_status === "executed" ? "חתום" : anchor.executed_status === "not_executed" ? "לא חתום" : "—",
+                },
+                ...(anchor.missing_information ?? []).map((m) => ({ label: "Follow-up", value: m })),
+              ],
+            },
+          ]}
+        />
       )}
 
       {chapter.findings.length > 0 && (

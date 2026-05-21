@@ -33,6 +33,8 @@ from app.agents.ma.anchor_schemas import (
     TransactionDocumentsExtraction,
     CustomerRevenueContractsExtraction,
     SupplierCriticalVendorExtraction,
+    SlimCustomerAnchor,
+    SlimSupplierAnchor,
     HrAggregateExtraction,
     RegulatoryExtraction,
     LitigationExtraction,
@@ -204,11 +206,11 @@ class TransactionOverviewChapterOutput(ChapterOutput):
 
 
 class CustomerObligationsChapterOutput(ChapterOutput):
-    customer_revenue_extraction: CustomerRevenueContractsExtraction | None = None
+    customer_revenue_extraction: SlimCustomerAnchor | None = None
 
 
 class SupplierObligationsChapterOutput(ChapterOutput):
-    supplier_critical_vendor_extraction: SupplierCriticalVendorExtraction | None = None
+    supplier_critical_vendor_extraction: SlimSupplierAnchor | None = None
 
 
 class HrChapterOutput(ChapterOutput):

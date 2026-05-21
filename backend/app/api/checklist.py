@@ -163,29 +163,67 @@ def generate_checklist(
         raise HTTPException(status_code=400, detail="אין דוח DD מוכן לפרויקט זה")
 
     report_dict = dd_check.report
-    if "tenant_table" not in report_dict:
+    is_ma = "tenant_table" not in report_dict and (
+        "chapters" in report_dict or "completeness" in report_dict
+    )
+
+    if is_ma:
+        _SEVERITY_TO_CATEGORY = {
+            "critical": "missing_doc",
+            "warning": "warning_note",
+            "info": "other",
+        }
+        completeness = report_dict.get("completeness") or {}
+        ma_items = list(completeness.get("items") or [])
+        seen_ids = {it.get("id") for it in ma_items}
+        for chapter in report_dict.get("chapters") or []:
+            for fu in chapter.get("follow_ups") or []:
+                fu_id = fu.get("id", "")
+                if fu_id not in seen_ids:
+                    ma_items.append({
+                        "id": fu_id,
+                        "description": fu.get("description", ""),
+                        "severity": fu.get("severity", "info"),
+                        "suggested_document": fu.get("suggested_document"),
+                    })
+                    seen_ids.add(fu_id)
+
+        if not ma_items:
+            raise HTTPException(status_code=400, detail="הדוח אינו מכיל פריטי השלמה")
+
+        new_items_list = [
+            {
+                "category": _SEVERITY_TO_CATEGORY.get(it.get("severity") or "info", "other"),
+                "title": (it.get("description") or "").strip()[:500],
+                "description": (it.get("suggested_document") or "")[:2000] or None,
+                "sort_order": i,
+            }
+            for i, it in enumerate(ma_items)
+            if (it.get("description") or "").strip()
+        ]
+    elif "tenant_table" not in report_dict:
         raise HTTPException(
             status_code=400,
             detail="רשימת ההשלמות זמינה רק לפרויקטי מימון נדל״ן",
         )
+    else:
+        from app.agents.schemas import RealEstateFinanceDDReport
+        from app.services.checklist_generator import generate_checklist_items
 
-    from app.agents.schemas import RealEstateFinanceDDReport
-    from app.services.checklist_generator import generate_checklist_items
+        org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        language = (org.language if org else None) or "he"
 
-    org_id = user.organization_id or DEFAULT_ORGANIZATION_ID
-    org = db.query(Organization).filter(Organization.id == org_id).first()
-    language = (org.language if org else None) or "he"
+        try:
+            report = RealEstateFinanceDDReport.model_validate(report_dict)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"שגיאה בקריאת הדוח: {exc}") from exc
 
-    try:
-        report = RealEstateFinanceDDReport.model_validate(report_dict)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"שגיאה בקריאת הדוח: {exc}") from exc
-
-    try:
-        new_items_list = generate_checklist_items(report, language=language)
-    except Exception as exc:
-        logger.error("checklist generation failed: %s", exc, exc_info=True)
-        raise HTTPException(status_code=500, detail=f"שגיאה ביצירת הרשימה: {exc}") from exc
+        try:
+            new_items_list = generate_checklist_items(report, language=language)
+        except Exception as exc:
+            logger.error("checklist generation failed: %s", exc, exc_info=True)
+            raise HTTPException(status_code=500, detail=f"שגיאה ביצירת הרשימה: {exc}") from exc
 
     # Delete uncompleted items for this project
     db.query(ChecklistItem).filter(

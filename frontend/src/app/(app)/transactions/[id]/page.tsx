@@ -570,10 +570,12 @@ export default function TransactionPage() {
     hasUploads && project.status !== "processing" && !analyzing;
   const dealMeta = getProjectDealType(project.id);
   const isFinanceProject =
-    dealMeta?.dealType === "real_estate" &&
-    dealMeta?.realEstateType === "project_finance";
+    project.transaction_type === "real_estate_finance" ||
+    (dealMeta?.dealType === "real_estate" &&
+      dealMeta?.realEstateType === "project_finance");
   const report = reportData?.report ?? null;
   const isMaProject =
+    project.transaction_type === "ma" ||
     dealMeta?.dealType === "ma" ||
     (report != null &&
       "transaction_type" in report &&
@@ -1411,7 +1413,7 @@ export default function TransactionPage() {
                 project.status,
               ) && (
                 <TabsContent value="ma-checklist" className="p-5 m-0">
-                  <ChecklistPanel projectId={project.id} onFileUploaded={fetchData} hideGenerate />
+                  <ChecklistPanel projectId={project.id} onFileUploaded={fetchData} />
                 </TabsContent>
               )}
           </Tabs>
