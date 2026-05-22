@@ -156,6 +156,7 @@ export default function AiPage() {
   const { lang, dir } = useLanguage();
   const locale = lang === "en" ? "en-US" : "he-IL";
   const [userName, setUserName] = useState<string | null>(null);
+  const [greetingVariant] = useState(() => Math.floor(Math.random() * 2));
 
   useEffect(() => {
     getMe().then((u) => { if (u) setUserName(u.name ?? u.email?.split("@")[0] ?? null); });
@@ -826,8 +827,11 @@ export default function AiPage() {
                 {/* Title + subtitle */}
                 <motion.div variants={itemVariants} className="text-center space-y-3">
                   <h2 className="text-[2rem] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
-                    {userName ? `Hi ${userName},` : "Hi,"}<br />
-                    What&apos;s on your mind?
+                    {greetingVariant === 0 ? (
+                      <>{userName ? `Hi ${userName},` : "Hi,"}<br />What&apos;s on your mind?</>
+                    ) : (
+                      <>The mic is yours,<br />{userName ?? ""}</>
+                    )}
                   </h2>
                   <p className="max-w-sm text-sm text-zinc-400 dark:text-zinc-500 leading-relaxed">
                     Connect a project, upload documents, or ask anything — D-DONE AI will answer with full context and citations.
