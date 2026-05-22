@@ -97,27 +97,28 @@ class UserProfileResponse(BaseModel):
 
 
 def _calc_user_token_stats(db: Session, target_user_id) -> tuple[int, int]:
-    own = (
+    # Own tokens: projects where the user is the owner (same source as admin /activity).
+    own = int(
         db.query(func.coalesce(func.sum(DDCheck.total_tokens), 0))
-        .join(ProjectMembership, ProjectMembership.project_id == DDCheck.project_id)
+        .join(Project, DDCheck.project_id == Project.id)
+        .filter(Project.owner_id == target_user_id)
+        .scalar()
+        or 0
+    )
+    # Member tokens: completed checks on projects where the user is a non-owner member.
+    member = int(
+        db.query(func.coalesce(func.sum(DDCheck.total_tokens), 0))
+        .join(Project, DDCheck.project_id == Project.id)
+        .join(ProjectMembership, ProjectMembership.project_id == Project.id)
         .filter(
             ProjectMembership.user_id == target_user_id,
-            ProjectMembership.role == "owner",
+            Project.owner_id != target_user_id,
             DDCheck.status == "completed",
         )
         .scalar()
+        or 0
     )
-    member = (
-        db.query(func.coalesce(func.sum(DDCheck.total_tokens), 0))
-        .join(ProjectMembership, ProjectMembership.project_id == DDCheck.project_id)
-        .filter(
-            ProjectMembership.user_id == target_user_id,
-            ProjectMembership.role == "viewer",
-            DDCheck.status == "completed",
-        )
-        .scalar()
-    )
-    return int(own or 0), int(member or 0)
+    return own, member
 
 
 @router.get("/users/{user_id}/profile", response_model=UserProfileResponse)
