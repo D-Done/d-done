@@ -69,6 +69,13 @@ const Avatar = ({
         marginLeft: index === 0 ? 0 : "-0.5rem",
         zIndex: totalItems - index,
       }}
+      onClick={(e) => {
+        if (clickable) {
+          e.preventDefault();
+          e.stopPropagation();
+          onAvatarClick!(item.userId!);
+        }
+      }}
     >
       <AnimatePresence mode="popLayout">
         {showTooltip && isHovered && (
@@ -106,13 +113,6 @@ const Avatar = ({
         whileHover={{ scale: 1.05, zIndex: 100 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
         className={cn("relative", clickable && "cursor-pointer")}
-        onClick={(e) => {
-          if (clickable) {
-            e.preventDefault();
-            e.stopPropagation();
-            onAvatarClick!(item.userId!);
-          }
-        }}
       >
         {item.image ? (
           <Image
