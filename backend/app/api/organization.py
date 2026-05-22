@@ -241,3 +241,4 @@ def get_leaderboard(
         e.rank = i + 1
 
     return LeaderboardResponse(entries=entries, current_user_id=str(user.id))
+
