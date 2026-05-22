@@ -484,12 +484,34 @@ export default function AiPage() {
           );
         }
       } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
+        if ((err as Error)?.name === "AbortError") {
+          setStreamingText(null);
+          streamAbortRef.current = null;
+          setLoading(false);
+          return;
+        }
+        // Streaming endpoint not available — fall back to non-streaming.
+        console.warn("Streaming failed, falling back to non-streaming:", err);
+        setStreamingText(null);
+        try {
+          const resp = await askInConversation(convId, question, undefined, modelMode);
+          setMessages((prev) => [
+            ...prev,
+            { id: "a-" + Date.now(), role: "assistant" as const, content: resp.answer, citations: resp.citations },
+          ]);
+          if (!conversations.find((c) => c.id === convId)?.title) {
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === convId ? { ...c, title: question.slice(0, 60) } : c,
+              ),
+            );
+          }
+        } catch (fallbackErr) {
           setMessages((prev) => [
             ...prev,
             { id: "e-" + Date.now(), role: "assistant" as const, content: "שגיאה בעיבוד השאלה. נסה שנית." },
           ]);
-          console.error("Stream ask failed:", err);
+          console.error("Fallback ask also failed:", fallbackErr);
         }
       } finally {
         setStreamingText(null);
