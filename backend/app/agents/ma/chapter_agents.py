@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import random
 
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
@@ -119,6 +120,10 @@ _VG_SUPPORTED_MIME_TYPES: frozenset[str] = frozenset(
 _MAX_EXTRACTION_CHARS = 30_000
 # Character cap per text-only file (Excel, Word, etc.).
 _MAX_CHARS_PER_FILE = 10_000
+# Maximum concurrent Flash overflow-batch calls across ALL chapter agents.
+# Prevents rate-limit exhaustion when 15 parallel Pro agents each fire
+# multiple Flash calls simultaneously (e.g. 428 docs → ~150+ concurrent calls).
+_FLASH_OVERFLOW_SEMAPHORE = asyncio.Semaphore(8)
 
 
 # Schemas whose inlined JSON size exceeds Vertex AI's response_schema limit
@@ -162,6 +167,11 @@ async def _extract_overflow_batch(
 
     Returns the extracted text capped at ``_MAX_EXTRACTION_CHARS`` characters.
     On failure returns a short error placeholder so the chapter can continue.
+
+    Acquires ``_FLASH_OVERFLOW_SEMAPHORE`` before each attempt so the total
+    number of concurrent Flash calls across all chapter agents stays bounded.
+    Retries up to 4 times on rate-limit (429 / RESOURCE_EXHAUSTED) errors with
+    exponential back-off + jitter before giving up and returning a placeholder.
     """
     from google.genai import Client
 
@@ -185,31 +195,57 @@ async def _extract_overflow_batch(
         )
     )
 
-    try:
-        client = Client()
-        response = await client.aio.models.generate_content(
-            model=FLASH_MODEL,
-            contents=parts,
-        )
-        text = (response.text or "").strip()
-        if len(text) > _MAX_EXTRACTION_CHARS:
-            text = text[:_MAX_EXTRACTION_CHARS] + "\n... [extraction truncated]"
-        logger.info(
-            "ma_chapter[%s]: overflow batch %d extracted %d chars from %d PDF(s)",
-            chapter_id,
-            batch_index,
-            len(text),
-            len(batch),
-        )
-        return text
-    except Exception as exc:
-        logger.warning(
-            "ma_chapter[%s]: overflow batch %d extraction failed: %s",
-            chapter_id,
-            batch_index,
-            exc,
-        )
-        return f"[Overflow batch {batch_index + 1} extraction failed: {exc}]"
+    _MAX_RETRIES = 4
+    _BASE_DELAY = 10.0  # seconds
+    retry_delay: float | None = None
+
+    for attempt in range(_MAX_RETRIES):
+        # Sleep outside the semaphore so we don't hold the slot during backoff.
+        if retry_delay is not None:
+            await asyncio.sleep(retry_delay)
+            retry_delay = None
+
+        async with _FLASH_OVERFLOW_SEMAPHORE:
+            try:
+                client = Client()
+                response = await client.aio.models.generate_content(
+                    model=FLASH_MODEL,
+                    contents=parts,
+                )
+                text = (response.text or "").strip()
+                if len(text) > _MAX_EXTRACTION_CHARS:
+                    text = text[:_MAX_EXTRACTION_CHARS] + "\n... [extraction truncated]"
+                logger.info(
+                    "ma_chapter[%s]: overflow batch %d extracted %d chars from %d PDF(s)",
+                    chapter_id,
+                    batch_index,
+                    len(text),
+                    len(batch),
+                )
+                return text
+            except Exception as exc:
+                exc_str = str(exc).lower()
+                is_rate_limit = "429" in exc_str or "resource_exhausted" in exc_str or "quota" in exc_str
+                if is_rate_limit and attempt < _MAX_RETRIES - 1:
+                    retry_delay = _BASE_DELAY * (2 ** attempt) + random.uniform(0, 5)
+                    logger.warning(
+                        "ma_chapter[%s]: overflow batch %d rate-limited (attempt %d/%d), retrying in %.1fs",
+                        chapter_id,
+                        batch_index,
+                        attempt + 1,
+                        _MAX_RETRIES,
+                        retry_delay,
+                    )
+                    continue
+                logger.warning(
+                    "ma_chapter[%s]: overflow batch %d extraction failed: %s",
+                    chapter_id,
+                    batch_index,
+                    exc,
+                )
+                return f"[Overflow batch {batch_index + 1} extraction failed: {exc}]"
+
+    return f"[Overflow batch {batch_index + 1} extraction failed after {_MAX_RETRIES} attempts]"
 
 
 def _make_inject_pdfs_by_chapter(chapter_id: str, empty_json: str):
