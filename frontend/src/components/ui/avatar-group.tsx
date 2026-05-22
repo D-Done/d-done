@@ -70,10 +70,10 @@ const Avatar = ({
         zIndex: totalItems - index,
       }}
       onClick={(e) => {
-        if (clickable) {
+        if (onAvatarClick) {
           e.preventDefault();
           e.stopPropagation();
-          onAvatarClick!(item.userId!);
+          if (item.userId) onAvatarClick(item.userId);
         }
       }}
     >
