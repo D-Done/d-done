@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
   Building2,
@@ -69,6 +70,7 @@ function projectTypeLabel(transactionType: string): { group: string; label: stri
 
 function TransactionsList() {
   const { lang, dir } = useLanguage();
+  const router = useRouter();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -189,7 +191,7 @@ function TransactionsList() {
                   const isDeleting = deletingId === p.id;
                   return (
                     <div key={p.id} className="group relative">
-                      <Link href={`/transactions/${p.id}`}>
+                      <div onClick={() => router.push(`/transactions/${p.id}`)}>
                         <Card
                           className={[
                             "h-full cursor-pointer rounded-2xl bg-white dark:bg-zinc-900/80 shadow-sm transition hover:shadow-md",
@@ -261,9 +263,9 @@ function TransactionsList() {
                             </div>
                           </CardContent>
                         </Card>
-                      </Link>
+                      </div>
 
-                      {/* Delete button — outside the Link so it doesn't navigate */}
+                      {/* Delete button — outside the card div so it doesn't navigate */}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
