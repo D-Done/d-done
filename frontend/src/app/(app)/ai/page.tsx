@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import {
   askInConversation,
+  askInConversationStream,
   createConversation,
   deleteConversation,
   getConversation,
@@ -183,8 +184,11 @@ export default function AiPage() {
 
   // Chat
   const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [modelMode, setModelMode] = useState<"flash" | "pro">("flash");
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const streamTextRef = useRef<string>("");
 
   // Citation drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -224,7 +228,7 @@ export default function AiPage() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, streamingText]);
 
   // ── Object URLs for uploaded files ─────────────────────────────────────
 
@@ -451,42 +455,77 @@ export default function AiPage() {
     setInput("");
     setLoading(true);
 
-    try {
-      const resp = await askInConversation(
-        convId,
-        question,
-        hasProjectContext ? undefined : files,
-        modelMode,
-      );
-      const assistantMsg: LocalMessage = {
-        id: "a-" + Date.now(),
-        role: "assistant",
-        content: resp.answer,
-        citations: resp.citations,
-        tokens: resp.raw_token_usage?.total_tokens ?? null,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-
-      // Update conversation title if it was just auto-set
-      if (!conversations.find((c) => c.id === convId)?.title) {
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === convId ? { ...c, title: question.slice(0, 60) } : c,
-          ),
+    // Use streaming for project-context and general chat; fallback to non-streaming for file uploads.
+    if (!hasUploadedFiles) {
+      const abort = new AbortController();
+      streamAbortRef.current = abort;
+      streamTextRef.current = "";
+      setStreamingText("");
+      try {
+        await askInConversationStream(
+          convId,
+          question,
+          modelMode,
+          (chunk) => {
+            streamTextRef.current += chunk;
+            setStreamingText(streamTextRef.current);
+          },
+          abort.signal,
         );
+        setMessages((prev) => [
+          ...prev,
+          { id: "a-" + Date.now(), role: "assistant" as const, content: streamTextRef.current },
+        ]);
+        if (!conversations.find((c) => c.id === convId)?.title) {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === convId ? { ...c, title: question.slice(0, 60) } : c,
+            ),
+          );
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          setMessages((prev) => [
+            ...prev,
+            { id: "e-" + Date.now(), role: "assistant" as const, content: "שגיאה בעיבוד השאלה. נסה שנית." },
+          ]);
+          console.error("Stream ask failed:", err);
+        }
+      } finally {
+        setStreamingText(null);
+        streamAbortRef.current = null;
+        setLoading(false);
       }
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: "e-" + Date.now(),
-          role: "assistant",
-          content: "שגיאה בעיבוד השאלה. נסה שנית.",
-        },
-      ]);
-      console.error("Ask failed:", err);
-    } finally {
-      setLoading(false);
+    } else {
+      // File-upload mode: use non-streaming endpoint
+      try {
+        const resp = await askInConversation(convId, question, files, modelMode);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: "a-" + Date.now(),
+            role: "assistant" as const,
+            content: resp.answer,
+            citations: resp.citations,
+            tokens: resp.raw_token_usage?.total_tokens ?? null,
+          },
+        ]);
+        if (!conversations.find((c) => c.id === convId)?.title) {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === convId ? { ...c, title: question.slice(0, 60) } : c,
+            ),
+          );
+        }
+      } catch (err) {
+        setMessages((prev) => [
+          ...prev,
+          { id: "e-" + Date.now(), role: "assistant" as const, content: "שגיאה בעיבוד השאלה. נסה שנית." },
+        ]);
+        console.error("Ask failed:", err);
+      } finally {
+        setLoading(false);
+      }
     }
   }, [
     input,
@@ -497,6 +536,7 @@ export default function AiPage() {
     messages.length,
     currentConvId,
     conversations,
+    modelMode,
   ]);
 
   const handleKeyDown = useCallback(
@@ -979,7 +1019,32 @@ export default function AiPage() {
                 </motion.div>
               ))}
 
-              {loading && (
+              {loading && streamingText !== null ? (
+                /* Streaming bubble — shows text as it arrives */
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 25 }}
+                  className="flex gap-4"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-zinc-900/10 text-zinc-800 dark:text-zinc-300 ring-1 ring-inset ring-zinc-900/15 shadow-sm">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <div className="rounded-3xl rounded-tl-sm bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md ring-1 ring-inset ring-zinc-200/50 dark:ring-zinc-700/40 px-5 py-3.5 text-[14px] text-zinc-800 dark:text-zinc-200 shadow-sm max-w-[80%]">
+                    {streamingText ? (
+                      <MarkdownContent content={streamingText} isUser={false} />
+                    ) : (
+                      <div className="flex items-center gap-2.5 text-zinc-500 dark:text-zinc-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="animate-pulse">{t("ai_analyzing", lang)}</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ) : loading ? (
+                /* File-upload mode spinner */
                 <motion.div
                   layout
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -996,7 +1061,7 @@ export default function AiPage() {
                     <span className="animate-pulse">{t("ai_analyzing", lang)}</span>
                   </div>
                 </motion.div>
-              )}
+              ) : null}
             </AnimatePresence>
             <div ref={chatEndRef} className="h-2" />
           </div>

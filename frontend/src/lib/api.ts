@@ -989,6 +989,52 @@ export async function askInConversation(
   return res.json();
 }
 
+export async function askInConversationStream(
+  convId: string,
+  question: string,
+  model: "flash" | "pro",
+  onChunk: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("question", question);
+  formData.append("model", model);
+
+  const res = await fetch(`${API_BASE}/ai/conversations/${convId}/ask-stream`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+    signal,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || res.statusText);
+  }
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop()!;
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = JSON.parse(line.slice(6)) as {
+        type: "chunk" | "done" | "error";
+        text?: string;
+        message?: string;
+      };
+      if (payload.type === "chunk" && payload.text) onChunk(payload.text);
+      else if (payload.type === "error") throw new Error(payload.message ?? "Stream error");
+    }
+  }
+}
+
 // ============================================================
 // Agent session events (post-check diagnostics)
 // ============================================================

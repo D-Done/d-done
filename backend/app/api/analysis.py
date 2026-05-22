@@ -634,13 +634,15 @@ async def start_analysis(
     org = org_result.scalar_one_or_none()
     language = (org.language if org else None) or "he"
 
+    _optional_chapters = body.optional_chapters if body else None
     logger.info(
-        "Starting DD analysis (async): check_id=%s, project=%s, files=%d, user=%s, language=%s",
+        "Starting DD analysis (async): check_id=%s, project=%s, files=%d, user=%s, language=%s, optional_chapters=%s",
         check_id,
         project_id,
         len(uploaded_files),
         user.email,
         language,
+        _optional_chapters,
     )
 
     task = asyncio.create_task(
@@ -652,7 +654,7 @@ async def start_analysis(
             transaction_metadata=transaction_metadata,
             user_email=user.email,
             language=language,
-            optional_chapters=body.optional_chapters if body else None,
+            optional_chapters=_optional_chapters,
         )
     )
     _running_analysis_tasks.add(task)

@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm.attributes import flag_modified
@@ -458,6 +459,151 @@ async def ask_in_conversation(
             raw_token_usage=resp.raw_token_usage,
             conversation_id=str(conv.id),
         )
+
+
+@router.post("/conversations/{conv_id}/ask-stream")
+async def ask_in_conversation_stream(
+    conv_id: UUID,
+    question: str = Form(...),
+    model: str = Form(default="flash"),
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Streaming version of ask — returns text/event-stream (SSE).
+
+    Only supports project-context and general chat (no inline file uploads).
+    Falls back gracefully if the project has no report yet.
+    """
+    resolved_model = GEMINI_CHAT_PRO_MODEL if model == "pro" else GEMINI_CHAT_MODEL
+
+    async with AsyncSessionLocal() as db:
+        conv = await _assert_conv_owner(conv_id, user.id, db)
+        history = list(conv.messages or [])
+        extra_context: str | None = None
+        file_names: list[str] = []
+
+        if conv.project_id:
+            files_result = await db.execute(
+                select(FileModel).where(
+                    and_(
+                        FileModel.project_id == conv.project_id,
+                        FileModel.upload_status == "uploaded",
+                    )
+                )
+            )
+            project_files = files_result.scalars().all()
+
+            dd_result = await db.execute(
+                select(DDCheck)
+                .where(
+                    and_(
+                        DDCheck.project_id == conv.project_id,
+                        DDCheck.status == "completed",
+                    )
+                )
+                .order_by(DDCheck.completed_at.desc())
+                .limit(1)
+            )
+            dd_check = dd_result.scalar_one_or_none()
+
+            file_names = [f.original_name for f in project_files]
+            ctx_parts: list[str] = []
+            if file_names:
+                ctx_parts.append("מסמכי הפרויקט:\n" + "\n".join(f"- {n}" for n in file_names))
+            if dd_check and dd_check.report:
+                report_json = json.dumps(dd_check.report, ensure_ascii=False)
+                ctx_parts.append(f"דוח DD של הפרויקט:\n{report_json[:80_000]}")
+            if ctx_parts:
+                extra_context = "\n\n".join(ctx_parts)
+
+    # Capture locals for the generator (DB session is closed above).
+    _conv_id = conv_id
+    _history = history
+    _extra_context = extra_context
+    _file_names = file_names
+    _question = question
+    _user_id = user.id
+
+    async def generate():
+        from google import genai
+        from google.genai import types
+
+        _ensure_genai_env()
+        client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
+
+        config = types.GenerateContentConfig(
+            system_instruction=(
+                "You are D-DONE AI — a large language model with a strong legal and financial orientation. "
+                "You assist legal and financial professionals across a wide range of topics, with particular depth "
+                "in due diligence, contracts, corporate law, and financial analysis. "
+                "When connected to a project, answer questions about the DD report, documents, clauses, risks, "
+                "parties, and timelines — grounded in the actual project files. "
+                "Answer clearly and concisely in the language of the question."
+            ),
+            temperature=0.4,
+            max_output_tokens=8192,
+        )
+
+        ctx = _extra_context
+        contents: list[types.Content] = []
+        for msg in _history:
+            role = "model" if msg["role"] == "assistant" else "user"
+            text = msg["content"]
+            if role == "user" and ctx:
+                text = ctx + "\n\n" + text
+                ctx = None
+            contents.append(types.Content(role=role, parts=[types.Part.from_text(text=text)]))
+        current_text = (ctx + "\n\n" + _question) if ctx else _question
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=current_text)]))
+
+        full_text = ""
+        try:
+            async for chunk in await client.aio.models.generate_content_stream(
+                model=resolved_model,
+                contents=contents,
+                config=config,
+            ):
+                if chunk.text:
+                    full_text += chunk.text
+                    yield f"data: {json.dumps({'type': 'chunk', 'text': chunk.text}, ensure_ascii=False)}\n\n"
+
+            now_iso = _utcnow().isoformat()
+            async with AsyncSessionLocal() as db2:
+                conv2 = await _assert_conv_owner(_conv_id, _user_id, db2)
+                messages = list(conv2.messages or [])
+                messages.append({
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": _question,
+                    "file_names": _file_names or None,
+                    "created_at": now_iso,
+                })
+                messages.append({
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": full_text,
+                    "citations": [],
+                    "created_at": _utcnow().isoformat(),
+                })
+                conv2.messages = messages
+                flag_modified(conv2, "messages")
+                if not conv2.title and len(messages) <= 2:
+                    conv2.title = _question[:60]
+                await db2.commit()
+
+            yield f"data: {json.dumps({'type': 'done', 'conversation_id': str(_conv_id)})}\n\n"
+
+        except Exception as exc:
+            logger.error("Streaming ask failed: %s", exc, exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ── Gemini helpers ───────────────────────────────────────────────────────────
