@@ -20,6 +20,7 @@ import type { ProjectListItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import AvatarGroup from "@/components/ui/avatar-group";
+import { UserProfileSheet } from "@/components/user-profile-sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,8 @@ function TransactionsList() {
   const [confirmProject, setConfirmProject] = useState<ProjectListItem | null>(
     null,
   );
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const q = (searchParams.get("q") ?? "").trim();
@@ -232,14 +235,19 @@ function TransactionsList() {
                               </div>
                               {p.members && p.members.length > 0 && (
                                 <AvatarGroup
-                                  items={p.members.map((m, i) => ({
+                                  items={p.members.map((m) => ({
                                     id: m.email,
                                     name: m.name ?? m.email,
                                     image: null,
+                                    userId: m.user_id,
                                   }))}
                                   maxVisible={5}
                                   size="sm"
                                   className="justify-end"
+                                  onAvatarClick={(uid) => {
+                                    setProfileUserId(uid);
+                                    setProfileSheetOpen(true);
+                                  }}
                                 />
                               )}
                             </div>
@@ -308,6 +316,15 @@ function TransactionsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UserProfileSheet
+        userId={profileUserId}
+        open={profileSheetOpen}
+        onOpenChange={(v) => {
+          setProfileSheetOpen(v);
+          if (!v) setProfileUserId(null);
+        }}
+      />
     </>
   );
 }

@@ -975,9 +975,38 @@ export interface Project {
 }
 
 export interface ProjectListMember {
+  user_id: string;
   email: string;
   name: string | null;
   is_deleted?: boolean;
+}
+
+export interface UserProfileData {
+  user_id: string;
+  name: string | null;
+  email: string;
+  joined_at: string;
+  shared_projects_count: number;
+  shared_project_names: string[];
+  total_project_count: number;
+  own_tokens: number;
+  member_tokens: number;
+  total_tokens: number;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  name: string | null;
+  email: string;
+  own_tokens: number;
+  member_tokens: number;
+  total_tokens: number;
+  rank: number;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  current_user_id: string;
 }
 
 export interface ProjectListItem {

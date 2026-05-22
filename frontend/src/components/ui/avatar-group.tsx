@@ -10,6 +10,7 @@ export interface AvatarItem {
   name: string;
   designation?: string | null;
   image?: string | null;
+  userId?: string;
 }
 
 interface AvatarGroupProps {
@@ -17,6 +18,7 @@ interface AvatarGroupProps {
   className?: string;
   maxVisible?: number;
   size?: "sm" | "md" | "lg";
+  onAvatarClick?: (userId: string) => void;
 }
 
 function getInitials(name: string): string {
@@ -38,6 +40,7 @@ const Avatar = ({
   isHovered,
   onHover,
   onLeave,
+  onAvatarClick,
 }: {
   item: AvatarItem;
   index: number;
@@ -46,6 +49,7 @@ const Avatar = ({
   isHovered: boolean;
   onHover: () => void;
   onLeave: () => void;
+  onAvatarClick?: (userId: string) => void;
 }) => {
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
@@ -54,6 +58,7 @@ const Avatar = ({
   };
 
   const showTooltip = item.name && (isHovered || !!item.designation);
+  const clickable = !!item.userId && !!onAvatarClick;
 
   return (
     <div
@@ -90,6 +95,9 @@ const Avatar = ({
                 {item.designation}
               </div>
             )}
+            {clickable && (
+              <div className="text-sky-500 text-[10px] mt-0.5">לחץ לפרופיל</div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -97,7 +105,10 @@ const Avatar = ({
       <motion.div
         whileHover={{ scale: 1.05, zIndex: 100 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="relative"
+        className={cn("relative", clickable && "cursor-pointer")}
+        onClick={() => {
+          if (clickable) onAvatarClick!(item.userId!);
+        }}
       >
         {item.image ? (
           <Image
@@ -130,6 +141,7 @@ const AvatarGroup = ({
   className,
   maxVisible = 5,
   size = "md",
+  onAvatarClick,
 }: AvatarGroupProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | string | null>(null);
 
@@ -148,6 +160,7 @@ const AvatarGroup = ({
           isHovered={hoveredIndex === item.id}
           onHover={() => setHoveredIndex(item.id)}
           onLeave={() => setHoveredIndex(null)}
+          onAvatarClick={onAvatarClick}
         />
       ))}
 

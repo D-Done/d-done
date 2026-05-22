@@ -130,6 +130,7 @@ class ProjectResponse(BaseModel):
 
 
 class ProjectMemberBrief(BaseModel):
+    user_id: str
     email: str
     name: str | None
     is_deleted: bool = False
@@ -291,6 +292,7 @@ def list_projects(
         if p.owner:
             members.append(
                 ProjectMemberBrief(
+                    user_id=str(p.owner.id),
                     email=p.owner.email,
                     name=p.owner.name,
                     is_deleted=bool(getattr(p.owner, "is_deleted", False)),
@@ -300,6 +302,7 @@ def list_projects(
             if m.user and m.user.email != (p.owner.email if p.owner else ""):
                 members.append(
                     ProjectMemberBrief(
+                        user_id=str(m.user.id),
                         email=m.user.email,
                         name=m.user.name,
                         is_deleted=bool(getattr(m.user, "is_deleted", False)),

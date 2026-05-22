@@ -379,6 +379,18 @@ export async function getOrganizationUsers(
   return request<OrganizationUser[]>(`/organization/users${params}`);
 }
 
+export async function getUserProfile(userId: string) {
+  return request<import("@/lib/types").UserProfileData>(
+    `/organization/users/${userId}/profile`
+  );
+}
+
+export async function getLeaderboard() {
+  return request<import("@/lib/types").LeaderboardResponse>(
+    `/organization/leaderboard`
+  );
+}
+
 export async function addProjectMember(
   projectId: string,
   email: string,
