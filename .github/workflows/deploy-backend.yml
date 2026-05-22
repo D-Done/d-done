@@ -13,7 +13,6 @@ jobs:
     environment: Production
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -21,8 +20,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/973037358388/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
-          service_account: "github-actions@coral-antonym-286617.iam.gserviceaccount.com"
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -32,5 +30,5 @@ jobs:
           gcloud run deploy d-done-api \
             --source backend/ \
             --region me-west1 \
-            --project coral-antonym-286617 \
+            --project d-done-prod \
             --quiet
