@@ -247,44 +247,6 @@ export default function UserProfilePage() {
             )}
           </motion.div>
 
-          {/* Leaderboard */}
-          {leaderboard && leaderboard.entries.length > 1 && (
-            <motion.div custom={2} variants={FADE_UP} initial="hidden" animate="show"
-              className="bg-white dark:bg-zinc-900/80 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800/60 px-6 py-5">
-              <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-4">
-                דירוג ארגון
-              </p>
-              <div className="space-y-0">
-                {leaderboard.entries.slice(0, 6).map((entry, idx, arr) => {
-                  const isMe = entry.user_id === currentUserId;
-                  const isTarget = entry.user_id === profile.user_id;
-                  const medals: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
-                  const isLast = idx === arr.slice(0, 6).length - 1;
-                  return (
-                    <div key={entry.user_id}
-                      className={cn(
-                        "flex items-center gap-3 py-2.5 text-sm",
-                        !isLast && "border-b border-slate-50 dark:border-zinc-800/40"
-                      )}>
-                      <span className="w-5 text-center text-xs shrink-0 text-slate-300 dark:text-zinc-600">
-                        {medals[entry.rank] ?? <span className="font-semibold">{entry.rank}</span>}
-                      </span>
-                      <span className={cn("flex-1 truncate font-medium",
-                        isMe ? "text-sky-500 dark:text-sky-400" : "text-slate-700 dark:text-zinc-200",
-                        isTarget && !isMe && "font-semibold text-slate-900 dark:text-zinc-100"
-                      )}>
-                        {entry.name || entry.email.split("@")[0]}
-                        {isMe && <span className="text-xs font-normal text-slate-400 mr-1">(אני)</span>}
-                      </span>
-                      <span className="tabular-nums font-semibold text-slate-500 dark:text-zinc-400 shrink-0">
-                        {fmt(entry.total_tokens)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
         </div>
       )}
     </div>
