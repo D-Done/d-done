@@ -235,7 +235,7 @@ export default function UserProfilePage() {
               <div className="flex-1 flex flex-col items-center py-6 px-4">
                 <span className={cn("text-xs font-medium mb-2 uppercase tracking-widest",
                   iAmWinner ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>
-                  אני
+                  {myEntry?.name?.split(" ")[0] || myEntry?.email?.split("@")[0] || "אני"}
                 </span>
                 <span className={cn("text-4xl font-black tabular-nums tracking-tight",
                   iAmWinner ? "text-slate-900 dark:text-zinc-100" : "text-slate-200 dark:text-zinc-700")}>
