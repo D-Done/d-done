@@ -126,11 +126,11 @@ export default function UserProfilePage() {
   return (
     <div className="-mx-4 -mt-8 sm:-mx-6 min-h-screen bg-zinc-50 dark:bg-zinc-950">
 
-      {/* ─── Dark hero ─────────────────────────────────────── */}
-      <div className="bg-zinc-950 px-6 pt-5 pb-16">
+      {/* ─── Hero ──────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-800/60 px-6 pt-5 pb-16">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           חזרה
@@ -138,12 +138,12 @@ export default function UserProfilePage() {
 
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-zinc-300" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-700 dark:border-t-zinc-300" />
           </div>
         )}
 
         {error && (
-          <div className="flex flex-col items-center py-16 gap-2 text-zinc-600">
+          <div className="flex flex-col items-center py-16 gap-2 text-slate-400 dark:text-zinc-600">
             <span className="text-2xl">⚠️</span>
             <span className="text-sm">שגיאה בטעינת הפרופיל</span>
           </div>
@@ -155,14 +155,14 @@ export default function UserProfilePage() {
             className="mt-8 max-w-xl mx-auto flex flex-col items-center text-center gap-3"
           >
             <PastelAvatar name={profile.name} email={profile.email} size="lg"
-              className="h-20 w-20 text-2xl ring-2 ring-white/10" />
+              className="h-20 w-20 text-2xl ring-2 ring-slate-100 dark:ring-white/10" />
             <div>
-              <h1 className="text-2xl font-bold text-zinc-100 mt-1">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 mt-1">
                 {profile.name || profile.email.split("@")[0]}
               </h1>
-              <p className="text-sm text-zinc-500 mt-0.5">{profile.email}</p>
+              <p className="text-sm text-slate-400 dark:text-zinc-500 mt-0.5">{profile.email}</p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-zinc-600">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-zinc-600">
               <CalendarDays className="h-3 w-3" />
               הצטרף {formatDate(profile.joined_at)}
             </div>
@@ -170,13 +170,13 @@ export default function UserProfilePage() {
             {/* Stats */}
             <div className="mt-4 flex items-center gap-8 text-center">
               <div>
-                <div className="text-2xl font-black text-zinc-100">{profile.total_project_count}</div>
-                <div className="text-xs text-zinc-600 mt-0.5">פרויקטים</div>
+                <div className="text-2xl font-black text-slate-900 dark:text-zinc-100">{profile.total_project_count}</div>
+                <div className="text-xs text-slate-400 dark:text-zinc-600 mt-0.5">פרויקטים</div>
               </div>
-              <div className="h-6 w-px bg-zinc-800" />
+              <div className="h-6 w-px bg-slate-200 dark:bg-zinc-800" />
               <div>
-                <div className="text-2xl font-black text-zinc-100">{profile.shared_projects_count}</div>
-                <div className="text-xs text-zinc-600 mt-0.5">משותפים איתי</div>
+                <div className="text-2xl font-black text-slate-900 dark:text-zinc-100">{profile.shared_projects_count}</div>
+                <div className="text-xs text-slate-400 dark:text-zinc-600 mt-0.5">משותפים איתי</div>
               </div>
             </div>
           </motion.div>
