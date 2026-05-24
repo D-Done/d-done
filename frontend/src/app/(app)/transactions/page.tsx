@@ -21,7 +21,6 @@ import type { ProjectListItem } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import AvatarGroup from "@/components/ui/avatar-group";
-import { UserProfileSheet } from "@/components/user-profile-sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,9 +76,6 @@ function TransactionsList() {
   const [confirmProject, setConfirmProject] = useState<ProjectListItem | null>(
     null,
   );
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
-
   const searchParams = useSearchParams();
   const q = (searchParams.get("q") ?? "").trim();
 
@@ -256,8 +252,7 @@ function TransactionsList() {
                                         if (!match) return;
                                         userId = match.id;
                                       }
-                                      setProfileUserId(userId);
-                                      setProfileSheetOpen(true);
+                                      router.push(`/users/${userId}`);
                                     }}
                                   />
                                 </div>
@@ -329,14 +324,6 @@ function TransactionsList() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <UserProfileSheet
-        userId={profileUserId}
-        open={profileSheetOpen}
-        onOpenChange={(v) => {
-          setProfileSheetOpen(v);
-          if (!v) setProfileUserId(null);
-        }}
-      />
     </>
   );
 }
