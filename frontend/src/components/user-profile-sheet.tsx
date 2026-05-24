@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { ArrowRight, CalendarDays } from "lucide-react";
 import { PastelAvatar } from "@/components/pastel-avatar";
 import * as api from "@/lib/api";
 import type { UserProfileData, LeaderboardEntry, LeaderboardResponse } from "@/lib/types";
@@ -78,17 +74,17 @@ function TokenCol({
         {label}
       </span>
       <span className={cn(
-        "text-3xl font-black tabular-nums tracking-tight",
-        isWinner ? "text-zinc-900 dark:text-zinc-100" : "text-slate-400 dark:text-zinc-500"
+        "text-4xl font-black tabular-nums tracking-tight",
+        isWinner ? "text-zinc-900 dark:text-zinc-100" : "text-slate-300 dark:text-zinc-600"
       )}>
         {fmt(totDisp)}
       </span>
       {isWinner && (
-        <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wide">
+        <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-widest mt-0.5">
           מנצח
         </span>
       )}
-      <div className="mt-2 space-y-0.5 w-full text-xs text-slate-400 dark:text-zinc-600">
+      <div className="mt-3 space-y-1 w-full max-w-[140px] text-xs text-slate-400 dark:text-zinc-600">
         <div className="flex justify-between">
           <span>פרויקטים</span>
           <span className="tabular-nums font-medium text-slate-500 dark:text-zinc-400">{fmt(ownDisp)}</span>
@@ -117,7 +113,7 @@ function LeaderboardRow({
 
   return (
     <div className={cn(
-      "flex items-center gap-3 py-2.5 text-sm",
+      "flex items-center gap-3 py-3 text-sm",
       !isLast && "border-b border-slate-100 dark:border-zinc-800/60"
     )}>
       <span className="w-5 text-center text-xs shrink-0 text-slate-300 dark:text-zinc-600 font-bold">
@@ -138,29 +134,26 @@ function LeaderboardRow({
   );
 }
 
-export function UserProfileSheet({
+function ProfileScreen({
   userId,
-  open,
-  onOpenChange,
+  onClose,
 }: {
-  userId: string | null;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  userId: string;
+  onClose: () => void;
 }) {
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [animStarted, setAnimStarted] = useState(false);
 
   useEffect(() => {
-    if (!open || !userId) return;
-    setProfile(null);
-    setLeaderboard(null);
-    setAnimStarted(false);
-    setError(false);
-    setLoading(true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
+  useEffect(() => {
     Promise.all([api.getUserProfile(userId), api.getLeaderboard()])
       .then(([prof, lb]) => {
         setProfile(prof);
@@ -169,7 +162,7 @@ export function UserProfileSheet({
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [open, userId]);
+  }, [userId]);
 
   const currentUserId = leaderboard?.current_user_id ?? "";
   const myEntry = leaderboard?.entries.find((e) => e.user_id === currentUserId);
@@ -181,141 +174,159 @@ export function UserProfileSheet({
   const theyWin = theirTotal > myTotal;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-sm p-0 flex flex-col bg-white dark:bg-zinc-950 border-l border-slate-200 dark:border-zinc-800/60"
-        showCloseButton={false}
-      >
-        <SheetTitle className="sr-only">פרופיל משתמש</SheetTitle>
+    <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-950 flex flex-col overflow-hidden">
+      {/* Top bar */}
+      <div className="shrink-0 flex items-center h-14 px-4 border-b border-slate-100 dark:border-zinc-800/60">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors"
+        >
+          <ArrowRight className="h-4 w-4" />
+          <span>חזרה</span>
+        </button>
+      </div>
 
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center flex-1 gap-2 text-slate-400 p-8">
-              <span className="text-3xl">⚠️</span>
-              <span className="text-sm text-slate-400">לא ניתן לטעון את הפרופיל</span>
-            </motion.div>
-          )}
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {error && (
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400">
+            <span className="text-3xl">⚠️</span>
+            <span className="text-sm">לא ניתן לטעון את הפרופיל</span>
+          </div>
+        )}
 
-          {!error && loading && (
-            <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center justify-center flex-1">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-zinc-900 dark:border-t-zinc-100" />
-            </motion.div>
-          )}
+        {!error && loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-zinc-900 dark:border-t-zinc-100" />
+          </div>
+        )}
 
-          {profile && (
-            <motion.div
-              key="content"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col flex-1 overflow-y-auto"
-            >
-              {/* Header */}
-              <div className="px-6 pt-10 pb-6 border-b border-slate-100 dark:border-zinc-800/60">
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="absolute top-4 end-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+        {profile && (
+          <div className="max-w-lg mx-auto px-6 py-10 space-y-10">
 
-                <div className="flex items-center gap-4">
-                  <PastelAvatar name={profile.name} email={profile.email} size="lg" />
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                      {profile.name || profile.email.split("@")[0]}
-                    </h2>
-                    <p className="text-sm text-slate-400 dark:text-zinc-500 truncate">{profile.email}</p>
-                    <div className="flex items-center gap-1 text-xs text-slate-300 dark:text-zinc-600 mt-1">
-                      <CalendarDays className="h-3 w-3 shrink-0" />
-                      <span>{formatDate(profile.joined_at)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Inline stats */}
-                <div className="mt-5 flex gap-6">
-                  <div>
-                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{profile.total_project_count}</div>
-                    <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">פרויקטים</div>
-                  </div>
-                  <div className="w-px bg-slate-100 dark:bg-zinc-800" />
-                  <div>
-                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{profile.shared_projects_count}</div>
-                    <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">משותפים איתי</div>
-                  </div>
+            {/* Profile header */}
+            <div className="flex items-center gap-5">
+              <PastelAvatar name={profile.name} email={profile.email} size="lg" />
+              <div>
+                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                  {profile.name || profile.email.split("@")[0]}
+                </h1>
+                <p className="text-sm text-slate-400 dark:text-zinc-500 mt-0.5">{profile.email}</p>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300 dark:text-zinc-600 mt-1.5">
+                  <CalendarDays className="h-3 w-3 shrink-0" />
+                  <span>{formatDate(profile.joined_at)}</span>
                 </div>
               </div>
+            </div>
 
-              {/* Body */}
-              <div className="flex-1 px-6 py-5 space-y-6">
+            {/* Stats */}
+            <div className="flex gap-8 border-b border-slate-100 dark:border-zinc-800/60 pb-8">
+              <div>
+                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{profile.total_project_count}</div>
+                <div className="text-xs text-slate-400 dark:text-zinc-500 mt-1">פרויקטים</div>
+              </div>
+              <div className="w-px bg-slate-100 dark:bg-zinc-800" />
+              <div>
+                <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{profile.shared_projects_count}</div>
+                <div className="text-xs text-slate-400 dark:text-zinc-500 mt-1">משותפים איתי</div>
+              </div>
+            </div>
 
-                {/* Shared project names */}
-                {profile.shared_project_names.length > 0 && (
-                  <div>
-                    <div className="text-xs text-slate-400 dark:text-zinc-500 mb-2">פרויקטים משותפים</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {profile.shared_project_names.map((name) => (
-                        <span key={name}
-                          className="text-xs text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/50 px-2.5 py-0.5 rounded-full">
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Shared projects */}
+            {profile.shared_project_names.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-xs font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wide">פרויקטים משותפים</div>
+                <div className="flex flex-wrap gap-2">
+                  {profile.shared_project_names.map((name) => (
+                    <span key={name}
+                      className="text-sm text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/50 px-3 py-1 rounded-full">
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-                {/* Token battle */}
+            {/* Token battle */}
+            <div className="space-y-4">
+              <div className="text-xs font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wide">תחרות טוקנים</div>
+              <div className="flex items-start gap-6">
+                <TokenCol
+                  label="אני"
+                  total={myTotal}
+                  own={myOwn}
+                  member={myMbr}
+                  isWinner={iAmWinner}
+                  isMe={true}
+                  started={animStarted}
+                />
+                <div className="pt-8 text-xs font-bold text-slate-200 dark:text-zinc-700 shrink-0">VS</div>
+                <TokenCol
+                  label={profile.name?.split(" ")[0] || profile.email.split("@")[0]}
+                  total={theirTotal}
+                  own={profile.own_tokens}
+                  member={profile.member_tokens}
+                  isWinner={theyWin}
+                  isMe={false}
+                  started={animStarted}
+                />
+              </div>
+              {!iAmWinner && !theyWin && (myTotal > 0 || theirTotal > 0) && (
+                <p className="text-xs text-slate-400 text-center">תיקו</p>
+              )}
+            </div>
+
+            {/* Leaderboard */}
+            {leaderboard && leaderboard.entries.length > 1 && (
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wide">דירוג ארגון</div>
                 <div>
-                  <div className="text-xs text-slate-400 dark:text-zinc-500 mb-4">תחרות טוקנים</div>
-                  <div className="flex items-start gap-4">
-                    <TokenCol
-                      label="אני"
-                      total={myTotal}
-                      own={myOwn}
-                      member={myMbr}
-                      isWinner={iAmWinner}
-                      isMe={true}
-                      started={animStarted}
+                  {leaderboard.entries.slice(0, 6).map((entry, idx, arr) => (
+                    <LeaderboardRow
+                      key={entry.user_id}
+                      entry={entry}
+                      isMe={entry.user_id === currentUserId}
+                      isTarget={entry.user_id === profile.user_id}
+                      isLast={idx === arr.slice(0, 6).length - 1}
                     />
-                    <div className="pt-8 text-xs font-semibold text-slate-200 dark:text-zinc-700 shrink-0">VS</div>
-                    <TokenCol
-                      label={profile.name?.split(" ")[0] || profile.email.split("@")[0]}
-                      total={theirTotal}
-                      own={profile.own_tokens}
-                      member={profile.member_tokens}
-                      isWinner={theyWin}
-                      isMe={false}
-                      started={animStarted}
-                    />
-                  </div>
-                  {!iAmWinner && !theyWin && (myTotal > 0 || theirTotal > 0) && (
-                    <p className="text-xs text-slate-400 mt-3 text-center">תיקו</p>
-                  )}
+                  ))}
                 </div>
-
-                {/* Leaderboard */}
-                {leaderboard && leaderboard.entries.length > 1 && (
-                  <div>
-                    <div className="text-xs text-slate-400 dark:text-zinc-500 mb-1">דירוג ארגון</div>
-                    {leaderboard.entries.slice(0, 6).map((entry, idx, arr) => (
-                      <LeaderboardRow
-                        key={entry.user_id}
-                        entry={entry}
-                        isMe={entry.user_id === currentUserId}
-                        isTarget={entry.user_id === profile.user_id}
-                        isLast={idx === arr.slice(0, 6).length - 1}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </SheetContent>
-    </Sheet>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function UserProfileSheet({
+  userId,
+  open,
+  onOpenChange,
+}: {
+  userId: string | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && userId && (
+        <motion.div
+          key="profile-screen"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+        >
+          <ProfileScreen userId={userId} onClose={() => onOpenChange(false)} />
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
