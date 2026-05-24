@@ -195,7 +195,7 @@ export default function UserProfilePage() {
           {/* Token battle */}
           <motion.div custom={1} variants={FADE_UP} initial="hidden" animate="show"
             className="bg-white dark:bg-zinc-900/80 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800/60 mb-4 overflow-hidden">
-            <div className="px-6 pt-5 pb-1">
+            <div className="px-6 pt-5 pb-1 text-center">
               <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">
                 תחרות טוקנים
               </p>
