@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, FolderOpen, Users, X, Zap, Crown } from "lucide-react";
+import { CalendarDays, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +13,7 @@ import * as api from "@/lib/api";
 import type { UserProfileData, LeaderboardEntry, LeaderboardResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function useCountUp(target: number, duration = 1400, started: boolean) {
+function useCountUp(target: number, duration = 1200, started: boolean) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!started) { setValue(0); return; }
@@ -48,123 +48,92 @@ function formatDate(iso: string): string {
   });
 }
 
-function TokenBattleCard({
+function TokenCol({
   label,
-  ownTokens,
-  memberTokens,
+  total,
+  own,
+  member,
   isWinner,
   isMe,
   started,
 }: {
   label: string;
-  ownTokens: number;
-  memberTokens: number;
+  total: number;
+  own: number;
+  member: number;
   isWinner: boolean;
   isMe: boolean;
   started: boolean;
 }) {
-  const ownDisp = useCountUp(ownTokens, 1200, started);
-  const mbrDisp = useCountUp(memberTokens, 1400, started);
-  const totDisp = useCountUp(ownTokens + memberTokens, 1600, started);
+  const totDisp = useCountUp(total, 1400, started);
+  const ownDisp = useCountUp(own, 1200, started);
+  const mbrDisp = useCountUp(member, 1300, started);
 
   return (
-    <div className={cn(
-      "relative flex-1 rounded-2xl border p-4 transition-all",
-      isWinner
-        ? "border-amber-200 dark:border-amber-700/60 bg-amber-50/80 dark:bg-amber-950/20 shadow-sm"
-        : "border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/60"
-    )}>
+    <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+      <span className={cn(
+        "text-xs font-medium mb-1",
+        isMe ? "text-sky-500 dark:text-sky-400" : "text-slate-400 dark:text-zinc-500"
+      )}>
+        {label}
+      </span>
+      <span className={cn(
+        "text-3xl font-black tabular-nums tracking-tight",
+        isWinner ? "text-zinc-900 dark:text-zinc-100" : "text-slate-400 dark:text-zinc-500"
+      )}>
+        {fmt(totDisp)}
+      </span>
       {isWinner && (
-        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10">
-          <span className="inline-flex items-center gap-1 bg-amber-400 dark:bg-amber-500 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-            <Crown className="h-2.5 w-2.5" /> מנצח
-          </span>
-        </div>
+        <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wide">
+          מנצח
+        </span>
       )}
-
-      <div className="mb-3 text-center">
-        <span className={cn(
-          "text-xs font-semibold",
-          isMe ? "text-sky-600 dark:text-sky-400" : "text-slate-500 dark:text-slate-400"
-        )}>
-          {label}
-        </span>
-      </div>
-
-      <div className="mb-4 text-center">
-        <span className={cn(
-          "text-2xl font-black tabular-nums tracking-tight block",
-          isWinner
-            ? "text-amber-600 dark:text-amber-400"
-            : "text-slate-800 dark:text-slate-100"
-        )}>
-          {fmt(totDisp)}
-        </span>
-        <span className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5 block">טוקנים סה"כ</span>
-      </div>
-
-      <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-zinc-700/40">
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1.5 text-slate-400 dark:text-zinc-500">
-            <Zap className="h-3 w-3 text-sky-400" /> פרויקטים שלי
-          </span>
-          <span className="font-semibold text-slate-600 dark:text-slate-300 tabular-nums">{fmt(ownDisp)}</span>
+      <div className="mt-2 space-y-0.5 w-full text-xs text-slate-400 dark:text-zinc-600">
+        <div className="flex justify-between">
+          <span>פרויקטים</span>
+          <span className="tabular-nums font-medium text-slate-500 dark:text-zinc-400">{fmt(ownDisp)}</span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1.5 text-slate-400 dark:text-zinc-500">
-            <Users className="h-3 w-3 text-violet-400" /> כחבר
-          </span>
-          <span className="font-semibold text-slate-600 dark:text-slate-300 tabular-nums">{fmt(mbrDisp)}</span>
+        <div className="flex justify-between">
+          <span>כחבר</span>
+          <span className="tabular-nums font-medium text-slate-500 dark:text-zinc-400">{fmt(mbrDisp)}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function LeaderboardStrip({
-  entries,
-  currentUserId,
-  targetUserId,
+function LeaderboardRow({
+  entry,
+  isMe,
+  isTarget,
+  isLast,
 }: {
-  entries: LeaderboardEntry[];
-  currentUserId: string;
-  targetUserId: string;
+  entry: LeaderboardEntry;
+  isMe: boolean;
+  isTarget: boolean;
+  isLast: boolean;
 }) {
   const medals: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
   return (
-    <div>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">
-        דירוג ארגון
-      </div>
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/60 overflow-hidden">
-        {entries.slice(0, 6).map((entry, idx) => {
-          const isMe = entry.user_id === currentUserId;
-          const isTarget = entry.user_id === targetUserId;
-          return (
-            <div
-              key={entry.user_id}
-              className={cn(
-                "flex items-center gap-3 px-4 py-2.5 text-sm",
-                idx < entries.slice(0, 6).length - 1 && "border-b border-slate-100 dark:border-zinc-800/60",
-                isMe && "bg-sky-50/60 dark:bg-sky-950/20",
-                isTarget && !isMe && "bg-amber-50/50 dark:bg-amber-950/10"
-              )}
-            >
-              <span className="w-5 text-center text-xs font-bold text-slate-400 dark:text-zinc-500 shrink-0">
-                {medals[entry.rank] ?? entry.rank}
-              </span>
-              <span className="flex-1 truncate font-medium text-slate-700 dark:text-slate-200">
-                {entry.name || entry.email.split("@")[0]}
-                {isMe && <span className="text-sky-500 dark:text-sky-400 text-xs font-normal mr-1"> (אני)</span>}
-              </span>
-              <span className="tabular-nums text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
-                {fmt(entry.total_tokens)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+    <div className={cn(
+      "flex items-center gap-3 py-2.5 text-sm",
+      !isLast && "border-b border-slate-100 dark:border-zinc-800/60"
+    )}>
+      <span className="w-5 text-center text-xs shrink-0 text-slate-300 dark:text-zinc-600 font-bold">
+        {medals[entry.rank] ?? entry.rank}
+      </span>
+      <span className={cn(
+        "flex-1 truncate font-medium",
+        isMe ? "text-sky-600 dark:text-sky-400" : "text-slate-700 dark:text-zinc-200",
+        isTarget && !isMe && "text-zinc-900 dark:text-zinc-100 font-semibold"
+      )}>
+        {entry.name || entry.email.split("@")[0]}
+        {isMe && <span className="text-xs font-normal text-sky-400 mr-1"> (אני)</span>}
+      </span>
+      <span className="tabular-nums text-xs font-semibold text-slate-400 dark:text-zinc-500 shrink-0">
+        {fmt(entry.total_tokens)}
+      </span>
     </div>
   );
 }
@@ -196,7 +165,7 @@ export function UserProfileSheet({
       .then(([prof, lb]) => {
         setProfile(prof);
         setLeaderboard(lb);
-        setTimeout(() => setAnimStarted(true), 300);
+        setTimeout(() => setAnimStarted(true), 250);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -213,96 +182,84 @@ export function UserProfileSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-sm p-0 gap-0 flex flex-col overflow-hidden border-l border-slate-200 dark:border-zinc-800/60" showCloseButton={false}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-sm p-0 flex flex-col bg-white dark:bg-zinc-950 border-l border-slate-200 dark:border-zinc-800/60"
+        showCloseButton={false}
+      >
         <SheetTitle className="sr-only">פרופיל משתמש</SheetTitle>
 
         <AnimatePresence mode="wait">
           {error && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center flex-1 gap-2 text-slate-400 p-8"
-            >
+            <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center flex-1 gap-2 text-slate-400 p-8">
               <span className="text-3xl">⚠️</span>
-              <span className="text-sm font-medium text-slate-500">לא ניתן לטעון את הפרופיל</span>
+              <span className="text-sm text-slate-400">לא ניתן לטעון את הפרופיל</span>
             </motion.div>
           )}
 
-          {!error && loading && !profile && (
-            <motion.div
-              key="loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center flex-1"
-            >
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          {!error && loading && (
+            <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center justify-center flex-1">
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-zinc-900 dark:border-t-zinc-100" />
             </motion.div>
           )}
 
           {profile && (
             <motion.div
               key="content"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               className="flex flex-col flex-1 overflow-y-auto"
             >
-              {/* Dark header — matches sidebar aesthetic */}
-              <div className="relative bg-zinc-950 px-6 pt-12 pb-6 shrink-0">
+              {/* Header */}
+              <div className="px-6 pt-10 pb-6 border-b border-slate-100 dark:border-zinc-800/60">
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="absolute top-4 end-4 rounded-xl p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-white/10 transition-colors"
+                  className="absolute top-4 end-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
 
-                <div className="flex flex-col items-center text-center gap-3">
-                  <PastelAvatar name={profile.name} email={profile.email} size="lg" className="ring-2 ring-white/10" />
-                  <div>
-                    <h2 className="text-lg font-bold text-zinc-100">
+                <div className="flex items-center gap-4">
+                  <PastelAvatar name={profile.name} email={profile.email} size="lg" />
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                       {profile.name || profile.email.split("@")[0]}
                     </h2>
-                    <p className="text-sm text-zinc-400 mt-0.5">{profile.email}</p>
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-500 mt-1.5">
-                      <CalendarDays className="h-3 w-3" />
-                      <span>הצטרף {formatDate(profile.joined_at)}</span>
+                    <p className="text-sm text-slate-400 dark:text-zinc-500 truncate">{profile.email}</p>
+                    <div className="flex items-center gap-1 text-xs text-slate-300 dark:text-zinc-600 mt-1">
+                      <CalendarDays className="h-3 w-3 shrink-0" />
+                      <span>{formatDate(profile.joined_at)}</span>
                     </div>
+                  </div>
+                </div>
+
+                {/* Inline stats */}
+                <div className="mt-5 flex gap-6">
+                  <div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{profile.total_project_count}</div>
+                    <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">פרויקטים</div>
+                  </div>
+                  <div className="w-px bg-slate-100 dark:bg-zinc-800" />
+                  <div>
+                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{profile.shared_projects_count}</div>
+                    <div className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">משותפים איתי</div>
                   </div>
                 </div>
               </div>
 
               {/* Body */}
-              <div className="flex-1 px-5 py-5 space-y-5 bg-zinc-50 dark:bg-zinc-950">
+              <div className="flex-1 px-6 py-5 space-y-6">
 
-                {/* Stats row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/60 p-4 text-center">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-600 dark:text-slate-300 mx-auto mb-2">
-                      <Users className="h-4 w-4 text-violet-500" />
-                    </div>
-                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{profile.shared_projects_count}</div>
-                    <div className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">פרויקטים משותפים</div>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/60 p-4 text-center">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-600/50 bg-slate-50 dark:bg-zinc-800/70 text-slate-600 dark:text-slate-300 mx-auto mb-2">
-                      <FolderOpen className="h-4 w-4 text-sky-500" />
-                    </div>
-                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{profile.total_project_count}</div>
-                    <div className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">פרויקטים סה"כ</div>
-                  </div>
-                </div>
-
-                {/* Shared project tags */}
+                {/* Shared project names */}
                 {profile.shared_project_names.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 mb-2">פרויקטים משותפים</div>
+                    <div className="text-xs text-slate-400 dark:text-zinc-500 mb-2">פרויקטים משותפים</div>
                     <div className="flex flex-wrap gap-1.5">
                       {profile.shared_project_names.map((name) => (
-                        <span
-                          key={name}
-                          className="inline-block bg-white dark:bg-zinc-900/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-zinc-700/50 text-xs px-2.5 py-1 rounded-full shadow-sm"
-                        >
+                        <span key={name}
+                          className="text-xs text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/50 px-2.5 py-0.5 rounded-full">
                           {name}
                         </span>
                       ))}
@@ -312,40 +269,47 @@ export function UserProfileSheet({
 
                 {/* Token battle */}
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 mb-3">תחרות טוקנים</div>
-                  <div className="flex gap-2 items-stretch">
-                    <TokenBattleCard
+                  <div className="text-xs text-slate-400 dark:text-zinc-500 mb-4">תחרות טוקנים</div>
+                  <div className="flex items-start gap-4">
+                    <TokenCol
                       label="אני"
-                      ownTokens={myOwn}
-                      memberTokens={myMbr}
+                      total={myTotal}
+                      own={myOwn}
+                      member={myMbr}
                       isWinner={iAmWinner}
                       isMe={true}
                       started={animStarted}
                     />
-                    <div className="flex items-center justify-center text-sm font-black text-slate-300 dark:text-zinc-600 shrink-0 select-none px-1">
-                      VS
-                    </div>
-                    <TokenBattleCard
+                    <div className="pt-8 text-xs font-semibold text-slate-200 dark:text-zinc-700 shrink-0">VS</div>
+                    <TokenCol
                       label={profile.name?.split(" ")[0] || profile.email.split("@")[0]}
-                      ownTokens={profile.own_tokens}
-                      memberTokens={profile.member_tokens}
+                      total={theirTotal}
+                      own={profile.own_tokens}
+                      member={profile.member_tokens}
                       isWinner={theyWin}
                       isMe={false}
                       started={animStarted}
                     />
                   </div>
                   {!iAmWinner && !theyWin && (myTotal > 0 || theirTotal > 0) && (
-                    <div className="mt-3 text-center text-sm text-slate-400">🤝 תיקו!</div>
+                    <p className="text-xs text-slate-400 mt-3 text-center">תיקו</p>
                   )}
                 </div>
 
-                {/* Org leaderboard */}
+                {/* Leaderboard */}
                 {leaderboard && leaderboard.entries.length > 1 && (
-                  <LeaderboardStrip
-                    entries={leaderboard.entries}
-                    currentUserId={currentUserId}
-                    targetUserId={profile.user_id}
-                  />
+                  <div>
+                    <div className="text-xs text-slate-400 dark:text-zinc-500 mb-1">דירוג ארגון</div>
+                    {leaderboard.entries.slice(0, 6).map((entry, idx, arr) => (
+                      <LeaderboardRow
+                        key={entry.user_id}
+                        entry={entry}
+                        isMe={entry.user_id === currentUserId}
+                        isTarget={entry.user_id === profile.user_id}
+                        isLast={idx === arr.slice(0, 6).length - 1}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.div>
