@@ -42,6 +42,41 @@ function formatDate(iso: string): string {
   });
 }
 
+function SharedProjects({ names }: { names: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const ROW_HEIGHT = 36; // approximate pill height + gap
+
+  return (
+    <motion.div custom={0} variants={FADE_UP} initial="hidden" animate="show"
+      className="bg-white dark:bg-zinc-900/80 rounded-2xl shadow-sm px-6 py-5 mb-4 border border-slate-100 dark:border-zinc-800/60">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">
+          פרויקטים משותפים
+        </p>
+        {names.length > 4 && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          >
+            {expanded ? "פחות ↑" : `+${names.length - 4} עוד`}
+          </button>
+        )}
+      </div>
+      <div
+        className="flex flex-wrap gap-2 overflow-hidden transition-all duration-300"
+        style={{ maxHeight: expanded ? `${Math.ceil(names.length / 4) * ROW_HEIGHT + 8}px` : `${ROW_HEIGHT}px` }}
+      >
+        {names.map((name) => (
+          <span key={name}
+            className="text-sm text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/50 px-3 py-1 rounded-full whitespace-nowrap">
+            {name}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 const FADE_UP = {
   hidden: { opacity: 0, y: 16 },
   show: (i: number = 0) => ({
@@ -154,20 +189,7 @@ export default function UserProfilePage() {
 
           {/* Shared project tags */}
           {profile.shared_project_names.length > 0 && (
-            <motion.div custom={0} variants={FADE_UP} initial="hidden" animate="show"
-              className="bg-white dark:bg-zinc-900/80 rounded-2xl shadow-sm px-6 py-5 mb-4 border border-slate-100 dark:border-zinc-800/60">
-              <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-3">
-                פרויקטים משותפים
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {profile.shared_project_names.map((name) => (
-                  <span key={name}
-                    className="text-sm text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/50 px-3 py-1 rounded-full">
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
+            <SharedProjects names={profile.shared_project_names} />
           )}
 
           {/* Token battle */}
