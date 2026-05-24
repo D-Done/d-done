@@ -185,6 +185,7 @@ export function UserProfileSheet({
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [animStarted, setAnimStarted] = useState(false);
 
   useEffect(() => {
@@ -192,6 +193,7 @@ export function UserProfileSheet({
     setProfile(null);
     setLeaderboard(null);
     setAnimStarted(false);
+    setError(false);
     setLoading(true);
 
     Promise.all([api.getUserProfile(userId), api.getLeaderboard()])
@@ -200,7 +202,7 @@ export function UserProfileSheet({
         setLeaderboard(lb);
         setTimeout(() => setAnimStarted(true), 350);
       })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [open, userId]);
 
@@ -215,13 +217,21 @@ export function UserProfileSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader className="mb-4">
           <SheetTitle className="sr-only">פרופיל משתמש</SheetTitle>
         </SheetHeader>
 
         <AnimatePresence mode="wait">
-          {loading && !profile && (
+          {error && (
+            <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-40 gap-2 text-slate-400">
+              <span className="text-2xl">⚠️</span>
+              <span className="text-sm">לא ניתן לטעון את הפרופיל</span>
+              <span className="text-xs text-slate-300">userId: {userId}</span>
+            </motion.div>
+          )}
+
+          {!error && loading && !profile && (
             <motion.div
               key="loader"
               initial={{ opacity: 0 }}
