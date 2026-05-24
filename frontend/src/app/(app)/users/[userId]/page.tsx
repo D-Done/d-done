@@ -202,30 +202,26 @@ export default function UserProfilePage() {
             </div>
             <div className="flex">
               {/* Their side */}
-              <div className={cn(
-                "flex-1 flex flex-col items-center py-6 px-4 transition-colors",
-                theyWin ? "bg-zinc-950 dark:bg-zinc-900" : ""
-              )}>
-                <span className={cn("text-xs font-semibold mb-2 uppercase tracking-widest",
-                  theyWin ? "text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>
+              <div className="flex-1 flex flex-col items-center py-6 px-4">
+                <span className={cn("text-xs font-medium mb-2 uppercase tracking-widest",
+                  theyWin ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>
                   {profile.name?.split(" ")[0] || profile.email.split("@")[0]}
                 </span>
                 <span className={cn("text-4xl font-black tabular-nums tracking-tight",
-                  theyWin ? "text-zinc-100" : "text-slate-200 dark:text-zinc-700")}>
+                  theyWin ? "text-slate-900 dark:text-zinc-100" : "text-slate-200 dark:text-zinc-700")}>
                   {fmt(theirTotalDisp)}
                 </span>
                 {theyWin
-                  ? <span className="mt-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-widest">מנצח</span>
+                  ? <span className="mt-1.5 text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">מנצח</span>
                   : <span className="mt-1.5 text-[10px] opacity-0 select-none">–</span>}
-                <div className={cn("mt-4 space-y-1 text-xs w-full max-w-[120px]",
-                  theyWin ? "text-zinc-600" : "text-slate-200 dark:text-zinc-700")}>
+                <div className="mt-4 space-y-1 text-xs w-full max-w-[120px] text-slate-300 dark:text-zinc-700">
                   <div className="flex justify-between">
                     <span>פרויקטים</span>
-                    <span className={cn("tabular-nums font-semibold", theyWin ? "text-zinc-400" : "text-slate-200 dark:text-zinc-700")}>{fmt(theirOwnDisp)}</span>
+                    <span className={cn("tabular-nums font-semibold", theyWin ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>{fmt(theirOwnDisp)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>כחבר</span>
-                    <span className={cn("tabular-nums font-semibold", theyWin ? "text-zinc-400" : "text-slate-200 dark:text-zinc-700")}>{fmt(theirMbrDisp)}</span>
+                    <span className={cn("tabular-nums font-semibold", theyWin ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>{fmt(theirMbrDisp)}</span>
                   </div>
                 </div>
               </div>
@@ -236,30 +232,26 @@ export default function UserProfilePage() {
               </div>
 
               {/* My side */}
-              <div className={cn(
-                "flex-1 flex flex-col items-center py-6 px-4 transition-colors",
-                iAmWinner ? "bg-zinc-950 dark:bg-zinc-900" : ""
-              )}>
-                <span className={cn("text-xs font-semibold mb-2 uppercase tracking-widest",
-                  iAmWinner ? "text-sky-400" : "text-slate-300 dark:text-zinc-700")}>
+              <div className="flex-1 flex flex-col items-center py-6 px-4">
+                <span className={cn("text-xs font-medium mb-2 uppercase tracking-widest",
+                  iAmWinner ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>
                   אני
                 </span>
                 <span className={cn("text-4xl font-black tabular-nums tracking-tight",
-                  iAmWinner ? "text-zinc-100" : "text-slate-200 dark:text-zinc-700")}>
+                  iAmWinner ? "text-slate-900 dark:text-zinc-100" : "text-slate-200 dark:text-zinc-700")}>
                   {fmt(myTotalDisp)}
                 </span>
                 {iAmWinner
-                  ? <span className="mt-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-widest">מנצח</span>
+                  ? <span className="mt-1.5 text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">מנצח</span>
                   : <span className="mt-1.5 text-[10px] opacity-0 select-none">–</span>}
-                <div className={cn("mt-4 space-y-1 text-xs w-full max-w-[120px]",
-                  iAmWinner ? "text-zinc-600" : "text-slate-200 dark:text-zinc-700")}>
+                <div className="mt-4 space-y-1 text-xs w-full max-w-[120px] text-slate-300 dark:text-zinc-700">
                   <div className="flex justify-between">
                     <span>פרויקטים</span>
-                    <span className={cn("tabular-nums font-semibold", iAmWinner ? "text-zinc-400" : "text-slate-200 dark:text-zinc-700")}>{fmt(myOwnDisp)}</span>
+                    <span className={cn("tabular-nums font-semibold", iAmWinner ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>{fmt(myOwnDisp)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>כחבר</span>
-                    <span className={cn("tabular-nums font-semibold", iAmWinner ? "text-zinc-400" : "text-slate-200 dark:text-zinc-700")}>{fmt(myMbrDisp)}</span>
+                    <span className={cn("tabular-nums font-semibold", iAmWinner ? "text-slate-500 dark:text-zinc-400" : "text-slate-300 dark:text-zinc-700")}>{fmt(myMbrDisp)}</span>
                   </div>
                 </div>
               </div>
