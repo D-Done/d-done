@@ -1163,12 +1163,18 @@ export default function AiPage() {
 
       {/* ── Project picker dialog ──────────────────────────────────────── */}
       <Dialog open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
-        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir={dir}>
-          <DialogHeader className="ps-5 pe-10 pt-5 pb-4 border-b">
+        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir={dir} showCloseButton={false}>
+          <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b">
             <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               {t("ai_link_dialog_title", lang)}
             </DialogTitle>
-          </DialogHeader>
+            <button
+              onClick={() => setProjectPickerOpen(false)}
+              className="rounded-xs opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
           {projectsLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
