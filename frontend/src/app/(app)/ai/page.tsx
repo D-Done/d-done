@@ -1165,7 +1165,7 @@ export default function AiPage() {
       <Dialog open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
         <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir={dir} showCloseButton={false}>
           <div className="relative px-5 pt-5 pb-4 border-b">
-            <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100 pr-8">
+            <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100 pr-8 text-right">
               {t("ai_link_dialog_title", lang)}
             </DialogTitle>
             <button
