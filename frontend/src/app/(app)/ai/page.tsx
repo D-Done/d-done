@@ -1164,7 +1164,7 @@ export default function AiPage() {
       {/* ── Project picker dialog ──────────────────────────────────────── */}
       <Dialog open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
         <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden" dir={dir}>
-          <DialogHeader className="px-5 pt-5 pb-4 border-b pe-10">
+          <DialogHeader className="ps-5 pe-10 pt-5 pb-4 border-b">
             <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               {t("ai_link_dialog_title", lang)}
             </DialogTitle>
