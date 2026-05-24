@@ -242,12 +242,20 @@ function TransactionsList() {
                                     name: m.name ?? m.email,
                                     image: null,
                                     userId: m.user_id,
+                                    email: m.email,
                                   }))}
                                   maxVisible={5}
                                   size="sm"
                                   className="justify-end"
-                                  onAvatarClick={(uid) => {
-                                    setProfileUserId(uid);
+                                  onAvatarClick={async (identifier) => {
+                                    let userId = identifier;
+                                    if (identifier.includes("@")) {
+                                      const users = await api.getOrganizationUsers(identifier).catch(() => []);
+                                      const match = users.find((u) => u.email === identifier);
+                                      if (!match) return;
+                                      userId = match.id;
+                                    }
+                                    setProfileUserId(userId);
                                     setProfileSheetOpen(true);
                                   }}
                                 />

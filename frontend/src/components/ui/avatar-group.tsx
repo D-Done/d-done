@@ -11,6 +11,7 @@ export interface AvatarItem {
   designation?: string | null;
   image?: string | null;
   userId?: string;
+  email?: string;
 }
 
 interface AvatarGroupProps {
@@ -58,7 +59,7 @@ const Avatar = ({
   };
 
   const showTooltip = item.name && (isHovered || !!item.designation);
-  const clickable = !!item.userId && !!onAvatarClick;
+  const clickable = !!(item.userId || item.email) && !!onAvatarClick;
 
   return (
     <div
@@ -73,7 +74,8 @@ const Avatar = ({
         if (onAvatarClick) {
           e.preventDefault();
           e.stopPropagation();
-          if (item.userId) onAvatarClick(item.userId);
+          const identifier = item.userId || item.email;
+          if (identifier) onAvatarClick(identifier);
         }
       }}
     >
