@@ -8,6 +8,7 @@ import {
   Copy,
   FileText,
   Home,
+  Briefcase,
   Loader2,
   Maximize2,
   Save,
@@ -47,6 +48,12 @@ const TRANSACTION_TABS: TransactionTypeTab[] = [
     label: "מימון נדל״ן",
     subtitle: "מחלצי מסמכים (Tier 1) וסינתזה (Tier 2)",
     icon: Home,
+  },
+  {
+    id: "ma",
+    label: "M&A",
+    subtitle: "10 פרקי חובה + 5 פרקי רשות",
+    icon: Briefcase,
   },
 ];
 
@@ -512,6 +519,7 @@ function AgentPromptCard({
   }
 
   const isSynthesis = entry.file_key === "finance_reconciliation_logic";
+  const isMAChapter = transactionType === "ma";
   const promptLines = content.split("\n").length;
 
   return (
@@ -529,12 +537,24 @@ function AgentPromptCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-900">{entry.label_he}</span>
-              <Badge
-                variant={isSynthesis ? "secondary" : "outline"}
-                className="rounded-full text-[10px]"
-              >
-                {isSynthesis ? "Tier 2" : "Tier 1"}
-              </Badge>
+              {!isMAChapter && (
+                <Badge
+                  variant={isSynthesis ? "secondary" : "outline"}
+                  className="rounded-full text-[10px]"
+                >
+                  {isSynthesis ? "Tier 2" : "Tier 1"}
+                </Badge>
+              )}
+              {entry.is_mandatory === false && (
+                <Badge className="rounded-full bg-violet-100 text-violet-700 text-[10px]">
+                  רשות
+                </Badge>
+              )}
+              {entry.is_mandatory === true && transactionType === "ma" && (
+                <Badge className="rounded-full bg-blue-50 text-blue-700 text-[10px]">
+                  חובה
+                </Badge>
+              )}
               {dirty && (
                 <Badge className="rounded-full bg-amber-100 text-amber-800 text-[10px]">
                   שונה
@@ -542,7 +562,7 @@ function AgentPromptCard({
               )}
             </div>
             <span className="mt-0.5 block text-xs text-slate-500">
-              {entry.file_key}.md · {isSynthesis ? "Pro · Thinking" : "Flash"}
+              {entry.file_key}.md{!isMAChapter && ` · ${isSynthesis ? "Pro · Thinking" : "Flash"}`}
             </span>
           </div>
           <ChevronDown
@@ -882,9 +902,29 @@ export default function AiPromptsSettingsPage() {
             onValueChange={setActiveTab}
             dir="rtl"
           >
-            {/* Tabs header intentionally removed */}
+            {/* Tab switcher */}
+            <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit mb-6">
+              {TRANSACTION_TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setActiveTab(t.id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                    activeTab === t.id
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700",
+                  )}
+                >
+                  <t.icon className="h-4 w-4 shrink-0" />
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-            {TRANSACTION_TABS.map((t) => {
+            {/* Real-estate tab */}
+            {(() => {
+              const t = TRANSACTION_TABS[0];
               const list = prompts[t.id] ?? [];
               const order = PIPELINE_AGENTS.map((a) => a.file_key);
               const extractors = order
@@ -894,13 +934,9 @@ export default function AiPromptsSettingsPage() {
               const synthesizer = list.find(
                 (p) => p.file_key === "finance_reconciliation_logic",
               );
-
               return (
-                <TabsContent key={t.id} value={t.id} className="mt-4 space-y-6">
-                  {/* Pipeline diagram */}
+                <TabsContent key={t.id} value={t.id} className="mt-0 space-y-6">
                   <PipelineDiagram onAgentClick={scrollToAgent} />
-
-                  {/* Extractors (Tier 1) */}
                   {extractors.length > 0 && (
                     <div className="space-y-2">
                       <h3 className="text-sm font-bold text-slate-700 px-1">
@@ -912,17 +948,13 @@ export default function AiPromptsSettingsPage() {
                             key={entry.file_key}
                             entry={entry}
                             transactionType={t.id}
-                            onSaved={(fk, nc) =>
-                              handlePromptSaved(t.id, fk, nc)
-                            }
+                            onSaved={(fk, nc) => handlePromptSaved(t.id, fk, nc)}
                             forwardedRef={cardRefs[entry.file_key]}
                           />
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* Synthesizer (Tier 2) */}
                   {synthesizer && (
                     <div className="space-y-2">
                       <h3 className="text-sm font-bold text-slate-700 px-1">
@@ -931,16 +963,86 @@ export default function AiPromptsSettingsPage() {
                       <AgentPromptCard
                         entry={synthesizer}
                         transactionType={t.id}
-                        onSaved={(fk, nc) =>
-                          handlePromptSaved(t.id, fk, nc)
-                        }
+                        onSaved={(fk, nc) => handlePromptSaved(t.id, fk, nc)}
                         forwardedRef={cardRefs[synthesizer.file_key]}
                       />
                     </div>
                   )}
                 </TabsContent>
               );
-            })}
+            })()}
+
+            {/* M&A tab */}
+            {(() => {
+              const t = TRANSACTION_TABS[1];
+              const list = prompts[t.id] ?? [];
+              const mandatory = list.filter((p) => p.is_mandatory !== false);
+              const optional = list.filter((p) => p.is_mandatory === false);
+              return (
+                <TabsContent key={t.id} value={t.id} className="mt-0 space-y-6">
+                  {/* Mandatory chapters */}
+                  {mandatory.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <h3 className="text-sm font-bold text-slate-700">פרקי חובה</h3>
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                          {mandatory.length} פרקים
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {mandatory.map((entry) => (
+                          <AgentPromptCard
+                            key={entry.file_key}
+                            entry={entry}
+                            transactionType={t.id}
+                            onSaved={(fk, nc) => handlePromptSaved(t.id, fk, nc)}
+                            forwardedRef={cardRefs[entry.file_key]}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  {optional.length > 0 && (
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-dashed border-slate-200" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-3 text-xs text-slate-400">פרקי רשות</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Optional chapters */}
+                  {optional.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <h3 className="text-sm font-bold text-slate-700">פרקי רשות</h3>
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
+                          {optional.length} פרקים
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          נכללים רק אם נבחרו בעת יצירת הדוח
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {optional.map((entry) => (
+                          <AgentPromptCard
+                            key={entry.file_key}
+                            entry={entry}
+                            transactionType={t.id}
+                            onSaved={(fk, nc) => handlePromptSaved(t.id, fk, nc)}
+                            forwardedRef={cardRefs[entry.file_key]}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })()}
           </Tabs>
         )}
       </div>

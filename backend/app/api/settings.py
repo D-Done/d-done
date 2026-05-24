@@ -14,6 +14,8 @@ from pydantic import BaseModel, Field
 
 from app.core.auth import CurrentUser, get_approved_user
 from app.services.ai_prompts import ALLOWED_PROMPT_KEYS, get_ai_prompts, put_ai_prompts
+from app.agents.ma.constants import MA_ALL_CHAPTERS, MA_MANDATORY_CHAPTERS, CHAPTER_TITLES_HE
+from app.agents.ma.chapter_prompts import build_chapter_prompt, _CHAPTER_OVERRIDES_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +74,7 @@ AGENT_PROMPT_FILES: dict[str, dict[str, str]] = {
         "pledges_registry": "רשם המשכונות",
         "finance_reconciliation_logic": "סינתזה — חתם בכיר",
     },
+    "ma": {chapter_id: CHAPTER_TITLES_HE[chapter_id] for chapter_id in MA_ALL_CHAPTERS},
 }
 
 
@@ -91,6 +94,7 @@ class AgentPromptEntry(BaseModel):
     file_key: str
     label_he: str
     content: str
+    is_mandatory: bool = True
 
 
 class AgentPromptsListResponse(BaseModel):
@@ -145,27 +149,44 @@ def list_agent_prompts(
     if mapping is None:
         raise HTTPException(404, f"Unknown transaction type: {transaction_type}")
 
-    import importlib
-
     entries: list[AgentPromptEntry] = []
-    for file_key, label_he in mapping.items():
-        mod_spec = _AGENT_PROMPT_MODULES.get(file_key)
-        if not mod_spec:
+
+    if transaction_type == "ma":
+        for chapter_id, label_he in mapping.items():
+            try:
+                content = build_chapter_prompt(chapter_id)
+            except Exception as exc:
+                logger.warning("Failed to load M&A chapter prompt for %s: %s", chapter_id, exc)
+                content = ""
             entries.append(
-                AgentPromptEntry(file_key=file_key, label_he=label_he, content="")
+                AgentPromptEntry(
+                    file_key=chapter_id,
+                    label_he=label_he,
+                    content=content,
+                    is_mandatory=chapter_id in MA_MANDATORY_CHAPTERS,
+                )
             )
-            continue
-        mod_path, _ = mod_spec
-        try:
-            mod = importlib.import_module(mod_path)
-            get_prompt = getattr(mod, "get_prompt", None)
-            content = get_prompt() if get_prompt else getattr(mod, "PROMPT", "")
-        except Exception as exc:
-            logger.warning("Failed to load prompt for %s: %s", file_key, exc)
-            content = ""
-        entries.append(
-            AgentPromptEntry(file_key=file_key, label_he=label_he, content=content)
-        )
+    else:
+        import importlib
+
+        for file_key, label_he in mapping.items():
+            mod_spec = _AGENT_PROMPT_MODULES.get(file_key)
+            if not mod_spec:
+                entries.append(
+                    AgentPromptEntry(file_key=file_key, label_he=label_he, content="")
+                )
+                continue
+            mod_path, _ = mod_spec
+            try:
+                mod = importlib.import_module(mod_path)
+                get_prompt = getattr(mod, "get_prompt", None)
+                content = get_prompt() if get_prompt else getattr(mod, "PROMPT", "")
+            except Exception as exc:
+                logger.warning("Failed to load prompt for %s: %s", file_key, exc)
+                content = ""
+            entries.append(
+                AgentPromptEntry(file_key=file_key, label_he=label_he, content=content)
+            )
 
     return AgentPromptsListResponse(transaction_type=transaction_type, prompts=entries)
 
@@ -189,6 +210,15 @@ def update_agent_prompt(
         raise HTTPException(404, f"Unknown transaction type: {transaction_type}")
     if file_key not in mapping:
         raise HTTPException(404, f"Unknown file key: {file_key}")
+
+    if transaction_type == "ma":
+        override_path = _CHAPTER_OVERRIDES_DIR / f"{file_key}.md"
+        override_path.parent.mkdir(parents=True, exist_ok=True)
+        override_path.write_text(body.content, encoding="utf-8")
+        logger.info(
+            "Updated M&A chapter prompt override %s (%d chars)", file_key, len(body.content)
+        )
+        return AgentPromptUpdateResponse(file_key=file_key, content=body.content)
 
     mod_spec = _AGENT_PROMPT_MODULES.get(file_key)
     if not mod_spec:

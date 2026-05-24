@@ -1122,6 +1122,7 @@ export interface AgentPromptEntry {
   file_key: string;
   label_he: string;
   content: string;
+  is_mandatory?: boolean;
 }
 
 export interface AgentPromptsListResponse {
