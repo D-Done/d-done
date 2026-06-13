@@ -1,6 +1,7 @@
 import type {
   AiPromptsResponse,
   AnalyzeResponse,
+  CustomAgent,
   DashboardStats,
   DDReportResponse,
   DealType,
@@ -703,6 +704,18 @@ export async function getFileBlobUrl(
   return URL.createObjectURL(blob);
 }
 
+export async function downloadAllFiles(projectId: string): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/files/download-all`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match ? match[1] : `documents.zip`;
+  return { blob, filename };
+}
+
 // ============================================================
 // VDR (external-party upload)
 // ============================================================
@@ -1317,6 +1330,92 @@ export async function setOrgLanguage(language: "he" | "en"): Promise<{ language:
     method: "PATCH",
     body: JSON.stringify({ language }),
   });
+}
+
+// ── Custom Agent Builder ──────────────────────────────────────────────────────
+
+export async function startBuilderSession(): Promise<{ agent_id: string }> {
+  return request<{ agent_id: string }>("/agents/builder/start", { method: "POST" });
+}
+
+export async function listAgents(): Promise<CustomAgent[]> {
+  return request<CustomAgent[]>("/agents");
+}
+
+export async function getAgent(agentId: string): Promise<CustomAgent> {
+  return request<CustomAgent>(`/agents/${agentId}`);
+}
+
+export async function publishAgent(agentId: string): Promise<CustomAgent> {
+  return request<CustomAgent>(`/agents/${agentId}/publish`, { method: "POST" });
+}
+
+export async function initiateAgentFileUpload(
+  agentId: string,
+  filename: string,
+  contentType: string,
+  fileSizeBytes?: number,
+): Promise<{ upload_url: string; file_id: string; gcs_uri: string }> {
+  return request(`/agents/builder/${agentId}/files/initiate`, {
+    method: "POST",
+    body: JSON.stringify({ filename, content_type: contentType, file_size_bytes: fileSizeBytes }),
+  });
+}
+
+export async function completeAgentFileUpload(
+  agentId: string,
+  fileId: string,
+  originalName: string,
+  gcsUri: string,
+  fileSizeBytes?: number,
+): Promise<CustomAgent> {
+  return request(`/agents/builder/${agentId}/files/complete`, {
+    method: "POST",
+    body: JSON.stringify({
+      file_id: fileId,
+      original_name: originalName,
+      gcs_uri: gcsUri,
+      file_size_bytes: fileSizeBytes,
+    }),
+  });
+}
+
+/**
+ * Returns the raw fetch Response so the caller can read the SSE body stream.
+ * The caller must consume `response.body` as a ReadableStream.
+ */
+export async function sendBuilderMessage(
+  agentId: string,
+  message: string,
+  attachedFileIds: string[] = [],
+): Promise<Response> {
+  const url = `${API_BASE}/agents/builder/${agentId}/chat`;
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, attached_file_ids: attachedFileIds }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  return res;
+}
+
+export async function runAgent(agentId: string, projectId: string): Promise<Response> {
+  const url = `${API_BASE}/agents/${agentId}/run`;
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  return res;
 }
 
 export async function uploadChecklistFile(

@@ -60,6 +60,7 @@ const translations: Record<string, Record<Lang, string>> = {
   nav_dashboard: { he: "דשבורד", en: "Dashboard" },
   nav_projects: { he: "פרויקטים", en: "Projects" },
   nav_ai: { he: "D-DONE AI", en: "D-DONE AI" },
+  nav_agents: { he: "סוכנים חכמים", en: "AI Agents" },
   nav_settings: { he: "הגדרות", en: "Settings" },
   nav_user_mgmt: { he: "ניהול משתמשים", en: "User Management" },
   nav_activity: { he: "פעילות ועלויות", en: "Activity & Costs" },

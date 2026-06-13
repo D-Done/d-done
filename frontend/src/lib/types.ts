@@ -1159,3 +1159,42 @@ export interface AgentSessionEventsResponse {
   agent_events: AgentSessionEvent[];
   judge_events: AgentSessionEvent[];
 }
+
+// ============================================================
+// Custom Agent Builder
+// ============================================================
+
+export interface KnowledgeBaseFile {
+  file_id: string;
+  original_name: string;
+  gcs_uri: string;
+  size_bytes: number | null;
+}
+
+export interface CustomAgent {
+  id: string;
+  name: string | null;
+  description: string | null;
+  status: "draft" | "published";
+  knowledge_base_files: KnowledgeBaseFile[];
+  extracted_fields_schema: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentPreview {
+  name: string | null;
+  description: string | null;
+  has_extraction_schema: boolean;
+}
+
+export type BuilderSSEEvent =
+  | { type: "chunk"; text: string }
+  | { type: "state_update"; preview: AgentPreview }
+  | { type: "done"; agent_id: string }
+  | { type: "error"; message: string };
+
+export type AgentRunSSEEvent =
+  | { type: "chunk"; text: string }
+  | { type: "done" }
+  | { type: "error"; message: string };

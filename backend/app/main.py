@@ -27,6 +27,7 @@ from app.api.vdr import router as vdr_router
 from app.api.groups import router as groups_router
 from app.api.comments import router as comments_router
 from app.api.checklist import router as checklist_router
+from app.api.agents import router as agents_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -121,6 +122,7 @@ app.include_router(vdr_router)
 app.include_router(groups_router)
 app.include_router(comments_router)
 app.include_router(checklist_router)
+app.include_router(agents_router, prefix="/api/v1")
 
 
 # ---- Health ----

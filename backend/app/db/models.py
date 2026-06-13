@@ -590,6 +590,68 @@ class ChecklistItem(Base):
         return f"<ChecklistItem id={self.id} category={self.category!r} completed={self.is_completed}>"
 
 
+class CustomAgent(Base):
+    """A custom AI agent built conversationally by a lawyer via the Agent Builder."""
+
+    __tablename__ = "custom_agents"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    organization_id = Column(
+        Uuid,
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    created_by_id = Column(
+        Uuid,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # draft → agent is still being built | published → ready to run
+    status = Column(String(20), nullable=False, default="draft", server_default="draft")
+
+    # Hidden agent configuration — filled in by Builder LLM via tool calls
+    name = Column(String(500), nullable=True)
+    description = Column(Text, nullable=True)
+    system_prompt = Column(Text, nullable=True)
+    # List of {file_id, original_name, gcs_uri, size_bytes} dicts
+    knowledge_base_files = Column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    # LLM-defined structured extraction schema (field name → description/type)
+    extracted_fields_schema = Column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=True,
+    )
+
+    # Full builder conversation history: [{role, content}]
+    builder_messages = Column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+
+    is_deleted = Column(Boolean, nullable=False, default=False, server_default="false")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+    )
+
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    organization = relationship("Organization")
+
+    def __repr__(self) -> str:
+        return f"<CustomAgent id={self.id} name={self.name!r} status={self.status}>"
+
+
 class ChecklistShare(Base):
     """Token-based share link giving an external party view + upload access."""
 

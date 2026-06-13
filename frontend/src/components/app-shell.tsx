@@ -8,6 +8,7 @@ import {
   Activity,
   Bell,
   Bot,
+  Cpu,
   FolderOpen,
   LayoutDashboard,
   Search,
@@ -141,6 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: t("nav_dashboard", lang), icon: LayoutDashboard },
     { href: "/transactions", label: t("nav_projects", lang), icon: FolderOpen },
     { href: "/ai", label: t("nav_ai", lang), icon: Bot },
+    { href: "/agents", label: t("nav_agents", lang), icon: Cpu },
     { href: "/settings", label: t("nav_settings", lang), icon: Settings },
     ...(authedUser.is_admin ? [
       { href: "/admin/users", label: t("nav_user_mgmt", lang), icon: ShieldCheck },
@@ -181,7 +183,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         ? pathname.startsWith("/settings")
                         : item.href === "/admin/users"
                           ? pathname.startsWith("/admin")
-                          : pathname === item.href;
+                          : item.href === "/agents"
+                            ? pathname.startsWith("/agents")
+                            : pathname === item.href;
                 const Icon = item.icon;
                 return (
                   <Link
