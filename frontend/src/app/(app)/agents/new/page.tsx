@@ -5,21 +5,21 @@ import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { startBuilderSession } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { AgentBuilderContainer } from "@/components/agent-builder-container";
 
 export default function NewAgentPage() {
   const router = useRouter();
+  const { lang } = useLanguage();
   const [agentId, setAgentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     startBuilderSession()
       .then(({ agent_id }) => setAgentId(agent_id))
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : "שגיאה ביצירת סשן";
-        setError(msg);
-      });
-  }, []);
+      .catch((err) => setError(err instanceof Error ? err.message : t("agents_session_error", lang)));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (
@@ -30,7 +30,7 @@ export default function NewAgentPage() {
             onClick={() => router.push("/agents")}
             className="mt-3 text-sm text-muted-foreground underline"
           >
-            חזרה לסוכנים
+            {t("agents_back_link", lang)}
           </button>
         </div>
       </div>
@@ -47,16 +47,14 @@ export default function NewAgentPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 border-b px-4 py-2 text-sm text-muted-foreground">
         <Link href="/agents" className="flex items-center gap-1 hover:text-foreground">
           <ArrowRight className="h-3.5 w-3.5" />
-          סוכנים חכמים
+          {t("agents_back", lang)}
         </Link>
         <span>/</span>
-        <span className="text-foreground">סוכן חדש</span>
+        <span className="text-foreground">{t("agents_new_label", lang)}</span>
       </div>
-
       <div className="min-h-0 flex-1 overflow-hidden">
         <AgentBuilderContainer agentId={agentId} />
       </div>

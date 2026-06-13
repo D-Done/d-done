@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { Paperclip, Send, User, Bot, Loader2, X } from "lucide-react";
 import { uploadFile } from "@/lib/gcs-upload";
 import { initiateAgentFileUpload, completeAgentFileUpload } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import type { KnowledgeBaseFile } from "@/lib/types";
 
 export interface ChatMessage {
@@ -28,12 +30,12 @@ export function AgentBuilderChat({
   onSend,
   onFileUploaded,
 }: AgentBuilderChatProps) {
+  const { lang } = useLanguage();
   const [input, setInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<{ name: string; id: string }[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,8 +44,7 @@ export function AgentBuilderChat({
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
-    const fileIds = pendingFiles.map((f) => f.id);
-    onSend(trimmed, fileIds);
+    onSend(trimmed, pendingFiles.map((f) => f.id));
     setInput("");
     setPendingFiles([]);
     setTimeout(scrollToBottom, 50);
@@ -69,34 +70,16 @@ export function AgentBuilderChat({
         file.type || "application/pdf",
         file.size,
       );
-
       await uploadFile(upload_url, file);
+      await completeAgentFileUpload(agentId, file_id, file.name, gcs_uri, file.size);
 
-      const updated = await completeAgentFileUpload(
-        agentId,
-        file_id,
-        file.name,
-        gcs_uri,
-        file.size,
-      );
-
-      const kbFile: KnowledgeBaseFile = {
-        file_id,
-        original_name: file.name,
-        gcs_uri,
-        size_bytes: file.size,
-      };
-      onFileUploaded(kbFile);
+      onFileUploaded({ file_id, original_name: file.name, gcs_uri, size_bytes: file.size });
       setPendingFiles((prev) => [...prev, { name: file.name, id: file_id }]);
     } catch (err) {
       console.error("File upload failed:", err);
     } finally {
       setUploadingFile(false);
     }
-  };
-
-  const removePendingFile = (id: string) => {
-    setPendingFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   return (
@@ -108,10 +91,8 @@ export function AgentBuilderChat({
             <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground">
               <Bot className="h-12 w-12 opacity-20" />
               <div>
-                <p className="font-medium">בנאי הסוכנים</p>
-                <p className="mt-1 text-sm">
-                  ספר לי מה הסוכן צריך לעשות — בשפה שלך, ללא ז׳רגון טכני
-                </p>
+                <p className="font-medium">{t("builder_title", lang)}</p>
+                <p className="mt-1 text-sm">{t("builder_empty_hint", lang)}</p>
               </div>
             </div>
           )}
@@ -121,7 +102,6 @@ export function AgentBuilderChat({
               key={msg.id}
               className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
-              {/* Avatar */}
               <div
                 className={[
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
@@ -130,14 +110,9 @@ export function AgentBuilderChat({
                     : "bg-muted text-muted-foreground",
                 ].join(" ")}
               >
-                {msg.role === "user" ? (
-                  <User className="h-4 w-4" />
-                ) : (
-                  <Bot className="h-4 w-4" />
-                )}
+                {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
               </div>
 
-              {/* Bubble */}
               <div
                 className={[
                   "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
@@ -162,13 +137,10 @@ export function AgentBuilderChat({
       {pendingFiles.length > 0 && (
         <div className="mx-4 mb-2 flex flex-wrap gap-2">
           {pendingFiles.map((f) => (
-            <span
-              key={f.id}
-              className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"
-            >
+            <span key={f.id} className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
               {f.name}
               <button
-                onClick={() => removePendingFile(f.id)}
+                onClick={() => setPendingFiles((prev) => prev.filter((x) => x.id !== f.id))}
                 className="ml-0.5 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -178,10 +150,9 @@ export function AgentBuilderChat({
         </div>
       )}
 
-      {/* Input area */}
+      {/* Input */}
       <div className="border-t bg-background px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-end gap-2">
-          {/* File upload */}
           <input
             ref={fileInputRef}
             type="file"
@@ -192,7 +163,7 @@ export function AgentBuilderChat({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingFile || isStreaming}
-            title="צרף מסמך עזר"
+            title={t("builder_attach_tooltip", lang)}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             {uploadingFile ? (
@@ -202,25 +173,20 @@ export function AgentBuilderChat({
             )}
           </button>
 
-          {/* Textarea */}
           <textarea
-            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="תאר את הסוכן שאתה רוצה לבנות..."
+            placeholder={t("builder_placeholder", lang)}
             disabled={isStreaming}
             rows={1}
             className={[
               "flex-1 resize-none rounded-xl border bg-background px-3 py-2 text-sm leading-relaxed",
               "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring",
-              "disabled:opacity-50",
-              "max-h-32 overflow-y-auto",
+              "disabled:opacity-50 max-h-32 overflow-y-auto",
             ].join(" ")}
-            style={{ direction: "rtl" }}
           />
 
-          {/* Send */}
           <button
             onClick={handleSend}
             disabled={!input.trim() || isStreaming}
