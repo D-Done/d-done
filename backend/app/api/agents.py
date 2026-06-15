@@ -115,10 +115,18 @@ async def _stream_agent(
             + "\n\nReturn your findings in a structured JSON object."
         )
 
+    import mimetypes as _mt
+    _GEMINI_SUPPORTED = {"application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"}
+
+    def _kb_mime(f: dict) -> str:
+        name = f.get("original_name") or f.get("file_id", "")
+        mime, _ = _mt.guess_type(name)
+        return mime or "application/pdf"
+
     kb_parts = [
-        types.Part.from_uri(file_uri=f["gcs_uri"], mime_type="application/pdf")
+        types.Part.from_uri(file_uri=f["gcs_uri"], mime_type=_kb_mime(f))
         for f in kb_files
-        if f.get("gcs_uri")
+        if f.get("gcs_uri") and _kb_mime(f) in _GEMINI_SUPPORTED
     ]
 
     if doc_inline_data:
