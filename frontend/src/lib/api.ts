@@ -1430,6 +1430,29 @@ export async function runAgentUpload(agentId: string, files: File[]): Promise<Re
   return res;
 }
 
+export async function renameAgent(agentId: string, name: string): Promise<void> {
+  await request(`/agents/${agentId}`, { method: "PATCH", body: JSON.stringify({ name }), headers: { "Content-Type": "application/json" } });
+}
+
+export async function deleteAgent(agentId: string): Promise<void> {
+  await request(`/agents/${agentId}`, { method: "DELETE" });
+}
+
+export async function exportAgentOutput(agentId: string, content: string, format: "docx" | "xlsx"): Promise<Blob> {
+  const url = `${API_BASE}/agents/${agentId}/export`;
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, format }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  return res.blob();
+}
+
 // ── Notebooks ────────────────────────────────────────────────────────────────
 
 export async function createNotebook(title = "Untitled Notebook"): Promise<import("./types").NotebookDetail> {

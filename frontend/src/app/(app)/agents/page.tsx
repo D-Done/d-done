@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, Plus, Play, Calendar } from "lucide-react";
-import { listAgents, getMe } from "@/lib/api";
+import { Bot, Plus, Play, Calendar, Pencil, Trash2, Share2, Check } from "lucide-react";
+import { listAgents, getMe, renameAgent, deleteAgent } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import type { CustomAgent } from "@/lib/types";
@@ -25,6 +25,14 @@ export default function AgentsPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "Error"))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDelete = (id: string) => {
+    setAgents((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleRename = (id: string, name: string) => {
+    setAgents((prev) => prev.map((a) => a.id === id ? { ...a, name } : a));
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -75,7 +83,14 @@ export default function AgentsPage() {
       {!loading && agents.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
           {agents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} lang={lang} currentUserId={currentUserId} />
+            <AgentCard
+              key={agent.id}
+              agent={agent}
+              lang={lang}
+              currentUserId={currentUserId}
+              onDelete={handleDelete}
+              onRename={handleRename}
+            />
           ))}
         </div>
       )}
@@ -83,34 +98,123 @@ export default function AgentsPage() {
   );
 }
 
-function AgentCard({ agent, lang, currentUserId }: { agent: CustomAgent; lang: import("@/lib/i18n").Lang; currentUserId: string | null }) {
+function AgentCard({
+  agent,
+  lang,
+  currentUserId,
+  onDelete,
+  onRename,
+}: {
+  agent: CustomAgent;
+  lang: import("@/lib/i18n").Lang;
+  currentUserId: string | null;
+  onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(agent.name ?? "");
+  const [copied, setCopied] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const isOwner = currentUserId !== null && agent.created_by_id === currentUserId;
   const createdDate = new Date(agent.created_at).toLocaleDateString(
     lang === "he" ? "he-IL" : "en-US",
     { day: "numeric", month: "short", year: "numeric" },
   );
-  const isShared = currentUserId !== null && agent.created_by_id !== currentUserId;
+
+  const startEdit = () => {
+    setEditName(agent.name ?? "");
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const commitEdit = async () => {
+    const trimmed = editName.trim();
+    if (!trimmed || trimmed === agent.name) { setEditing(false); return; }
+    try {
+      await renameAgent(agent.id, trimmed);
+      onRename(agent.id, trimmed);
+    } catch { /* ignore */ }
+    setEditing(false);
+  };
+
+  const handleDelete = async () => {
+    const msg = lang === "he" ? "למחוק את האייגנט?" : "Delete this agent?";
+    if (!confirm(msg)) return;
+    try {
+      await deleteAgent(agent.id);
+      onDelete(agent.id);
+    } catch { /* ignore */ }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <>
       <Card className="group transition-shadow hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Bot className="h-4 w-4 text-primary" />
               </div>
-              <CardTitle className="text-base">{agent.name ?? "—"}</CardTitle>
+              {editing ? (
+                <input
+                  ref={inputRef}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={commitEdit}
+                  onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditing(false); }}
+                  className="min-w-0 flex-1 rounded border px-2 py-0.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary"
+                />
+              ) : (
+                <CardTitle className="truncate text-base">{agent.name ?? "—"}</CardTitle>
+              )}
             </div>
-            {isShared ? (
-              <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground">
-                {agent.created_by_name ?? t("agents_shared", lang)}
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="shrink-0 text-xs">
-                {t("agents_active", lang)}
-              </Badge>
-            )}
+
+            <div className="flex shrink-0 items-center gap-1">
+              {/* Action icons — always visible on hover */}
+              <button
+                onClick={handleShare}
+                className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                title={lang === "he" ? "שתף" : "Share"}
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Share2 className="h-3.5 w-3.5" />}
+              </button>
+              {isOwner && (
+                <>
+                  <button
+                    onClick={startEdit}
+                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                    title={lang === "he" ? "שנה שם" : "Rename"}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                    title={lang === "he" ? "מחק" : "Delete"}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+
+              {!isOwner ? (
+                <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground">
+                  {agent.created_by_name ?? t("agents_shared", lang)}
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="shrink-0 text-xs">
+                  {t("agents_active", lang)}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Upload, FolderOpen, X } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Loader2, Upload, FolderOpen, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listProjects, runAgent, runAgentUpload } from "@/lib/api";
+import { listProjects, runAgent, runAgentUpload, exportAgentOutput } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import type { ProjectListItem } from "@/lib/types";
@@ -60,6 +60,7 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"docx" | "xlsx" | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +107,23 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
       setRunning(false);
     }
   }, [agentId, mode, selectedProject, uploadedFiles]);
+
+  const handleDownload = async (format: "docx" | "xlsx") => {
+    setExporting(format);
+    try {
+      const blob = await exportAgentOutput(agentId, result, format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${agentName}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      /* ignore */
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files ?? []);
@@ -226,6 +244,30 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
             </button>
           ) : <div />}
           <div className="flex gap-2">
+            {hasResult && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload("docx")}
+                  disabled={!!exporting}
+                  className="gap-1.5 text-xs"
+                >
+                  {exporting === "docx" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  Word
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload("xlsx")}
+                  disabled={!!exporting}
+                  className="gap-1.5 text-xs"
+                >
+                  {exporting === "xlsx" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+                  Excel
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={onClose} disabled={running}>{t("run_cancel", lang)}</Button>
             {!hasResult && (
               <Button onClick={handleRun} disabled={running}>

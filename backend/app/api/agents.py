@@ -16,13 +16,15 @@ POST /agents/{agent_id}/run                     — run agent on a project (SSE 
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
+import re
 import uuid
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response as FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm.attributes import flag_modified
@@ -88,6 +90,15 @@ class CompleteFileRequest(BaseModel):
 
 class RunAgentRequest(BaseModel):
     project_id: str
+
+
+class RenameAgentRequest(BaseModel):
+    name: str
+
+
+class ExportRequest(BaseModel):
+    content: str
+    format: str  # "docx" | "xlsx"
 
 
 # ── Shared streaming helper ───────────────────────────────────────────────────
@@ -632,3 +643,147 @@ async def run_agent_upload(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── Rename / Delete / Export ──────────────────────────────────────────────────
+
+@router.patch("/{agent_id}", response_model=AgentOut)
+async def rename_agent(
+    agent_id: UUID,
+    body: RenameAgentRequest,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty.")
+    async with AsyncSessionLocal() as db:
+        agent = await _get_own_agent(agent_id, user.id, db)
+        agent.name = name
+        await db.commit()
+        await db.refresh(agent)
+        return _to_agent_out(agent)
+
+
+@router.delete("/{agent_id}", status_code=204)
+async def delete_agent(
+    agent_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    async with AsyncSessionLocal() as db:
+        agent = await _get_own_agent(agent_id, user.id, db)
+        agent.is_deleted = True
+        await db.commit()
+
+
+@router.post("/{agent_id}/export")
+async def export_agent_output(
+    agent_id: UUID,
+    body: ExportRequest,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Convert agent text output to a downloadable Word (.docx) or Excel (.xlsx) file."""
+    async with AsyncSessionLocal() as db:
+        await _get_accessible_agent(agent_id, user, db)
+
+    if body.format == "docx":
+        data = await asyncio.to_thread(_build_docx, body.content)
+        return FileResponse(
+            content=data,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": "attachment; filename=output.docx"},
+        )
+    elif body.format == "xlsx":
+        data = await asyncio.to_thread(_build_xlsx, body.content)
+        return FileResponse(
+            content=data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=output.xlsx"},
+        )
+    else:
+        raise HTTPException(status_code=400, detail="format must be 'docx' or 'xlsx'")
+
+
+# ── File generation helpers ───────────────────────────────────────────────────
+
+def _build_docx(content: str) -> bytes:
+    from docx import Document
+
+    doc = Document()
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            doc.add_paragraph("")
+            continue
+        if stripped.startswith("### "):
+            doc.add_heading(stripped[4:], level=3)
+        elif stripped.startswith("## "):
+            doc.add_heading(stripped[3:], level=2)
+        elif stripped.startswith("# "):
+            doc.add_heading(stripped[2:], level=1)
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            p = doc.add_paragraph(style="List Bullet")
+            p.add_run(stripped[2:])
+        elif stripped.startswith("**") and stripped.endswith("**") and len(stripped) > 4:
+            p = doc.add_paragraph()
+            p.add_run(stripped[2:-2]).bold = True
+        else:
+            doc.add_paragraph(stripped)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def _build_xlsx(content: str) -> bytes:
+    import re as _re
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+
+    # Try markdown table rows first (lines containing |, skip separator lines)
+    sep_re = _re.compile(r"^[\s|:\-]+$")
+    table_lines = [
+        l for l in content.splitlines()
+        if "|" in l and not sep_re.match(l)
+    ]
+
+    if table_lines:
+        for row_idx, line in enumerate(table_lines, 1):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            for col_idx, cell in enumerate(cells, 1):
+                ws_cell = ws.cell(row=row_idx, column=col_idx, value=cell)
+                if row_idx == 1:
+                    ws_cell.font = Font(bold=True)
+                    ws_cell.fill = PatternFill("solid", fgColor="DDEEFF")
+        for col in ws.columns:
+            max_len = max((len(str(c.value or "")) for c in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 50)
+    else:
+        # Try JSON array of objects
+        try:
+            data = json.loads(content)
+            if isinstance(data, list) and data and isinstance(data[0], dict):
+                headers = list(data[0].keys())
+                for col_idx, h in enumerate(headers, 1):
+                    c = ws.cell(row=1, column=col_idx, value=h)
+                    c.font = Font(bold=True)
+                    c.fill = PatternFill("solid", fgColor="DDEEFF")
+                for row_idx, row in enumerate(data, 2):
+                    for col_idx, h in enumerate(headers, 1):
+                        ws.cell(row=row_idx, column=col_idx, value=str(row.get(h, "")))
+                for col in ws.columns:
+                    max_len = max((len(str(c.value or "")) for c in col), default=10)
+                    ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 50)
+            else:
+                raise ValueError
+        except (json.JSONDecodeError, ValueError, KeyError):
+            # Fall back: each non-empty line → row in column A
+            for row_idx, line in enumerate((l for l in content.splitlines() if l.strip()), 1):
+                ws.cell(row=row_idx, column=1, value=line.strip())
+            ws.column_dimensions["A"].width = 80
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
