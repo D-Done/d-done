@@ -326,6 +326,21 @@ def move_blob(source_gcs_uri: str, dest_gcs_uri: str) -> str:
     return result_uri
 
 
+def upload_bytes_to_gcs(
+    data: bytes,
+    object_name: str,
+    content_type: str = "application/pdf",
+) -> str:
+    """Upload raw bytes to GCS and return the GCS URI gs://bucket/object."""
+    client = _get_client()
+    bucket = _get_or_create_bucket(client)
+    blob = bucket.blob(object_name)
+    blob.upload_from_string(data, content_type=content_type)
+    gcs_uri = f"gs://{bucket.name}/{object_name}"
+    logger.info("Uploaded %d bytes to %s", len(data), gcs_uri)
+    return gcs_uri
+
+
 def delete_blob(gcs_uri: str) -> None:
     """Delete a single GCS blob by URI. Silently ignores NotFound."""
     client = _get_client()

@@ -98,8 +98,7 @@ async def _stream_agent(
     system_prompt: str,
     kb_files: list[dict],
     extracted_fields_schema: dict | None,
-    doc_gcs_uris: list[tuple[str, str]] | None = None,   # (gcs_uri, mime_type) — for project runs
-    doc_inline_data: list[tuple[bytes, str]] | None = None,  # (data, mime_type) — for upload runs
+    doc_gcs_uris: list[tuple[str, str]] | None = None,  # (gcs_uri, mime_type)
 ):
     """Shared SSE generator used by both run-on-project and run-on-upload."""
     from google import genai
@@ -131,16 +130,10 @@ async def _stream_agent(
         if f.get("gcs_uri") and _kb_mime(f) in _GEMINI_SUPPORTED
     ]
 
-    if doc_inline_data:
-        doc_parts = [
-            types.Part.from_bytes(data=data, mime_type=mime)
-            for data, mime in doc_inline_data
-        ]
-    else:
-        doc_parts = [
-            types.Part.from_uri(file_uri=uri, mime_type=mime)
-            for uri, mime in (doc_gcs_uris or [])
-        ]
+    doc_parts = [
+        types.Part.from_uri(file_uri=uri, mime_type=mime)
+        for uri, mime in (doc_gcs_uris or [])
+    ]
 
     instruction_part = types.Part.from_text(
         text=f"Please analyze the provided documents according to your instructions.{schema_instruction}"
@@ -569,9 +562,12 @@ async def run_agent_upload(
     """Run the agent on directly uploaded files — no project required.
 
     Accepts multipart/form-data with one or more PDF files.
-    File bytes are passed inline to Gemini (no GCS temp storage needed).
+    Files are uploaded to GCS temporarily and processed via GCS URI
+    (same path as project-based runs, which Vertex AI handles reliably).
     Returns the same SSE stream as the project-based run endpoint.
     """
+    from app.services.gcs import upload_bytes_to_gcs, delete_blob
+
     if not files:
         raise HTTPException(status_code=400, detail="No files provided.")
 
@@ -585,21 +581,40 @@ async def run_agent_upload(
         kb_files = list(agent.knowledge_base_files or [])
         extracted_fields_schema = agent.extracted_fields_schema
 
-    inline_data: list[tuple[bytes, str]] = []
-    for f in files:
-        content = await f.read()
-        if not content:
-            raise HTTPException(status_code=400, detail=f"File '{f.filename}' is empty.")
-        inline_data.append((content, f.content_type or "application/pdf"))
+    # Upload to GCS temp path and use URIs — Vertex AI handles GCS URIs reliably
+    # (inline Part.from_bytes is not supported for PDFs in this configuration)
+    temp_uris: list[tuple[str, str]] = []
+    try:
+        for f in files:
+            content = await f.read()
+            if not content:
+                raise HTTPException(status_code=400, detail=f"File '{f.filename}' is empty.")
+            mime = f.content_type or "application/pdf"
+            safe_name = f.filename or "document.pdf"
+            object_name = f"agent-run-temp/{agent_id}/{uuid.uuid4()}_{safe_name}"
+            gcs_uri = await asyncio.to_thread(upload_bytes_to_gcs, content, object_name, mime)
+            temp_uris.append((gcs_uri, mime))
+    except HTTPException:
+        for gcs_uri, _ in temp_uris:
+            asyncio.create_task(asyncio.to_thread(delete_blob, gcs_uri))
+        raise
+
+    async def generate():
+        try:
+            async for chunk in _stream_agent(
+                agent_id=agent_id,
+                system_prompt=system_prompt,
+                kb_files=kb_files,
+                extracted_fields_schema=extracted_fields_schema,
+                doc_gcs_uris=temp_uris,
+            ):
+                yield chunk
+        finally:
+            for gcs_uri, _ in temp_uris:
+                asyncio.create_task(asyncio.to_thread(delete_blob, gcs_uri))
 
     return StreamingResponse(
-        _stream_agent(
-            agent_id=agent_id,
-            system_prompt=system_prompt,
-            kb_files=kb_files,
-            extracted_fields_schema=extracted_fields_schema,
-            doc_inline_data=inline_data,
-        ),
+        generate(),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
