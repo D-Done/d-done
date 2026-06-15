@@ -69,6 +69,7 @@ const translations: Record<string, Record<Lang, string>> = {
   agents_empty_title: { he: "אין סוכנים עדיין", en: "No agents yet" },
   agents_empty_subtitle: { he: "בנה את הסוכן הראשון שלך — תוך דקות, ללא קוד", en: "Build your first agent — in minutes, no code required" },
   agents_active: { he: "פעיל", en: "Active" },
+  agents_shared: { he: "שותף", en: "Shared" },
   agents_ref_docs: { he: "מסמכי עזר", en: "reference docs" },
   agents_run: { he: "הרץ", en: "Run" },
   agents_back: { he: "סוכנים חכמים", en: "AI Agents" },

@@ -1180,6 +1180,8 @@ export interface CustomAgent {
   extracted_fields_schema: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+  created_by_id: string;
+  created_by_name: string | null;
 }
 
 export interface AgentPreview {

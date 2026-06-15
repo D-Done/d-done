@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bot, Plus, Play, Calendar } from "lucide-react";
-import { listAgents } from "@/lib/api";
+import { listAgents, getMe } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import type { CustomAgent } from "@/lib/types";
@@ -14,10 +14,12 @@ import { RunAgentDialog } from "@/components/run-agent-dialog";
 export default function AgentsPage() {
   const { lang } = useLanguage();
   const [agents, setAgents] = useState<CustomAgent[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    getMe().then((me) => { if (me) setCurrentUserId(me.id); }).catch(() => {});
     listAgents()
       .then(setAgents)
       .catch((err) => setError(err instanceof Error ? err.message : "Error"))
@@ -73,7 +75,7 @@ export default function AgentsPage() {
       {!loading && agents.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
           {agents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} lang={lang} />
+            <AgentCard key={agent.id} agent={agent} lang={lang} currentUserId={currentUserId} />
           ))}
         </div>
       )}
@@ -81,12 +83,13 @@ export default function AgentsPage() {
   );
 }
 
-function AgentCard({ agent, lang }: { agent: CustomAgent; lang: import("@/lib/i18n").Lang }) {
+function AgentCard({ agent, lang, currentUserId }: { agent: CustomAgent; lang: import("@/lib/i18n").Lang; currentUserId: string | null }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const createdDate = new Date(agent.created_at).toLocaleDateString(
     lang === "he" ? "he-IL" : "en-US",
     { day: "numeric", month: "short", year: "numeric" },
   );
+  const isShared = currentUserId !== null && agent.created_by_id !== currentUserId;
 
   return (
     <>
@@ -99,9 +102,15 @@ function AgentCard({ agent, lang }: { agent: CustomAgent; lang: import("@/lib/i1
               </div>
               <CardTitle className="text-base">{agent.name ?? "—"}</CardTitle>
             </div>
-            <Badge variant="secondary" className="shrink-0 text-xs">
-              {t("agents_active", lang)}
-            </Badge>
+            {isShared ? (
+              <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground">
+                {agent.created_by_name ?? t("agents_shared", lang)}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="shrink-0 text-xs">
+                {t("agents_active", lang)}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent>

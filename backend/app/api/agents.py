@@ -28,7 +28,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.auth import CurrentUser, get_approved_user
-from app.db.models import CustomAgent
+from app.db.models import CustomAgent, User
 from app.db.session import AsyncSessionLocal
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -63,6 +63,8 @@ class AgentOut(BaseModel):
     extracted_fields_schema: dict | None
     created_at: str
     updated_at: str
+    created_by_id: str
+    created_by_name: str | None
 
 
 class InitiateFileRequest(BaseModel):
@@ -169,6 +171,7 @@ async def _stream_agent(
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 async def _get_own_agent(agent_id: UUID, user_id: UUID, db) -> CustomAgent:
+    """Fetch an agent owned by the current user (for edit/publish/build operations)."""
     result = await db.execute(
         select(CustomAgent).where(
             CustomAgent.id == agent_id,
@@ -182,7 +185,28 @@ async def _get_own_agent(agent_id: UUID, user_id: UUID, db) -> CustomAgent:
     return agent
 
 
-def _to_agent_out(agent: CustomAgent) -> AgentOut:
+async def _get_accessible_agent(agent_id: UUID, user: CurrentUser, db) -> CustomAgent:
+    """Fetch an agent accessible to the user: owned by them or in their organization."""
+    result = await db.execute(
+        select(CustomAgent).where(
+            CustomAgent.id == agent_id,
+            CustomAgent.is_deleted.is_(False),
+            or_(
+                CustomAgent.created_by_id == user.id,
+                and_(
+                    CustomAgent.organization_id == user.organization_id,
+                    CustomAgent.organization_id.is_not(None),
+                ),
+            ),
+        )
+    )
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return agent
+
+
+def _to_agent_out(agent: CustomAgent, creator: User | None = None) -> AgentOut:
     return AgentOut(
         id=str(agent.id),
         name=agent.name,
@@ -192,6 +216,8 @@ def _to_agent_out(agent: CustomAgent) -> AgentOut:
         extracted_fields_schema=agent.extracted_fields_schema,
         created_at=agent.created_at.isoformat(),
         updated_at=agent.updated_at.isoformat(),
+        created_by_id=str(agent.created_by_id),
+        created_by_name=creator.name if creator else None,
     )
 
 
@@ -402,18 +428,33 @@ async def publish_agent(
 async def list_agents(
     user: CurrentUser = Depends(get_approved_user),
 ):
-    """List the current user's published agents."""
+    """List published agents accessible to the user (own + same organization)."""
     async with AsyncSessionLocal() as db:
-        result = await db.execute(
+        agents_result = await db.execute(
             select(CustomAgent)
             .where(
-                CustomAgent.created_by_id == user.id,
                 CustomAgent.is_deleted.is_(False),
                 CustomAgent.status == "published",
+                or_(
+                    CustomAgent.created_by_id == user.id,
+                    and_(
+                        CustomAgent.organization_id == user.organization_id,
+                        CustomAgent.organization_id.is_not(None),
+                    ),
+                ),
             )
             .order_by(CustomAgent.created_at.desc())
         )
-        return [_to_agent_out(a) for a in result.scalars().all()]
+        agents = agents_result.scalars().all()
+
+        # Fetch creator names in one query
+        creator_ids = list({a.created_by_id for a in agents})
+        users_result = await db.execute(
+            select(User).where(User.id.in_(creator_ids))
+        )
+        users_by_id = {u.id: u for u in users_result.scalars().all()}
+
+        return [_to_agent_out(a, users_by_id.get(a.created_by_id)) for a in agents]
 
 
 @router.get("/drafts", response_model=list[AgentOut])
@@ -440,8 +481,10 @@ async def get_agent(
     user: CurrentUser = Depends(get_approved_user),
 ):
     async with AsyncSessionLocal() as db:
-        agent = await _get_own_agent(agent_id, user.id, db)
-        return _to_agent_out(agent)
+        agent = await _get_accessible_agent(agent_id, user, db)
+        creator_result = await db.execute(select(User).where(User.id == agent.created_by_id))
+        creator = creator_result.scalar_one_or_none()
+        return _to_agent_out(agent, creator)
 
 
 @router.post("/{agent_id}/run")
@@ -460,7 +503,7 @@ async def run_agent(
     from app.db.models import File as FileModel, Project, ProjectMembership
 
     async with AsyncSessionLocal() as db:
-        agent = await _get_own_agent(agent_id, user.id, db)
+        agent = await _get_accessible_agent(agent_id, user, db)
         if agent.status != "published":
             raise HTTPException(status_code=400, detail="Agent must be published before running.")
         if not agent.system_prompt:
@@ -533,7 +576,7 @@ async def run_agent_upload(
         raise HTTPException(status_code=400, detail="No files provided.")
 
     async with AsyncSessionLocal() as db:
-        agent = await _get_own_agent(agent_id, user.id, db)
+        agent = await _get_accessible_agent(agent_id, user, db)
         if agent.status != "published":
             raise HTTPException(status_code=400, detail="Agent must be published before running.")
         if not agent.system_prompt:
