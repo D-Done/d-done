@@ -21,7 +21,7 @@ import logging
 import uuid
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import and_, or_, select
@@ -86,6 +86,80 @@ class CompleteFileRequest(BaseModel):
 
 class RunAgentRequest(BaseModel):
     project_id: str
+
+
+# ── Shared streaming helper ───────────────────────────────────────────────────
+
+async def _stream_agent(
+    *,
+    agent_id: UUID,
+    system_prompt: str,
+    kb_files: list[dict],
+    extracted_fields_schema: dict | None,
+    doc_gcs_uris: list[tuple[str, str]],  # (gcs_uri, mime_type)
+    temp_gcs_uris: list[str] | None = None,  # cleaned up after run
+):
+    """Shared SSE generator used by both run-on-project and run-on-upload."""
+    from google import genai
+    from google.genai import types
+    import os
+    from app.agents.builder.builder_llm import _ensure_genai_env
+    _ensure_genai_env()
+
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
+
+    schema_instruction = ""
+    if extracted_fields_schema:
+        schema_instruction = (
+            "\n\nExtract the following structured fields:\n"
+            + json.dumps(extracted_fields_schema, ensure_ascii=False, indent=2)
+            + "\n\nReturn your findings in a structured JSON object."
+        )
+
+    kb_parts = [
+        types.Part.from_uri(file_uri=f["gcs_uri"], mime_type="application/pdf")
+        for f in kb_files
+        if f.get("gcs_uri")
+    ]
+    doc_parts = [
+        types.Part.from_uri(file_uri=uri, mime_type=mime)
+        for uri, mime in doc_gcs_uris
+    ]
+    instruction_part = types.Part.from_text(
+        text=f"Please analyze the provided documents according to your instructions.{schema_instruction}"
+    )
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=0.3,
+        max_output_tokens=16384,
+    )
+
+    try:
+        async for chunk in await client.aio.models.generate_content_stream(
+            model="gemini-2.5-flash",
+            contents=[types.Content(role="user", parts=kb_parts + doc_parts + [instruction_part])],
+            config=config,
+        ):
+            if chunk.text:
+                yield f"data: {json.dumps({'type': 'chunk', 'text': chunk.text}, ensure_ascii=False)}\n\n"
+
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    except Exception as exc:
+        logger.exception("Agent run error: agent=%s", agent_id)
+        yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    finally:
+        if temp_gcs_uris:
+            from app.services.gcs import _get_client, _parse_gcs_uri
+            gcs_client = _get_client()
+            for uri in temp_gcs_uris:
+                try:
+                    bucket_name, object_name = _parse_gcs_uri(uri)
+                    await asyncio.to_thread(gcs_client.bucket(bucket_name).blob(object_name).delete)
+                except Exception:
+                    pass
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -424,65 +498,76 @@ async def run_agent(
     if not project_files:
         raise HTTPException(status_code=400, detail="No uploaded documents found in this project.")
 
-    async def generate():
-        from google import genai
-        from google.genai import types
-        import os
-
-        from app.agents.builder.builder_llm import _ensure_genai_env
-        _ensure_genai_env()
-
-        client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
-
-        schema_instruction = ""
-        if extracted_fields_schema:
-            schema_instruction = (
-                "\n\nExtract the following structured fields:\n"
-                + json.dumps(extracted_fields_schema, ensure_ascii=False, indent=2)
-                + "\n\nReturn your findings in a structured JSON object."
-            )
-
-        # Knowledge base files (reference docs) come first
-        kb_parts = [
-            types.Part.from_uri(file_uri=f["gcs_uri"], mime_type="application/pdf")
-            for f in kb_files
-            if f.get("gcs_uri")
-        ]
-        # Project documents to analyze
-        doc_parts = [
-            types.Part.from_uri(
-                file_uri=f.gcs_uri,
-                mime_type=f.content_type or "application/pdf",
-            )
-            for f in project_files
-        ]
-        instruction_part = types.Part.from_text(
-            text=f"Please analyze the provided documents according to your instructions.{schema_instruction}"
-        )
-
-        config = types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.3,
-            max_output_tokens=16384,
-        )
-
-        try:
-            async for chunk in await client.aio.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=[types.Content(role="user", parts=kb_parts + doc_parts + [instruction_part])],
-                config=config,
-            ):
-                if chunk.text:
-                    yield f"data: {json.dumps({'type': 'chunk', 'text': chunk.text}, ensure_ascii=False)}\n\n"
-
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
-
-        except Exception as exc:
-            logger.exception("Agent run error: agent=%s project=%s", agent_id, body.project_id)
-            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+    doc_uris = [(f.gcs_uri, f.content_type or "application/pdf") for f in project_files]
 
     return StreamingResponse(
-        generate(),
+        _stream_agent(
+            agent_id=agent_id,
+            system_prompt=system_prompt,
+            kb_files=kb_files,
+            extracted_fields_schema=extracted_fields_schema,
+            doc_gcs_uris=doc_uris,
+        ),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.post("/{agent_id}/run-upload")
+async def run_agent_upload(
+    agent_id: UUID,
+    files: list[UploadFile],
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Run the agent on directly uploaded files — no project required.
+
+    Accepts multipart/form-data with one or more PDF files.
+    Returns the same SSE stream as the project-based run endpoint.
+    """
+    from app.services.gcs import _get_client, _parse_gcs_uri
+    from app.core.config import settings
+
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided.")
+
+    async with AsyncSessionLocal() as db:
+        agent = await _get_own_agent(agent_id, user.id, db)
+        if agent.status != "published":
+            raise HTTPException(status_code=400, detail="Agent must be published before running.")
+        if not agent.system_prompt:
+            raise HTTPException(status_code=400, detail="Agent has no system prompt.")
+        system_prompt = agent.system_prompt
+        kb_files = list(agent.knowledge_base_files or [])
+        extracted_fields_schema = agent.extracted_fields_schema
+
+    run_id = str(uuid.uuid4())
+    bucket_name = settings.gcs_bucket_name
+    gcs_client = _get_client()
+    temp_uris: list[str] = []
+
+    for f in files:
+        content = await f.read()
+        safe_name = f.filename or f"{uuid.uuid4()}.pdf"
+        object_name = f"agent-run-temp/{agent_id}/{run_id}/{safe_name}"
+        blob = gcs_client.bucket(bucket_name).blob(object_name)
+        await asyncio.to_thread(
+            blob.upload_from_string,
+            content,
+            content_type=f.content_type or "application/pdf",
+        )
+        temp_uris.append(f"gs://{bucket_name}/{object_name}")
+
+    doc_uris = [(uri, "application/pdf") for uri in temp_uris]
+
+    return StreamingResponse(
+        _stream_agent(
+            agent_id=agent_id,
+            system_prompt=system_prompt,
+            kb_files=kb_files,
+            extracted_fields_schema=extracted_fields_schema,
+            doc_gcs_uris=doc_uris,
+            temp_gcs_uris=temp_uris,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

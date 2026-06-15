@@ -1418,6 +1418,18 @@ export async function runAgent(agentId: string, projectId: string): Promise<Resp
   return res;
 }
 
+export async function runAgentUpload(agentId: string, files: File[]): Promise<Response> {
+  const url = `${API_BASE}/agents/${agentId}/run-upload`;
+  const form = new FormData();
+  for (const file of files) form.append("files", file);
+  const res = await fetch(url, { method: "POST", credentials: "include", body: form });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  return res;
+}
+
 export async function uploadChecklistFile(
   projectId: string,
   itemId: string,

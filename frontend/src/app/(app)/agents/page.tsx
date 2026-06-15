@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import type { CustomAgent } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RunAgentDialog } from "@/components/run-agent-dialog";
 
 export default function AgentsPage() {
   const { lang } = useLanguage();
@@ -81,53 +82,63 @@ export default function AgentsPage() {
 }
 
 function AgentCard({ agent, lang }: { agent: CustomAgent; lang: import("@/lib/i18n").Lang }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const createdDate = new Date(agent.created_at).toLocaleDateString(
     lang === "he" ? "he-IL" : "en-US",
     { day: "numeric", month: "short", year: "numeric" },
   );
 
   return (
-    <Card className="group transition-shadow hover:shadow-md">
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Bot className="h-4 w-4 text-primary" />
+    <>
+      <Card className="group transition-shadow hover:shadow-md">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <CardTitle className="text-base">{agent.name ?? "—"}</CardTitle>
             </div>
-            <CardTitle className="text-base">{agent.name ?? "—"}</CardTitle>
+            <Badge variant="secondary" className="shrink-0 text-xs">
+              {t("agents_active", lang)}
+            </Badge>
           </div>
-          <Badge variant="secondary" className="shrink-0 text-xs">
-            {t("agents_active", lang)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {agent.description && (
-          <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-            {agent.description}
-          </p>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            {createdDate}
+        </CardHeader>
+        <CardContent>
+          {agent.description && (
+            <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+              {agent.description}
+            </p>
+          )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {createdDate}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {agent.knowledge_base_files.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {agent.knowledge_base_files.length} {t("agents_ref_docs", lang)}
+                </span>
+              )}
+              <button
+                className="flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+                onClick={() => setDialogOpen(true)}
+              >
+                <Play className="h-3 w-3" />
+                {t("agents_run", lang)}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            {agent.knowledge_base_files.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {agent.knowledge_base_files.length} {t("agents_ref_docs", lang)}
-              </span>
-            )}
-            <button
-              className="flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20"
-              onClick={() => alert(`Run agent ${agent.id} — select a project`)}
-            >
-              <Play className="h-3 w-3" />
-              {t("agents_run", lang)}
-            </button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <RunAgentDialog
+        agentId={agent.id}
+        agentName={agent.name ?? "אגנט"}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
+    </>
   );
 }
