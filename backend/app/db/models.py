@@ -652,6 +652,71 @@ class CustomAgent(Base):
         return f"<CustomAgent id={self.id} name={self.name!r} status={self.status}>"
 
 
+class Notebook(Base):
+    """An AI-powered notebook — upload documents and chat about them (NotebookLM-style)."""
+
+    __tablename__ = "notebooks"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    organization_id = Column(
+        Uuid, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    created_by_id = Column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title = Column(String(500), nullable=False, default="Untitled Notebook")
+    is_deleted = Column(Boolean, nullable=False, default=False, server_default="false")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    organization = relationship("Organization")
+    sources = relationship("NotebookSource", back_populates="notebook", cascade="all, delete-orphan", order_by="NotebookSource.created_at")
+    messages = relationship("NotebookMessage", back_populates="notebook", cascade="all, delete-orphan", order_by="NotebookMessage.created_at")
+
+    def __repr__(self) -> str:
+        return f"<Notebook id={self.id} title={self.title!r}>"
+
+
+class NotebookSource(Base):
+    """A source document uploaded to a notebook."""
+
+    __tablename__ = "notebook_sources"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    notebook_id = Column(
+        Uuid, ForeignKey("notebooks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    original_name = Column(String(500), nullable=False)
+    gcs_uri = Column(String(1000), nullable=False)
+    file_size_bytes = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    notebook = relationship("Notebook", back_populates="sources")
+
+    def __repr__(self) -> str:
+        return f"<NotebookSource id={self.id} name={self.original_name!r}>"
+
+
+class NotebookMessage(Base):
+    """A single message in a notebook conversation."""
+
+    __tablename__ = "notebook_messages"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    notebook_id = Column(
+        Uuid, ForeignKey("notebooks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role = Column(String(20), nullable=False)  # "user" | "model"
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    notebook = relationship("Notebook", back_populates="messages")
+
+    def __repr__(self) -> str:
+        return f"<NotebookMessage id={self.id} role={self.role}>"
+
+
 class ChecklistShare(Base):
     """Token-based share link giving an external party view + upload access."""
 

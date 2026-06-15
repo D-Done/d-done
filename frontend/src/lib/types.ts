@@ -1184,6 +1184,43 @@ export interface CustomAgent {
   created_by_name: string | null;
 }
 
+// ============================================================
+// Notebooks (NotebookLM-style document Q&A)
+// ============================================================
+
+export interface NotebookSource {
+  id: string;
+  original_name: string;
+  gcs_uri: string;
+  file_size_bytes: number | null;
+  created_at: string;
+}
+
+export interface NotebookMessage {
+  id: string;
+  role: "user" | "model";
+  content: string;
+  created_at: string;
+}
+
+export interface NotebookListItem {
+  id: string;
+  title: string;
+  source_count: number;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotebookDetail {
+  id: string;
+  title: string;
+  sources: NotebookSource[];
+  messages: NotebookMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AgentPreview {
   name: string | null;
   description: string | null;

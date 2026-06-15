@@ -1430,6 +1430,57 @@ export async function runAgentUpload(agentId: string, files: File[]): Promise<Re
   return res;
 }
 
+// ── Notebooks ────────────────────────────────────────────────────────────────
+
+export async function createNotebook(title = "Untitled Notebook"): Promise<import("./types").NotebookDetail> {
+  return request("/notebooks", { method: "POST", body: JSON.stringify({ title }), headers: { "Content-Type": "application/json" } });
+}
+
+export async function listNotebooks(): Promise<import("./types").NotebookListItem[]> {
+  return request("/notebooks");
+}
+
+export async function getNotebook(id: string): Promise<import("./types").NotebookDetail> {
+  return request(`/notebooks/${id}`);
+}
+
+export async function renameNotebook(id: string, title: string): Promise<import("./types").NotebookListItem> {
+  return request(`/notebooks/${id}`, { method: "PATCH", body: JSON.stringify({ title }), headers: { "Content-Type": "application/json" } });
+}
+
+export async function deleteNotebook(id: string): Promise<void> {
+  await request(`/notebooks/${id}`, { method: "DELETE" });
+}
+
+export async function uploadNotebookSources(id: string, files: File[]): Promise<import("./types").NotebookSource[]> {
+  const form = new FormData();
+  for (const f of files) form.append("files", f);
+  return request(`/notebooks/${id}/sources`, { method: "POST", body: form });
+}
+
+export async function deleteNotebookSource(notebookId: string, sourceId: string): Promise<void> {
+  await request(`/notebooks/${notebookId}/sources/${sourceId}`, { method: "DELETE" });
+}
+
+export async function chatNotebook(notebookId: string, message: string): Promise<Response> {
+  const url = `${API_BASE}/notebooks/${notebookId}/chat`;
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  return res;
+}
+
+export async function clearNotebookChat(notebookId: string): Promise<void> {
+  await request(`/notebooks/${notebookId}/chat`, { method: "DELETE" });
+}
+
 export async function uploadChecklistFile(
   projectId: string,
   itemId: string,
