@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listProjects, runAgent, runAgentUpload } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import type { ProjectListItem } from "@/lib/types";
 
 type Mode = "project" | "upload";
@@ -50,6 +52,7 @@ async function* parseSSE(stream: ReadableStream<Uint8Array>) {
 }
 
 export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
+  const { lang } = useLanguage();
   const [mode, setMode] = useState<Mode>("project");
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
@@ -84,10 +87,10 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
     try {
       let res: Response;
       if (mode === "project") {
-        if (!selectedProject) { setError("יש לבחור פרויקט"); setRunning(false); return; }
+        if (!selectedProject) { setError(t("run_no_project", lang)); setRunning(false); return; }
         res = await runAgent(agentId, selectedProject);
       } else {
-        if (!uploadedFiles.length) { setError("יש להעלות לפחות קובץ אחד"); setRunning(false); return; }
+        if (!uploadedFiles.length) { setError(t("run_no_files", lang)); setRunning(false); return; }
         res = await runAgentUpload(agentId, uploadedFiles);
       }
 
@@ -98,7 +101,7 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
         else if (event.type === "error") setError(event.message);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בהרצת האגנט");
+      setError(err instanceof Error ? err.message : t("run_error", lang));
     } finally {
       setRunning(false);
     }
@@ -116,7 +119,7 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => { if (!v && !running) onClose(); }}>
       <DialogContent className="flex max-h-[85vh] w-full max-w-2xl flex-col gap-0 p-0">
         <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle className="text-base">הרצת אגנט — {agentName}</DialogTitle>
+          <DialogTitle className="text-base">{t("run_dialog_title", lang)} — {agentName}</DialogTitle>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
@@ -129,21 +132,21 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
                   onClick={() => setMode("project")}
                 >
                   <FolderOpen className="h-3.5 w-3.5" />
-                  פרויקט קיים
+                  {t("run_tab_project", lang)}
                 </button>
                 <button
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors ${mode === "upload" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                   onClick={() => setMode("upload")}
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  העלאת קבצים
+                  {t("run_tab_upload", lang)}
                 </button>
               </div>
 
               {mode === "project" && (
                 <Select value={selectedProject} onValueChange={setSelectedProject}>
                   <SelectTrigger>
-                    <SelectValue placeholder="בחר פרויקט..." />
+                    <SelectValue placeholder={t("run_select_project", lang)} />
                   </SelectTrigger>
                   <SelectContent>
                     {projects.map((p) => (
@@ -163,7 +166,7 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
                     className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border py-8 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                   >
                     <Upload className="h-6 w-6" />
-                    <span>לחץ להוספת קבצי PDF</span>
+                    <span>{t("run_upload_hint", lang)}</span>
                   </button>
                   <input
                     ref={fileInputRef}
@@ -219,15 +222,15 @@ export function RunAgentDialog({ agentId, agentName, open, onClose }: Props) {
               className="text-sm text-muted-foreground hover:text-foreground"
               onClick={() => { setResult(""); setError(null); }}
             >
-              הרצה נוספת
+              {t("run_again", lang)}
             </button>
           ) : <div />}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={running}>ביטול</Button>
+            <Button variant="outline" onClick={onClose} disabled={running}>{t("run_cancel", lang)}</Button>
             {!hasResult && (
               <Button onClick={handleRun} disabled={running}>
                 {running && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                הרץ
+                {t("run_submit", lang)}
               </Button>
             )}
           </div>
