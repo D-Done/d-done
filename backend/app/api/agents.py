@@ -96,13 +96,12 @@ async def _stream_agent(
     system_prompt: str,
     kb_files: list[dict],
     extracted_fields_schema: dict | None,
-    doc_gcs_uris: list[tuple[str, str]],  # (gcs_uri, mime_type)
-    temp_gcs_uris: list[str] | None = None,  # cleaned up after run
+    doc_gcs_uris: list[tuple[str, str]] | None = None,   # (gcs_uri, mime_type) — for project runs
+    doc_inline_data: list[tuple[bytes, str]] | None = None,  # (data, mime_type) — for upload runs
 ):
     """Shared SSE generator used by both run-on-project and run-on-upload."""
     from google import genai
     from google.genai import types
-    import os
     from app.agents.builder.builder_llm import _ensure_genai_env
     _ensure_genai_env()
 
@@ -121,10 +120,18 @@ async def _stream_agent(
         for f in kb_files
         if f.get("gcs_uri")
     ]
-    doc_parts = [
-        types.Part.from_uri(file_uri=uri, mime_type=mime)
-        for uri, mime in doc_gcs_uris
-    ]
+
+    if doc_inline_data:
+        doc_parts = [
+            types.Part.from_bytes(data=data, mime_type=mime)
+            for data, mime in doc_inline_data
+        ]
+    else:
+        doc_parts = [
+            types.Part.from_uri(file_uri=uri, mime_type=mime)
+            for uri, mime in (doc_gcs_uris or [])
+        ]
+
     instruction_part = types.Part.from_text(
         text=f"Please analyze the provided documents according to your instructions.{schema_instruction}"
     )
@@ -149,17 +156,6 @@ async def _stream_agent(
     except Exception as exc:
         logger.exception("Agent run error: agent=%s", agent_id)
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
-
-    finally:
-        if temp_gcs_uris:
-            from app.services.gcs import _get_client, _parse_gcs_uri
-            gcs_client = _get_client()
-            for uri in temp_gcs_uris:
-                try:
-                    bucket_name, object_name = _parse_gcs_uri(uri)
-                    await asyncio.to_thread(gcs_client.bucket(bucket_name).blob(object_name).delete)
-                except Exception:
-                    pass
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -522,11 +518,9 @@ async def run_agent_upload(
     """Run the agent on directly uploaded files — no project required.
 
     Accepts multipart/form-data with one or more PDF files.
+    File bytes are passed inline to Gemini (no GCS temp storage needed).
     Returns the same SSE stream as the project-based run endpoint.
     """
-    from app.services.gcs import _get_client, _parse_gcs_uri
-    from app.core.config import settings
-
     if not files:
         raise HTTPException(status_code=400, detail="No files provided.")
 
@@ -540,27 +534,12 @@ async def run_agent_upload(
         kb_files = list(agent.knowledge_base_files or [])
         extracted_fields_schema = agent.extracted_fields_schema
 
-    run_id = str(uuid.uuid4())
-    bucket_name = settings.gcs_bucket_name
-    gcs_client = _get_client()
-    temp_uris: list[str] = []
-
+    inline_data: list[tuple[bytes, str]] = []
     for f in files:
         content = await f.read()
         if not content:
             raise HTTPException(status_code=400, detail=f"File '{f.filename}' is empty.")
-        # Use UUID-based name to avoid non-ASCII characters in GCS URI
-        safe_name = f"{uuid.uuid4()}.pdf"
-        object_name = f"agent-run-temp/{agent_id}/{run_id}/{safe_name}"
-        blob = gcs_client.bucket(bucket_name).blob(object_name)
-        await asyncio.to_thread(
-            blob.upload_from_string,
-            content,
-            content_type=f.content_type or "application/pdf",
-        )
-        temp_uris.append(f"gs://{bucket_name}/{object_name}")
-
-    doc_uris = [(uri, "application/pdf") for uri in temp_uris]
+        inline_data.append((content, f.content_type or "application/pdf"))
 
     return StreamingResponse(
         _stream_agent(
@@ -568,8 +547,7 @@ async def run_agent_upload(
             system_prompt=system_prompt,
             kb_files=kb_files,
             extracted_fields_schema=extracted_fields_schema,
-            doc_gcs_uris=doc_uris,
-            temp_gcs_uris=temp_uris,
+            doc_inline_data=inline_data,
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
