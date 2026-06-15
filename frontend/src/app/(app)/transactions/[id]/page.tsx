@@ -283,6 +283,7 @@ export default function TransactionPage() {
   // True after user approves HITL review — hides the sheet and resumes animation
   const [hitlApproved, setHitlApproved] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string } | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const userChangedTabRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autostartFiredRef = useRef(false);
@@ -752,6 +753,37 @@ export default function TransactionPage() {
                     })}
                   </span>
                 </div>
+                {uploadedFiles.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mr-auto gap-1.5"
+                    disabled={downloadingAll}
+                    onClick={async () => {
+                      setDownloadingAll(true);
+                      try {
+                        const { blob, filename } = await api.downloadAllFiles(project.id);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = filename;
+                        a.click();
+                        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                      } catch {
+                        toast.error("שגיאה בהורדת המסמכים");
+                      } finally {
+                        setDownloadingAll(false);
+                      }
+                    }}
+                  >
+                    {downloadingAll ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    הורד הכל
+                  </Button>
+                )}
               </div>
               {uploadedFiles.length === 0 ? (
                 <div className="py-10 text-center text-sm text-slate-500">

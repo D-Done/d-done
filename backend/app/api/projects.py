@@ -505,6 +505,59 @@ async def get_file_content(
     )
 
 
+@router.get("/{project_id}/files/download-all")
+async def download_all_files(
+    project_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+    db: Session = Depends(get_db),
+):
+    """Return a ZIP archive containing all uploaded files in the project."""
+    import asyncio
+    import io
+    import zipfile
+    from app.services.gcs import _get_client, _parse_gcs_uri
+
+    project, _ = require_project_access(db, user.id, project_id)
+    files = [f for f in project.files if f.upload_status == "uploaded"]
+
+    if not files:
+        raise HTTPException(status_code=404, detail="No uploaded files found")
+
+    def _build_zip() -> bytes:
+        client = _get_client()
+        buf = io.BytesIO()
+        seen_names: dict[str, int] = {}
+        with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for f in files:
+                name = f.original_name or str(f.id)
+                if name in seen_names:
+                    seen_names[name] += 1
+                    base, _, ext = name.rpartition(".")
+                    name = f"{base}_{seen_names[name]}.{ext}" if ext else f"{name}_{seen_names[name]}"
+                else:
+                    seen_names[name] = 0
+                bucket_name, object_name = _parse_gcs_uri(f.gcs_uri)
+                data = client.bucket(bucket_name).blob(object_name).download_as_bytes()
+                zf.writestr(name, data)
+        return buf.getvalue()
+
+    try:
+        zip_bytes = await asyncio.to_thread(_build_zip)
+    except Exception as exc:
+        logger.error("ZIP build failed for project %s: %s", project_id, exc)
+        raise HTTPException(status_code=502, detail="Could not build ZIP archive")
+
+    safe_project_name = (project.name or str(project_id)).replace('"', '\\"')
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_project_name}.zip"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
 @router.delete("/{project_id}/files/{file_id}", status_code=204)
 def delete_project_file(
     project_id: UUID,

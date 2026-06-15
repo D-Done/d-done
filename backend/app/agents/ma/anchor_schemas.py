@@ -30,8 +30,10 @@ from app.agents.schemas import EvidentiaryReference
 # Shared type aliases
 # ---------------------------------------------------------------------------
 
-BoolOrUnknown = Union[bool, Literal["unknown"]]
-NumOrUnknown = Union[float, Literal["unknown"]]
+# Vertex AI response_schema does not support anyOf — use plain str so the
+# model can output "true", "false", or "unknown" without schema rejection.
+BoolOrUnknown = str
+NumOrUnknown = str
 
 
 # ===========================================================================

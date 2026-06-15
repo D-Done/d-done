@@ -432,7 +432,7 @@ async def run_agent(
         from app.agents.builder.builder_llm import _ensure_genai_env
         _ensure_genai_env()
 
-        client = genai.Client(http_options=types.HttpOptions(api_version="v1alpha"))
+        client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
 
         schema_instruction = ""
         if extracted_fields_schema:

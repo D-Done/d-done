@@ -54,7 +54,7 @@ async def stream_builder_response(
     from app.agents.builder.prompt import BUILDER_SYSTEM_PROMPT
 
     _ensure_genai_env()
-    client = genai.Client(http_options=types.HttpOptions(api_version="v1alpha"))
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
 
     # Build multi-turn contents from stored history
     contents: list[types.Content] = []
