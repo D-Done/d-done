@@ -116,19 +116,33 @@ async def _stream_agent(
             + "\n\nReturn your findings in a structured JSON object."
         )
 
-    import mimetypes as _mt
-    _GEMINI_SUPPORTED = {"application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"}
+    # Explicit extension map — mimetypes.guess_type returns None for .docx on
+    # minimal Linux (no system MIME DB), so we can't rely on it for filtering.
+    _EXT_TO_MIME = {
+        ".pdf": "application/pdf",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
 
-    def _kb_mime(f: dict) -> str:
-        name = f.get("original_name") or f.get("file_id", "")
-        mime, _ = _mt.guess_type(name)
-        return mime or "application/pdf"
+    def _kb_mime(f: dict) -> str | None:
+        name = (f.get("original_name") or f.get("file_id", "")).lower()
+        for ext, mime in _EXT_TO_MIME.items():
+            if name.endswith(ext):
+                return mime
+        return None  # unsupported (e.g. .docx, .xlsx) — will be excluded
 
     kb_parts = [
-        types.Part.from_uri(file_uri=f["gcs_uri"], mime_type=_kb_mime(f))
+        types.Part.from_uri(file_uri=f["gcs_uri"], mime_type=mime)
         for f in kb_files
-        if f.get("gcs_uri") and _kb_mime(f) in _GEMINI_SUPPORTED
+        if f.get("gcs_uri") and (mime := _kb_mime(f)) is not None
     ]
+    logger.info(
+        "Agent %s: %d/%d KB files included (non-PDF/image files skipped)",
+        agent_id, len(kb_parts), len(kb_files),
+    )
 
     doc_parts = [
         types.Part.from_uri(file_uri=uri, mime_type=mime)
