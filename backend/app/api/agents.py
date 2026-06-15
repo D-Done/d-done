@@ -547,7 +547,10 @@ async def run_agent_upload(
 
     for f in files:
         content = await f.read()
-        safe_name = f.filename or f"{uuid.uuid4()}.pdf"
+        if not content:
+            raise HTTPException(status_code=400, detail=f"File '{f.filename}' is empty.")
+        # Use UUID-based name to avoid non-ASCII characters in GCS URI
+        safe_name = f"{uuid.uuid4()}.pdf"
         object_name = f"agent-run-temp/{agent_id}/{run_id}/{safe_name}"
         blob = gcs_client.bucket(bucket_name).blob(object_name)
         await asyncio.to_thread(
