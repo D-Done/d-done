@@ -1504,6 +1504,23 @@ export async function clearNotebookChat(notebookId: string): Promise<void> {
   await request(`/notebooks/${notebookId}/chat`, { method: "DELETE" });
 }
 
+export async function generateNotebookAudio(
+  notebookId: string,
+): Promise<{ type: "audio"; blob: Blob } | { type: "script"; script: string }> {
+  const url = `${API_BASE}/notebooks/${notebookId}/audio`;
+  const res = await fetch(url, { method: "POST", credentials: "include" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(detailMessage(body) || `HTTP ${res.status}`);
+  }
+  const ct = res.headers.get("content-type") ?? "";
+  if (ct.startsWith("audio/")) {
+    return { type: "audio", blob: await res.blob() };
+  }
+  const json = await res.json();
+  return { type: "script", script: json.script ?? "" };
+}
+
 export async function uploadChecklistFile(
   projectId: string,
   itemId: string,

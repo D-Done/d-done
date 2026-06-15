@@ -18,13 +18,15 @@ DELETE /notebooks/{id}/chat                — clear chat history
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
 import uuid
+import wave
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response as FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -428,3 +430,134 @@ async def clear_chat(
         for msg in result.scalars().all():
             await db.delete(msg)
         await db.commit()
+
+
+@router.post("/{notebook_id}/audio")
+async def generate_audio_overview(
+    notebook_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Generate an Audio Overview podcast from notebook sources.
+
+    1. Generates a Host-A / Host-B podcast script via Gemini.
+    2. Converts it to audio via Gemini 2.5 Flash TTS (multi-speaker).
+    Returns audio/wav on success, or {"script": "..."} JSON as fallback.
+    """
+    async with AsyncSessionLocal() as db:
+        nb = await _get_notebook(notebook_id, user, db)
+        await db.refresh(nb, ["sources"])
+        if not nb.sources:
+            raise HTTPException(status_code=400, detail="Add at least one source first.")
+        sources_snapshot = [{"name": s.original_name, "gcs_uri": s.gcs_uri} for s in nb.sources]
+
+    from google import genai
+    from google.genai import types
+    from app.agents.builder.builder_llm import _ensure_genai_env
+    _ensure_genai_env()
+
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
+
+    source_parts = [
+        types.Part.from_uri(file_uri=s["gcs_uri"], mime_type="application/pdf")
+        for s in sources_snapshot
+    ]
+
+    script_prompt = (
+        "Write a natural, engaging podcast conversation between two hosts about these documents.\n"
+        "Format EXACTLY like this — use these exact speaker labels:\n"
+        "Host A: [what Host A says]\nHost B: [what Host B responds]\n"
+        "Host A: [Host A continues]\nHost B: [Host B responds]\n\n"
+        "Guidelines:\n"
+        "- 600-800 words total\n"
+        "- Cover the most important facts, insights, and implications\n"
+        "- Conversational tone, not academic\n"
+        "- Use the exact format 'Host A:' and 'Host B:' — no asterisks, no bold"
+    )
+
+    # Step 1: Generate script
+    try:
+        script_resp = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[types.Content(role="user", parts=source_parts + [types.Part.from_text(text=script_prompt)])],
+            config=types.GenerateContentConfig(temperature=0.7, max_output_tokens=4096),
+        )
+        script = script_resp.text or ""
+    except Exception as exc:
+        logger.exception("Audio script generation failed: notebook=%s", notebook_id)
+        raise HTTPException(status_code=500, detail=f"Script generation failed: {exc}")
+
+    if not script.strip():
+        raise HTTPException(status_code=500, detail="Empty script generated.")
+
+    # Step 2: Convert to audio via Gemini TTS
+    try:
+        tts_client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
+        tts_resp = await tts_client.aio.models.generate_content(
+            model="gemini-2.5-flash-preview-tts",
+            contents=script,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    multi_speaker_voice_config=types.MultiSpeakerVoiceConfig(
+                        speaker_voice_configs=[
+                            types.SpeakerVoiceConfig(
+                                speaker="Host A",
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Aoede")
+                                ),
+                            ),
+                            types.SpeakerVoiceConfig(
+                                speaker="Host B",
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Puck")
+                                ),
+                            ),
+                        ]
+                    )
+                ),
+            ),
+        )
+
+        audio_bytes = None
+        audio_mime = None
+        for candidate in tts_resp.candidates or []:
+            for part in candidate.content.parts or []:
+                if part.inline_data and part.inline_data.mime_type.startswith("audio/"):
+                    audio_bytes = part.inline_data.data
+                    audio_mime = part.inline_data.mime_type
+                    break
+            if audio_bytes:
+                break
+
+        if not audio_bytes:
+            raise ValueError("No audio data in TTS response")
+
+        # Wrap raw PCM (audio/L16) in a WAV container; pass through WAV directly
+        if audio_mime and "wav" not in audio_mime.lower():
+            wav_data = _pcm_to_wav(audio_bytes)
+        else:
+            wav_data = audio_bytes
+
+        return FileResponse(
+            content=wav_data,
+            media_type="audio/wav",
+            headers={"Content-Disposition": f"inline; filename=audio-overview-{notebook_id}.wav"},
+        )
+
+    except Exception as exc:
+        logger.warning("TTS failed for notebook=%s, returning script fallback: %s", notebook_id, exc)
+        # Fallback: return the script so the frontend can use Web Speech API
+        return FileResponse(
+            content=json.dumps({"script": script}, ensure_ascii=False).encode(),
+            media_type="application/json",
+        )
+
+
+def _pcm_to_wav(pcm: bytes, sample_rate: int = 24000, channels: int = 1, bit_depth: int = 16) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(bit_depth // 8)
+        wf.setframerate(sample_rate)
+        wf.writeframes(pcm)
+    return buf.getvalue()

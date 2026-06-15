@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ChevronLeft, FileText, Headphones, Loader2, MoreVertical,
   Plus, Send, Sparkles, X, MonitorPlay, BrainCircuit, Video,
-  BookOpen, FileBarChart, HelpCircle, BarChart3, Table2, Newspaper,
-  ChevronRight, Check, RotateCcw,
+  BookOpen, FileBarChart, HelpCircle, BarChart3, Table2,
+  ChevronRight, Check, RotateCcw, Volume2, Play, Pause, Square,
 } from "lucide-react";
 import {
   chatNotebook, clearNotebookChat, deleteNotebookSource,
-  getNotebook, renameNotebook, uploadNotebookSources,
+  getNotebook, renameNotebook, uploadNotebookSources, generateNotebookAudio,
 } from "@/lib/api";
 import type { NotebookDetail, NotebookSource } from "@/lib/types";
 
@@ -19,7 +19,7 @@ import type { NotebookDetail, NotebookSource } from "@/lib/types";
 // ─────────────────────────────────────────────────────────────
 
 type StudioType =
-  | "presentation" | "audio" | "mindmap" | "video"
+  | "presentation" | "mindmap" | "video"
   | "flashcards" | "report" | "quiz" | "infographic" | "datatable";
 
 interface UserMsg  { kind: "user";   id: string; content: string }
@@ -38,7 +38,7 @@ interface IFact       { icon: string; title: string; value: string; desc: string
 interface DataTable   { title: string; headers: string[]; rows: string[][] }
 
 // ─────────────────────────────────────────────────────────────
-// Studio config
+// Studio config (no audio/flashcards — they have dedicated UI)
 // ─────────────────────────────────────────────────────────────
 
 const STUDIO: {
@@ -50,11 +50,6 @@ const STUDIO: {
     prompt: `Create a slide presentation. Return ONLY a JSON object (no extra text):
 {"slides":[{"title":"string","points":["string"],"notes":"string"}]}
 Make 7-9 slides covering all key topics from the sources.`,
-  },
-  {
-    type: "audio", label: "Audio Overview", Icon: Headphones, color: "#E8711A", format: "md",
-    prompt: `Write a podcast-style conversation between two hosts (Host A and Host B) about the documents.
-Format: **Host A:** [dialogue]\n**Host B:** [response]. About 800-1000 words, conversational and insightful.`,
   },
   {
     type: "mindmap", label: "Mind Map", Icon: BrainCircuit, color: "#6AA84F", format: "json",
@@ -101,7 +96,7 @@ Extract all quantitative data, parties, dates, or structured comparisons.`,
 ];
 
 // ─────────────────────────────────────────────────────────────
-// SSE parser
+// SSE parser + JSON helper
 // ─────────────────────────────────────────────────────────────
 async function* parseSSE(stream: ReadableStream<Uint8Array>) {
   const reader = stream.getReader();
@@ -153,6 +148,214 @@ function WithCitations({ text, sources }: { text: string; sources: NotebookSourc
 }
 
 // ─────────────────────────────────────────────────────────────
+// Flashcard Modal (fullscreen overlay)
+// ─────────────────────────────────────────────────────────────
+function FlashcardModal({ cards, onClose }: { cards: Flashcard[]; onClose: () => void }) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); setFlipped(f => !f); }
+      if (e.key === "ArrowRight" && idx < cards.length - 1) { setIdx(i => i + 1); setFlipped(false); }
+      if (e.key === "ArrowLeft" && idx > 0) { setIdx(i => i - 1); setFlipped(false); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [idx, cards.length, onClose]);
+
+  const card = cards[idx];
+  const progress = ((idx + 1) / cards.length) * 100;
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#111113]">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#2C2C2E] px-6 py-4">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-[#7B68EE]" />
+          <span className="text-sm font-semibold text-white">Flashcards</span>
+          <span className="text-sm text-[#8E8E93]">{idx + 1} / {cards.length}</span>
+        </div>
+        <button onClick={onClose} className="rounded-md p-1.5 text-[#8E8E93] hover:bg-[#2C2C2E] hover:text-white">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-[#2C2C2E]">
+        <div className="h-full bg-[#7B68EE] transition-all duration-300" style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* Card */}
+      <div className="flex flex-1 flex-col items-center justify-center px-8">
+        <div
+          className="w-full max-w-2xl cursor-pointer"
+          onClick={() => setFlipped(f => !f)}
+          style={{ perspective: "1000px" }}
+        >
+          <div
+            className="relative h-72 transition-transform duration-500"
+            style={{ transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+          >
+            {/* Front */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] p-8 text-center"
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#636366]">Question</p>
+              <p className="text-xl font-medium leading-relaxed text-white">{card?.front}</p>
+              <p className="mt-6 text-[11px] text-[#636366]">Click or press Space to reveal answer</p>
+            </div>
+            {/* Back */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-[#7B68EE]/40 bg-[#1C1C1E] p-8 text-center"
+              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+            >
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#7B68EE]">Answer</p>
+              <p className="text-lg leading-relaxed text-[#C7C7CC]">{card?.back}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <div className="mt-8 flex items-center gap-6">
+          <button
+            disabled={idx === 0}
+            onClick={() => { setIdx(i => i - 1); setFlipped(false); }}
+            className="flex items-center gap-1.5 rounded-xl border border-[#3A3A3C] px-4 py-2.5 text-sm text-[#C7C7CC] hover:border-[#7B68EE] hover:text-white disabled:opacity-30"
+          >
+            <ChevronLeft className="h-4 w-4" /> Previous
+          </button>
+          <button
+            onClick={() => setFlipped(f => !f)}
+            className="flex items-center gap-1.5 rounded-xl bg-[#7B68EE]/10 px-4 py-2.5 text-sm text-[#7B68EE] hover:bg-[#7B68EE]/20"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Flip
+          </button>
+          <button
+            disabled={idx === cards.length - 1}
+            onClick={() => { setIdx(i => i + 1); setFlipped(false); }}
+            className="flex items-center gap-1.5 rounded-xl border border-[#3A3A3C] px-4 py-2.5 text-sm text-[#C7C7CC] hover:border-[#7B68EE] hover:text-white disabled:opacity-30"
+          >
+            Next <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <p className="mt-4 text-[11px] text-[#636366]">← → arrow keys to navigate · Space to flip · Esc to close</p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Audio Player
+// ─────────────────────────────────────────────────────────────
+function AudioPlayer({ src, script }: { src: string | null; script: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const synthRef = useRef<SpeechSynthesisUtterance[]>([]);
+  const [speaking, setSpeaking] = useState(false);
+
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  // Real audio player
+  if (src) {
+    return (
+      <div className="mt-3 rounded-xl bg-[#2C2C2E] p-3">
+        <audio
+          ref={audioRef}
+          src={src}
+          className="hidden"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          onTimeUpdate={() => setProgress(audioRef.current?.currentTime ?? 0)}
+          onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+        />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { if (playing) audioRef.current?.pause(); else audioRef.current?.play(); }}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8711A] text-white hover:bg-[#D4621A]"
+          >
+            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+          <div className="flex-1">
+            <input
+              type="range" min={0} max={duration || 100} value={progress} step={0.1}
+              onChange={e => { if (audioRef.current) audioRef.current.currentTime = Number(e.target.value); setProgress(Number(e.target.value)); }}
+              className="w-full accent-[#E8711A]"
+            />
+          </div>
+          <span className="text-[11px] text-[#8E8E93]">{fmt(progress)} / {fmt(duration)}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Web Speech fallback
+  if (script) {
+    const lines = script.split("\n").filter(l => l.trim().match(/^Host [AB]:/));
+
+    const speakLines = () => {
+      if (typeof window === "undefined") return;
+      window.speechSynthesis.cancel();
+      setSpeaking(true);
+      const voices = window.speechSynthesis.getVoices();
+      const voiceA = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female")) || voices.find(v => v.lang.startsWith("en")) || voices[0];
+      const voiceB = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("male") && v !== voiceA) || voices.find(v => v.lang.startsWith("en") && v !== voiceA) || voices[1] || voices[0];
+
+      const utterances: SpeechSynthesisUtterance[] = lines.map((line, i) => {
+        const text = line.replace(/^Host [AB]:\s*/, "");
+        const u = new SpeechSynthesisUtterance(text);
+        u.voice = i % 2 === 0 ? voiceA : voiceB;
+        u.rate = 1.05;
+        if (i === lines.length - 1) u.onend = () => setSpeaking(false);
+        return u;
+      });
+      synthRef.current = utterances;
+      utterances.forEach(u => window.speechSynthesis.speak(u));
+    };
+
+    const stopSpeaking = () => {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+    };
+
+    return (
+      <div className="mt-3 rounded-xl bg-[#2C2C2E] p-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={speaking ? stopSpeaking : speakLines}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8711A] text-white hover:bg-[#D4621A]"
+          >
+            {speaking ? <Square className="h-3.5 w-3.5" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+          <div className="flex-1">
+            {speaking ? (
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div key={i} className="w-0.5 rounded-full bg-[#E8711A]"
+                    style={{ height: `${8 + Math.sin(i * 0.8) * 8}px`, animationDelay: `${i * 0.05}s`, animation: "pulse 0.8s ease-in-out infinite" }} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-[12px] text-[#8E8E93]">Press play to listen ({lines.length} turns)</p>
+            )}
+          </div>
+          <Volume2 className="h-4 w-4 text-[#8E8E93]" />
+        </div>
+        <p className="mt-1.5 text-[10px] text-[#636366]">Using browser text-to-speech synthesis</p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Studio renderers
 // ─────────────────────────────────────────────────────────────
 
@@ -185,47 +388,6 @@ function PresentationRenderer({ data }: { data: { slides: Slide[] } }) {
           <ChevronLeft className="h-3.5 w-3.5" /> Previous
         </button>
         <button disabled={idx === slides.length - 1} onClick={() => setIdx(i => i + 1)}
-          className="flex items-center gap-1 text-xs text-[#1A8C52] disabled:opacity-30">
-          Next <ChevronRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function FlashcardsRenderer({ data }: { data: { cards: Flashcard[] } }) {
-  const [idx, setIdx] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const cards = data.cards ?? [];
-  const card = cards[idx];
-  if (!card) return null;
-  return (
-    <div className="rounded-xl bg-[#1A1A1E] overflow-hidden">
-      <div className="bg-[#2C2C2E] px-4 py-2.5 flex items-center justify-between">
-        <span className="text-xs text-[#8E8E93]">Flashcards · {cards.length} cards</span>
-        <span className="text-xs text-[#8E8E93]">{idx + 1} / {cards.length}</span>
-      </div>
-      <div
-        className="mx-4 my-4 cursor-pointer rounded-xl border border-[#3A3A3C] bg-[#2C2C2E] p-8 text-center transition-all hover:border-[#1A8C52]"
-        onClick={() => setFlipped(f => !f)}
-      >
-        <p className="text-[11px] font-medium uppercase tracking-wider text-[#636366] mb-3">
-          {flipped ? "Answer" : "Question"} · click to flip
-        </p>
-        <p className="text-[15px] text-white leading-relaxed">
-          {flipped ? card.back : card.front}
-        </p>
-      </div>
-      <div className="border-t border-[#2C2C2E] px-4 py-2 flex justify-between items-center">
-        <button disabled={idx === 0} onClick={() => { setIdx(i => i - 1); setFlipped(false); }}
-          className="flex items-center gap-1 text-xs text-[#1A8C52] disabled:opacity-30">
-          <ChevronLeft className="h-3.5 w-3.5" /> Previous
-        </button>
-        <button onClick={() => setFlipped(f => !f)}
-          className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white">
-          <RotateCcw className="h-3 w-3" /> Flip
-        </button>
-        <button disabled={idx === cards.length - 1} onClick={() => { setIdx(i => i + 1); setFlipped(false); }}
           className="flex items-center gap-1 text-xs text-[#1A8C52] disabled:opacity-30">
           Next <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -419,12 +581,11 @@ function StudioArtifact({ entry, sources }: { entry: StudioMsg; sources: Noteboo
       <div className="min-w-0 flex-1">
         <p className="text-[12px] font-medium text-[#8E8E93] mb-2">{cfg?.label}</p>
         {entry.studioType === "presentation"  && <PresentationRenderer data={entry.data as { slides: Slide[] }} />}
-        {entry.studioType === "flashcards"    && <FlashcardsRenderer   data={entry.data as { cards: Flashcard[] }} />}
         {entry.studioType === "quiz"          && <QuizRenderer         data={entry.data as { questions: QuizQ[] }} />}
         {entry.studioType === "mindmap"       && <MindMapRenderer      data={entry.data as { center: string; branches: MapBranch[] }} />}
         {entry.studioType === "infographic"   && <InfographicRenderer  data={entry.data as { title: string; facts: IFact[] }} />}
         {entry.studioType === "datatable"     && <DataTableRenderer    data={entry.data as DataTable} />}
-        {["audio","video","report"].includes(entry.studioType) && <MarkdownRenderer text={entry.raw} sources={sources} />}
+        {["video","report"].includes(entry.studioType) && <MarkdownRenderer text={entry.raw} sources={sources} />}
       </div>
     </div>
   );
@@ -448,7 +609,16 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
   const [titleDraft, setTitleDraft] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const bottomRef  = useRef<HTMLDivElement>(null);
+  // Flashcard modal state
+  const [flashcardData, setFlashcardData] = useState<Flashcard[] | null>(null);
+  const [flashcardsGenerating, setFlashcardsGenerating] = useState(false);
+
+  // Audio overview state
+  const [audioGenerating, setAudioGenerating] = useState(false);
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [audioScript, setAudioScript] = useState<string | null>(null);
+
+  const bottomRef    = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
 
@@ -487,9 +657,30 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
     finally { setIsStreaming(false); setStreamingText(""); }
   }, [id, input, isStreaming, sources.length]);
 
-  // ── Studio generate ───────────────────────────────────────
+  // ── Studio generate (non-flashcard, non-audio) ───────────
   const handleStudio = useCallback(async (type: StudioType) => {
     if (!sources.length) { setError("Add at least one source first."); return; }
+
+    // Flashcards open in modal
+    if (type === "flashcards") {
+      setFlashcardsGenerating(true);
+      setError(null);
+      const cfg = STUDIO.find(s => s.type === "flashcards")!;
+      try {
+        const res = await chatNotebook(id, cfg.prompt);
+        if (!res.body) throw new Error("No response body");
+        let full = "";
+        for await (const ev of parseSSE(res.body)) {
+          if (ev.type === "chunk") full += ev.text;
+        }
+        const parsed = tryParseJSON(full) as { cards: Flashcard[] } | null;
+        if (parsed?.cards?.length) setFlashcardData(parsed.cards);
+        else setError("Could not generate flashcards. Try again.");
+      } catch (e) { setError(e instanceof Error ? e.message : "Error"); }
+      finally { setFlashcardsGenerating(false); }
+      return;
+    }
+
     const cfg = STUDIO.find(s => s.type === type)!;
     const artifactId = `studio-${Date.now()}`;
     const placeholder: StudioMsg = { kind: "studio", id: artifactId, studioType: type, loading: true, data: null, raw: "" };
@@ -513,6 +704,23 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
       setError(e instanceof Error ? e.message : "Studio error");
       setEntries(prev => prev.filter(e => e.id !== artifactId));
     }
+  }, [id, sources.length]);
+
+  // ── Audio Overview generate ───────────────────────────────
+  const handleGenerateAudio = useCallback(async () => {
+    if (!sources.length) { setError("Add at least one source first."); return; }
+    setAudioGenerating(true); setError(null);
+    setAudioSrc(null); setAudioScript(null);
+    try {
+      const result = await generateNotebookAudio(id);
+      if (result.type === "audio") {
+        const url = URL.createObjectURL(result.blob);
+        setAudioSrc(url);
+      } else {
+        setAudioScript(result.script);
+      }
+    } catch (e) { setError(e instanceof Error ? e.message : "Audio generation failed"); }
+    finally { setAudioGenerating(false); }
   }, [id, sources.length]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -545,252 +753,327 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
   );
 
   const hasMessages = entries.length > 0 || isStreaming;
+  const hasAudio = audioSrc !== null || audioScript !== null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col bg-[#111113] text-[#F2F2F7]">
+    <>
+      {/* Flashcard modal */}
+      {flashcardData && (
+        <FlashcardModal cards={flashcardData} onClose={() => setFlashcardData(null)} />
+      )}
 
-      {/* ── Header ───────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 border-b border-[#2C2C2E] bg-[#111113] px-4 py-2.5">
-        <button onClick={() => router.push("/notebooks")}
-          className="rounded-md p-1.5 text-[#8E8E93] hover:bg-[#2C2C2E] hover:text-white">
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        {editingTitle ? (
-          <input autoFocus value={titleDraft}
-            onChange={e => setTitleDraft(e.target.value)}
-            onBlur={handleRenameSubmit}
-            onKeyDown={e => { if (e.key === "Enter") handleRenameSubmit(); if (e.key === "Escape") setEditingTitle(false); }}
-            className="flex-1 rounded-lg border border-[#1A8C52] bg-[#2C2C2E] px-3 py-1 text-sm font-medium text-white outline-none" />
-        ) : (
-          <h1 className="flex-1 cursor-pointer truncate text-sm font-semibold hover:opacity-70"
-            onClick={() => setEditingTitle(true)}>
-            {notebook.title}
-          </h1>
-        )}
-        {hasMessages && (
-          <button onClick={async () => {
-            if (!confirm("Clear conversation?")) return;
-            await clearNotebookChat(id);
-            setEntries([]);
-          }} className="text-xs text-[#8E8E93] hover:text-white px-2 py-1 rounded">
-            Clear
+      <div className="flex h-[calc(100vh-4rem)] flex-col bg-[#111113] text-[#F2F2F7]">
+
+        {/* ── Header ───────────────────────────────────────────── */}
+        <header className="flex items-center gap-3 border-b border-[#2C2C2E] bg-[#111113] px-4 py-2.5">
+          <button onClick={() => router.push("/notebooks")}
+            className="rounded-md p-1.5 text-[#8E8E93] hover:bg-[#2C2C2E] hover:text-white">
+            <ArrowLeft className="h-4 w-4" />
           </button>
-        )}
-        <button className="rounded-md p-1.5 text-[#8E8E93] hover:bg-[#2C2C2E]">
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </header>
+          {editingTitle ? (
+            <input autoFocus value={titleDraft}
+              onChange={e => setTitleDraft(e.target.value)}
+              onBlur={handleRenameSubmit}
+              onKeyDown={e => { if (e.key === "Enter") handleRenameSubmit(); if (e.key === "Escape") setEditingTitle(false); }}
+              className="flex-1 rounded-lg border border-[#1A8C52] bg-[#2C2C2E] px-3 py-1 text-sm font-medium text-white outline-none" />
+          ) : (
+            <h1 className="flex-1 cursor-pointer truncate text-sm font-semibold hover:opacity-70"
+              onClick={() => setEditingTitle(true)}>
+              {notebook.title}
+            </h1>
+          )}
+          {hasMessages && (
+            <button onClick={async () => {
+              if (!confirm("Clear conversation?")) return;
+              await clearNotebookChat(id);
+              setEntries([]);
+            }} className="text-xs text-[#8E8E93] hover:text-white px-2 py-1 rounded">
+              Clear
+            </button>
+          )}
+          <button className="rounded-md p-1.5 text-[#8E8E93] hover:bg-[#2C2C2E]">
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </header>
 
-      {/* ── Three panels ─────────────────────────────────────── */}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* ── Three panels ─────────────────────────────────────── */}
+        <div className="flex min-h-0 flex-1 overflow-hidden">
 
-        {/* ── LEFT: Studio ────────────────────────────────────── */}
-        <aside className="flex w-[260px] shrink-0 flex-col border-r border-[#2C2C2E] bg-[#1C1C1E]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2C2C2E]">
-            <span className="text-[13px] font-semibold text-[#F2F2F7]">Studio</span>
-            <Sparkles className="h-4 w-4 text-[#8E8E93]" />
-          </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            <div className="grid grid-cols-2 gap-2">
-              {STUDIO.map(cfg => (
-                <button key={cfg.type}
-                  onClick={() => handleStudio(cfg.type)}
-                  disabled={!sources.length}
-                  className="group flex flex-col items-start gap-2 rounded-xl bg-[#2C2C2E] px-3 py-3 text-left transition-all hover:bg-[#3A3A3C] disabled:opacity-40">
-                  <cfg.Icon className="h-4 w-4" style={{ color: cfg.color }} />
-                  <div className="flex w-full items-center justify-between">
-                    <span className="text-[11.5px] font-medium text-[#F2F2F7] leading-tight">{cfg.label}</span>
-                    <ChevronLeft className="h-3 w-3 text-[#636366] group-hover:text-[#8E8E93]" />
-                  </div>
-                </button>
-              ))}
+          {/* ── LEFT: Studio ────────────────────────────────────── */}
+          <aside className="flex w-[260px] shrink-0 flex-col border-r border-[#2C2C2E] bg-[#1C1C1E]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2C2C2E]">
+              <span className="text-[13px] font-semibold text-[#F2F2F7]">Studio</span>
+              <Sparkles className="h-4 w-4 text-[#8E8E93]" />
             </div>
-          </div>
-          <div className="border-t border-[#2C2C2E] p-3">
-            <p className="text-[10.5px] text-[#636366] leading-relaxed">
-              Studio content is generated from your sources. Click any format to generate.
-            </p>
-          </div>
-        </aside>
 
-        {/* ── CENTER: Chat ─────────────────────────────────────── */}
-        <main className="flex min-w-0 flex-1 flex-col bg-[#111113]">
-          <div className="flex-1 overflow-y-auto py-6">
-            {!hasMessages ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-                <div className="text-5xl">👋</div>
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-2">
-                    Let&apos;s start building your notebook...
-                  </h2>
-                  <p className="text-sm text-[#8E8E93]">
-                    {sources.length === 0
-                      ? "Add sources on the right to get started"
-                      : `Grounded in ${sources.length} source${sources.length > 1 ? "s" : ""}`}
-                  </p>
+            <div className="flex-1 overflow-y-auto">
+              {/* Audio Overview */}
+              <div className="m-3 rounded-xl border border-[#3A3A3C] bg-[#2C2C2E] p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Headphones className="h-4 w-4 text-[#E8711A]" />
+                  <span className="text-[13px] font-semibold text-[#F2F2F7]">Audio Overview</span>
                 </div>
-                {sources.length > 0 && (
-                  <div>
-                    <p className="text-sm text-[#8E8E93] mb-3">What would you like to do?</p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {["Summarize all sources", "What are the key risks?", "List important dates and parties", "Create a timeline of events"].map(q => (
-                        <button key={q} onClick={() => handleSend(q)}
-                          className="rounded-full border border-[#3A3A3C] px-4 py-2 text-sm text-[#C7C7CC] hover:border-[#1A8C52] hover:text-white transition-colors">
-                          {q}
-                        </button>
+                <p className="text-[11px] text-[#8E8E93] mb-3 leading-relaxed">
+                  Two AI hosts discuss your sources in a podcast-style conversation.
+                </p>
+
+                {/* Host avatars */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8711A] text-[11px] font-bold text-white">A</div>
+                  {(audioGenerating || hasAudio) ? (
+                    <div className="flex flex-1 items-center gap-0.5 px-1">
+                      {Array.from({ length: 16 }).map((_, i) => (
+                        <div key={i} className="w-0.5 rounded-full bg-[#E8711A]/60"
+                          style={{ height: `${6 + Math.abs(Math.sin(i * 0.6)) * 10}px` }} />
                       ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center gap-0.5">
+                      {Array.from({ length: 16 }).map((_, i) => (
+                        <div key={i} className="w-0.5 rounded-full bg-[#3A3A3C]" style={{ height: "3px" }} />
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#5B9BD5] text-[11px] font-bold text-white">B</div>
+                </div>
+
+                {hasAudio && (
+                  <AudioPlayer src={audioSrc} script={audioScript} />
                 )}
+
+                <button
+                  onClick={handleGenerateAudio}
+                  disabled={audioGenerating || !sources.length}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E8711A] py-2.5 text-[13px] font-semibold text-white hover:bg-[#D4621A] disabled:opacity-50 transition-colors"
+                >
+                  {audioGenerating ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating…</>
+                  ) : (
+                    hasAudio ? "Regenerate" : "Generate"
+                  )}
+                </button>
               </div>
-            ) : (
-              <div className="mx-auto max-w-2xl space-y-6">
-                {entries.map(entry => {
-                  if (entry.kind === "user") {
+
+              {/* Flashcards special button */}
+              <div className="mx-3 mb-2">
+                <button
+                  onClick={() => handleStudio("flashcards")}
+                  disabled={!sources.length || flashcardsGenerating}
+                  className="group flex w-full items-center gap-3 rounded-xl bg-[#2C2C2E] px-4 py-3 text-left transition-all hover:bg-[#3A3A3C] disabled:opacity-40"
+                >
+                  {flashcardsGenerating
+                    ? <Loader2 className="h-4 w-4 animate-spin text-[#7B68EE]" />
+                    : <BookOpen className="h-4 w-4 text-[#7B68EE]" />
+                  }
+                  <span className="flex-1 text-[12.5px] font-medium text-[#F2F2F7]">
+                    {flashcardsGenerating ? "Generating flashcards…" : "Flashcards"}
+                  </span>
+                  <ChevronRight className="h-3 w-3 text-[#636366] group-hover:text-[#8E8E93]" />
+                </button>
+              </div>
+
+              {/* Other studio items */}
+              <div className="grid grid-cols-2 gap-2 px-3 pb-3">
+                {STUDIO.filter(s => s.type !== "flashcards").map(cfg => (
+                  <button key={cfg.type}
+                    onClick={() => handleStudio(cfg.type)}
+                    disabled={!sources.length}
+                    className="group flex flex-col items-start gap-2 rounded-xl bg-[#2C2C2E] px-3 py-3 text-left transition-all hover:bg-[#3A3A3C] disabled:opacity-40">
+                    <cfg.Icon className="h-4 w-4" style={{ color: cfg.color }} />
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-[11.5px] font-medium text-[#F2F2F7] leading-tight">{cfg.label}</span>
+                      <ChevronRight className="h-3 w-3 text-[#636366] group-hover:text-[#8E8E93]" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-[#2C2C2E] p-3">
+              <p className="text-[10.5px] text-[#636366] leading-relaxed">
+                Studio content is generated from your sources.
+              </p>
+            </div>
+          </aside>
+
+          {/* ── CENTER: Chat ─────────────────────────────────────── */}
+          <main className="flex min-w-0 flex-1 flex-col bg-[#111113]">
+            <div className="flex-1 overflow-y-auto py-6">
+              {!hasMessages ? (
+                <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
+                  <div className="text-5xl">👋</div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white mb-2">
+                      Let&apos;s start building your notebook...
+                    </h2>
+                    <p className="text-sm text-[#8E8E93]">
+                      {sources.length === 0
+                        ? "Add sources on the right to get started"
+                        : `Grounded in ${sources.length} source${sources.length > 1 ? "s" : ""}`}
+                    </p>
+                  </div>
+                  {sources.length > 0 && (
+                    <div>
+                      <p className="text-sm text-[#8E8E93] mb-3">What would you like to do?</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {["Summarize all sources", "What are the key risks?", "List important dates and parties", "Create a timeline of events"].map(q => (
+                          <button key={q} onClick={() => handleSend(q)}
+                            className="rounded-full border border-[#3A3A3C] px-4 py-2 text-sm text-[#C7C7CC] hover:border-[#1A8C52] hover:text-white transition-colors">
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mx-auto max-w-2xl space-y-6">
+                  {entries.map(entry => {
+                    if (entry.kind === "user") {
+                      return (
+                        <div key={entry.id} className="flex justify-end px-4">
+                          <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-[#2C2C2E] px-4 py-3 text-[13.5px] text-[#F2F2F7]">
+                            {entry.content}
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (entry.kind === "studio") {
+                      return <StudioArtifact key={entry.id} entry={entry} sources={sources} />;
+                    }
+                    const cited = Array.from(new Set(
+                      [...entry.content.matchAll(/\[(\d+)\]/g)].map(m => parseInt(m[1], 10))
+                    )).filter(n => n >= 1 && n <= sources.length);
                     return (
-                      <div key={entry.id} className="flex justify-end px-4">
-                        <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-[#2C2C2E] px-4 py-3 text-[13.5px] text-[#F2F2F7]">
-                          {entry.content}
+                      <div key={entry.id} className="flex gap-3 px-4">
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1A8C52]/20">
+                          <Sparkles className="h-3.5 w-3.5 text-[#1A8C52]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[13.5px] leading-relaxed text-[#C7C7CC]">
+                            {entry.content.split("\n").map((line, i) => (
+                              <p key={i} className="mb-1 last:mb-0">
+                                <WithCitations text={line} sources={sources} />
+                              </p>
+                            ))}
+                          </div>
+                          {cited.length > 0 && (
+                            <div className="mt-2.5 flex flex-wrap gap-1.5">
+                              {cited.map(n => (
+                                <span key={n} className="flex items-center gap-1.5 rounded-full bg-[#2C2C2E] px-2.5 py-0.5 text-[11px] text-[#8E8E93]">
+                                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#1A8C52] text-[8px] font-bold text-white">{n}</span>
+                                  <span className="max-w-[120px] truncate">{sources[n - 1]?.original_name}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
-                  }
-                  if (entry.kind === "studio") {
-                    return <StudioArtifact key={entry.id} entry={entry} sources={sources} />;
-                  }
-                  // AI message
-                  const cited = Array.from(new Set(
-                    [...entry.content.matchAll(/\[(\d+)\]/g)].map(m => parseInt(m[1], 10))
-                  )).filter(n => n >= 1 && n <= sources.length);
-                  return (
-                    <div key={entry.id} className="flex gap-3 px-4">
+                  })}
+
+                  {isStreaming && (
+                    <div className="flex gap-3 px-4">
                       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1A8C52]/20">
-                        <Sparkles className="h-3.5 w-3.5 text-[#1A8C52]" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1A8C52]" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[13.5px] leading-relaxed text-[#C7C7CC]">
-                          {entry.content.split("\n").map((line, i) => (
-                            <p key={i} className="mb-1 last:mb-0">
-                              <WithCitations text={line} sources={sources} />
-                            </p>
-                          ))}
-                        </div>
-                        {cited.length > 0 && (
-                          <div className="mt-2.5 flex flex-wrap gap-1.5">
-                            {cited.map(n => (
-                              <span key={n} className="flex items-center gap-1.5 rounded-full bg-[#2C2C2E] px-2.5 py-0.5 text-[11px] text-[#8E8E93]">
-                                <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#1A8C52] text-[8px] font-bold text-white">{n}</span>
-                                <span className="max-w-[120px] truncate">{sources[n - 1]?.original_name}</span>
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                      <div className="text-[13.5px] leading-relaxed text-[#C7C7CC]">
+                        {streamingText
+                          ? streamingText.split("\n").map((l, i) => <p key={i} className="mb-1 last:mb-0"><WithCitations text={l} sources={sources} /></p>)
+                          : <span className="text-[#636366] italic">Analyzing sources…</span>}
                       </div>
                     </div>
-                  );
-                })}
-
-                {isStreaming && (
-                  <div className="flex gap-3 px-4">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1A8C52]/20">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#1A8C52]" />
-                    </div>
-                    <div className="text-[13.5px] leading-relaxed text-[#C7C7CC]">
-                      {streamingText
-                        ? streamingText.split("\n").map((l, i) => <p key={i} className="mb-1 last:mb-0"><WithCitations text={l} sources={sources} /></p>)
-                        : <span className="text-[#636366] italic">Analyzing sources…</span>}
-                    </div>
-                  </div>
-                )}
-                {error && (
-                  <div className="mx-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">{error}</div>
-                )}
-                <div ref={bottomRef} />
-              </div>
-            )}
-          </div>
-
-          {/* Input */}
-          <div className="border-t border-[#2C2C2E] bg-[#111113] px-6 py-4">
-            <div className="mx-auto max-w-2xl">
-              <div className="flex items-end gap-3 rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] px-4 py-3 focus-within:border-[#1A8C52]/60">
-                <button onClick={() => fileInputRef.current?.click()}
-                  className="shrink-0 flex items-center gap-1.5 rounded-lg border border-[#3A3A3C] px-2.5 py-1.5 text-[11px] text-[#8E8E93] hover:text-white hover:border-[#636366]">
-                  <ChevronLeft className="h-3 w-3" />
-                  <span>{sources.length} sources</span>
-                </button>
-                <textarea ref={textareaRef} value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 160)}px`; }}
-                  placeholder="Ask a question or create something"
-                  rows={1} disabled={isStreaming}
-                  className="max-h-40 flex-1 resize-none bg-transparent text-[13.5px] text-[#F2F2F7] outline-none placeholder:text-[#636366] disabled:opacity-50" />
-                <button onClick={() => handleSend()} disabled={!input.trim() || isStreaming}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#1A8C52] text-white disabled:opacity-30 hover:bg-[#157A44]">
-                  {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-              <p className="mt-1 text-center text-[10.5px] text-[#636366]">
-                NotebookLM responses may be inaccurate — always verify with original sources.
-              </p>
-            </div>
-          </div>
-        </main>
-
-        {/* ── RIGHT: Sources ───────────────────────────────────── */}
-        <aside className="flex w-[260px] shrink-0 flex-col border-l border-[#2C2C2E] bg-[#1C1C1E]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2C2C2E]">
-            <span className="text-[13px] font-semibold text-[#F2F2F7]">Sources</span>
-            <FileText className="h-4 w-4 text-[#8E8E93]" />
-          </div>
-
-          <div className="p-3 border-b border-[#2C2C2E]">
-            <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#3A3A3C] py-2.5 text-[12.5px] font-medium text-[#F2F2F7] hover:border-[#1A8C52] hover:text-[#1A8C52] transition-colors disabled:opacity-50">
-              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-              Add source
-            </button>
-            <input ref={fileInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleUpload} />
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3">
-            {sources.length === 0 ? (
-              <div className="mt-6 flex flex-col items-center gap-3 text-center px-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2C2C2E]">
-                  <FileText className="h-6 w-6 text-[#636366]" />
+                  )}
+                  {error && (
+                    <div className="mx-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">{error}</div>
+                  )}
+                  <div ref={bottomRef} />
                 </div>
-                <p className="text-[11.5px] text-[#8E8E93] leading-relaxed">
-                  Sources will appear here. Click &quot;Add source&quot; to upload PDFs.
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-[#2C2C2E] bg-[#111113] px-6 py-4">
+              <div className="mx-auto max-w-2xl">
+                <div className="flex items-end gap-3 rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] px-4 py-3 focus-within:border-[#1A8C52]/60">
+                  <button onClick={() => fileInputRef.current?.click()}
+                    className="shrink-0 flex items-center gap-1.5 rounded-lg border border-[#3A3A3C] px-2.5 py-1.5 text-[11px] text-[#8E8E93] hover:text-white hover:border-[#636366]">
+                    <ChevronLeft className="h-3 w-3" />
+                    <span>{sources.length} sources</span>
+                  </button>
+                  <textarea ref={textareaRef} value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 160)}px`; }}
+                    placeholder="Ask a question or create something"
+                    rows={1} disabled={isStreaming}
+                    className="max-h-40 flex-1 resize-none bg-transparent text-[13.5px] text-[#F2F2F7] outline-none placeholder:text-[#636366] disabled:opacity-50" />
+                  <button onClick={() => handleSend()} disabled={!input.trim() || isStreaming}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#1A8C52] text-white disabled:opacity-30 hover:bg-[#157A44]">
+                    {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <p className="mt-1 text-center text-[10.5px] text-[#636366]">
+                  Responses may be inaccurate — always verify with original sources.
                 </p>
               </div>
-            ) : (
-              <ul className="space-y-1.5">
-                {sources.map((src, i) => {
-                  const colors = ["#4285F4","#EA4335","#FBBC04","#34A853","#9C27B0","#FF6D00"];
-                  const color = colors[i % colors.length];
-                  return (
-                    <li key={src.id} className="group flex items-center gap-2.5 rounded-xl bg-[#2C2C2E] px-3 py-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[9px] font-bold text-white"
-                        style={{ backgroundColor: color }}>
-                        PDF
-                      </div>
-                      <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-[#F2F2F7]" title={src.original_name}>
-                        {src.original_name}
-                      </p>
-                      <button onClick={() => deleteNotebookSource(notebook.id, src.id).then(() =>
-                        setSources(prev => prev.filter(s => s.id !== src.id))
-                      )} className="shrink-0 opacity-0 group-hover:opacity-100 text-[#636366] hover:text-red-400">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </aside>
+            </div>
+          </main>
+
+          {/* ── RIGHT: Sources ───────────────────────────────────── */}
+          <aside className="flex w-[260px] shrink-0 flex-col border-l border-[#2C2C2E] bg-[#1C1C1E]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2C2C2E]">
+              <span className="text-[13px] font-semibold text-[#F2F2F7]">Sources</span>
+              <FileText className="h-4 w-4 text-[#8E8E93]" />
+            </div>
+
+            <div className="p-3 border-b border-[#2C2C2E]">
+              <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#3A3A3C] py-2.5 text-[12.5px] font-medium text-[#F2F2F7] hover:border-[#1A8C52] hover:text-[#1A8C52] transition-colors disabled:opacity-50">
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                Add source
+              </button>
+              <input ref={fileInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleUpload} />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3">
+              {sources.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center gap-3 text-center px-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2C2C2E]">
+                    <FileText className="h-6 w-6 text-[#636366]" />
+                  </div>
+                  <p className="text-[11.5px] text-[#8E8E93] leading-relaxed">
+                    Sources will appear here. Click &quot;Add source&quot; to upload PDFs.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-1.5">
+                  {sources.map((src, i) => {
+                    const colors = ["#4285F4","#EA4335","#FBBC04","#34A853","#9C27B0","#FF6D00"];
+                    const color = colors[i % colors.length];
+                    return (
+                      <li key={src.id} className="group flex items-center gap-2.5 rounded-xl bg-[#2C2C2E] px-3 py-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[9px] font-bold text-white"
+                          style={{ backgroundColor: color }}>
+                          PDF
+                        </div>
+                        <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-[#F2F2F7]" title={src.original_name}>
+                          {src.original_name}
+                        </p>
+                        <button onClick={() => deleteNotebookSource(notebook.id, src.id).then(() =>
+                          setSources(prev => prev.filter(s => s.id !== src.id))
+                        )} className="shrink-0 opacity-0 group-hover:opacity-100 text-[#636366] hover:text-red-400">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
