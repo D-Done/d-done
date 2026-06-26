@@ -416,6 +416,64 @@ async def chat(
     )
 
 
+@router.post("/{notebook_id}/auto-name", response_model=NotebookOut)
+async def auto_name_notebook(
+    notebook_id: UUID,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Generate a short AI title from the notebook's sources and first message."""
+    async with AsyncSessionLocal() as db:
+        nb = await _get_notebook(notebook_id, user, db)
+        await db.refresh(nb, ["sources", "messages"])
+
+        source_names = [s.original_name for s in nb.sources]
+        first_msg = next((m.content for m in nb.messages if m.role == "user"), None)
+
+        context_parts = []
+        if source_names:
+            context_parts.append("Documents: " + ", ".join(source_names[:5]))
+        if first_msg:
+            context_parts.append("First question: " + first_msg[:300])
+
+        if not context_parts:
+            return _notebook_out(nb)
+
+    from google import genai
+    from google.genai import types
+    from app.agents.builder.builder_llm import _ensure_genai_env
+    _ensure_genai_env()
+
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1"))
+    prompt = (
+        "Generate a short, descriptive title (3-6 words) for a document analysis session.\n"
+        + "\n".join(context_parts)
+        + "\n\nRespond with ONLY the title — no quotes, no period at the end."
+    )
+
+    try:
+        resp = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.4, max_output_tokens=20),
+        )
+        title = (resp.text or "").strip().strip("\"'").strip()
+        if title:
+            async with AsyncSessionLocal() as db2:
+                nb2 = await _get_notebook(notebook_id, user, db2)
+                await db2.refresh(nb2, ["sources", "messages"])
+                nb2.title = title
+                await db2.commit()
+                await db2.refresh(nb2)
+                return _notebook_out(nb2)
+    except Exception:
+        pass
+
+    async with AsyncSessionLocal() as db3:
+        nb3 = await _get_notebook(notebook_id, user, db3)
+        await db3.refresh(nb3, ["sources", "messages"])
+        return _notebook_out(nb3)
+
+
 @router.delete("/{notebook_id}/chat", status_code=204)
 async def clear_chat(
     notebook_id: UUID,

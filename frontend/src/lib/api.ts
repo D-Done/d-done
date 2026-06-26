@@ -1485,6 +1485,10 @@ export async function deleteNotebook(id: string): Promise<void> {
   await request(`/notebooks/${id}`, { method: "DELETE" });
 }
 
+export async function autoNameNotebook(id: string): Promise<import("./types").NotebookListItem> {
+  return request(`/notebooks/${id}/auto-name`, { method: "POST" });
+}
+
 export async function uploadNotebookSources(id: string, files: File[]): Promise<import("./types").NotebookSource[]> {
   const form = new FormData();
   for (const f of files) form.append("files", f);

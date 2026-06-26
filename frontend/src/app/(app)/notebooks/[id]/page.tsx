@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   chatNotebook, clearNotebookChat, deleteNotebookSource,
-  getNotebook, renameNotebook, uploadNotebookSources, generateNotebookAudio,
+  getNotebook, renameNotebook, uploadNotebookSources, generateNotebookAudio, autoNameNotebook,
 } from "@/lib/api";
 import type { NotebookDetail, NotebookSource } from "@/lib/types";
 
@@ -642,6 +642,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
     const msg = (text ?? input).trim();
     if (!msg || isStreaming) return;
     if (!sources.length) { setError("Add at least one source before chatting."); return; }
+    const isFirstMessage = entries.length === 0;
     setInput(""); setError(null); setIsStreaming(true); setStreamingText("");
     setEntries(prev => [...prev, { kind: "user", id: `u-${Date.now()}`, content: msg }]);
     try {
@@ -653,9 +654,15 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
         else if (ev.type === "error") setError(ev.message);
       }
       if (full) setEntries(prev => [...prev, { kind: "ai", id: `a-${Date.now()}`, content: full }]);
+      if (isFirstMessage) {
+        autoNameNotebook(id).then(nb => {
+          setNotebook(prev => prev ? { ...prev, title: nb.title } : prev);
+          setTitleDraft(nb.title);
+        }).catch(() => {});
+      }
     } catch (e) { setError(e instanceof Error ? e.message : "Error"); }
     finally { setIsStreaming(false); setStreamingText(""); }
-  }, [id, input, isStreaming, sources.length]);
+  }, [id, input, isStreaming, sources.length, entries.length]);
 
   // ── Studio generate (non-flashcard, non-audio) ───────────
   const handleStudio = useCallback(async (type: StudioType) => {
