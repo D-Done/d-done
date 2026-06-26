@@ -63,6 +63,7 @@ class AgentOut(BaseModel):
     status: str
     knowledge_base_files: list[dict]
     extracted_fields_schema: dict | None
+    system_prompt: str | None = None
     created_at: str
     updated_at: str
     created_by_id: str
@@ -230,7 +231,7 @@ async def _get_accessible_agent(agent_id: UUID, user: CurrentUser, db) -> Custom
     return agent
 
 
-def _to_agent_out(agent: CustomAgent, creator: User | None = None) -> AgentOut:
+def _to_agent_out(agent: CustomAgent, creator: User | None = None, include_prompt: bool = False) -> AgentOut:
     return AgentOut(
         id=str(agent.id),
         name=agent.name,
@@ -238,6 +239,7 @@ def _to_agent_out(agent: CustomAgent, creator: User | None = None) -> AgentOut:
         status=agent.status,
         knowledge_base_files=list(agent.knowledge_base_files or []),
         extracted_fields_schema=agent.extracted_fields_schema,
+        system_prompt=agent.system_prompt if include_prompt else None,
         created_at=agent.created_at.isoformat(),
         updated_at=agent.updated_at.isoformat(),
         created_by_id=str(agent.created_by_id),
@@ -532,7 +534,8 @@ async def get_agent(
         agent = await _get_accessible_agent(agent_id, user, db)
         creator_result = await db.execute(select(User).where(User.id == agent.created_by_id))
         creator = creator_result.scalar_one_or_none()
-        return _to_agent_out(agent, creator)
+        is_owner = agent.created_by_id == user.id
+        return _to_agent_out(agent, creator, include_prompt=is_owner)
 
 
 @router.post("/{agent_id}/run")

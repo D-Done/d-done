@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bot, Plus, Play, Calendar, Pencil, Trash2, Share2, Check } from "lucide-react";
+import { Bot, Plus, Play, Calendar, Pencil, Trash2, Share2, Check, Settings } from "lucide-react";
 import { listAgents, getMe, renameAgent, deleteAgent } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
@@ -188,6 +188,13 @@ function AgentCard({
               </button>
               {isOwner && (
                 <>
+                  <button
+                    onClick={() => router.push(`/agents/${agent.id}/edit`)}
+                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                    title={lang === "he" ? "ערוך" : "Edit"}
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                  </button>
                   <button
                     onClick={startEdit}
                     className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"

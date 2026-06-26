@@ -1178,6 +1178,7 @@ export interface CustomAgent {
   status: "draft" | "published";
   knowledge_base_files: KnowledgeBaseFile[];
   extracted_fields_schema: Record<string, unknown> | null;
+  system_prompt: string | null;
   created_at: string;
   updated_at: string;
   created_by_id: string;
