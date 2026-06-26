@@ -85,6 +85,38 @@ class ChatRequest(BaseModel):
     message: str
 
 
+class AddProjectSourcesRequest(BaseModel):
+    project_id: str
+
+
+# ── File helpers ─────────────────────────────────────────────────────────────
+
+def _extract_text_docx(content: bytes) -> str:
+    from docx import Document
+    doc = Document(io.BytesIO(content))
+    return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+
+
+def _extract_text_xlsx(content: bytes) -> str:
+    import openpyxl
+    wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    lines = []
+    for sheet in wb.worksheets:
+        lines.append(f"[{sheet.title}]")
+        for row in sheet.iter_rows(values_only=True):
+            line = "\t".join("" if c is None else str(c) for c in row)
+            if line.strip():
+                lines.append(line)
+    return "\n".join(lines)
+
+
+def _source_mime(original_name: str) -> str:
+    n = original_name.lower()
+    if n.endswith((".docx", ".doc", ".xlsx", ".xls")):
+        return "text/plain"
+    return "application/pdf"
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _source_out(s: NotebookSource) -> NotebookSourceOut:
@@ -239,9 +271,25 @@ async def upload_sources(
             if not content:
                 continue
             safe_name = f.filename or "document.pdf"
-            object_name = f"notebooks/{notebook_id}/{uuid.uuid4()}_{safe_name}"
+            name_lower = safe_name.lower()
+
+            if name_lower.endswith((".docx", ".doc")):
+                text = await asyncio.to_thread(_extract_text_docx, content)
+                upload_content = text.encode("utf-8")
+                upload_mime = "text/plain"
+                object_name = f"notebooks/{notebook_id}/{uuid.uuid4()}_{safe_name}.txt"
+            elif name_lower.endswith((".xlsx", ".xls")):
+                text = await asyncio.to_thread(_extract_text_xlsx, content)
+                upload_content = text.encode("utf-8")
+                upload_mime = "text/plain"
+                object_name = f"notebooks/{notebook_id}/{uuid.uuid4()}_{safe_name}.txt"
+            else:
+                upload_content = content
+                upload_mime = f.content_type or "application/pdf"
+                object_name = f"notebooks/{notebook_id}/{uuid.uuid4()}_{safe_name}"
+
             gcs_uri = await asyncio.to_thread(
-                upload_bytes_to_gcs, content, object_name, f.content_type or "application/pdf"
+                upload_bytes_to_gcs, upload_content, object_name, upload_mime
             )
             source = NotebookSource(
                 notebook_id=nb.id,
@@ -281,6 +329,66 @@ async def delete_source(
             raise HTTPException(status_code=404, detail="Source not found")
         await db.delete(source)
         await db.commit()
+
+
+@router.post("/{notebook_id}/sources/from-project", response_model=list[NotebookSourceOut])
+async def add_sources_from_project(
+    notebook_id: UUID,
+    body: AddProjectSourcesRequest,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Import uploaded project files as notebook sources."""
+    from sqlalchemy import and_, or_
+    from app.db.models import File as FileModel, Project, ProjectMembership
+
+    async with AsyncSessionLocal() as db:
+        nb = await _get_notebook(notebook_id, user, db)
+
+        proj_result = await db.execute(
+            select(Project).where(
+                and_(
+                    Project.id == UUID(body.project_id),
+                    or_(
+                        Project.owner_id == user.id,
+                        Project.id.in_(
+                            select(ProjectMembership.project_id).where(
+                                ProjectMembership.user_id == user.id
+                            )
+                        ),
+                    ),
+                )
+            )
+        )
+        project = proj_result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        files_result = await db.execute(
+            select(FileModel).where(
+                FileModel.project_id == UUID(body.project_id),
+                FileModel.upload_status == "uploaded",
+            )
+        )
+        project_files = files_result.scalars().all()
+        if not project_files:
+            raise HTTPException(status_code=400, detail="No uploaded files in this project.")
+
+        new_sources = []
+        for f in project_files:
+            source = NotebookSource(
+                notebook_id=nb.id,
+                original_name=f.original_name,
+                gcs_uri=f.gcs_uri,
+                file_size_bytes=f.file_size_bytes,
+            )
+            db.add(source)
+            new_sources.append(source)
+
+        await db.commit()
+        for s in new_sources:
+            await db.refresh(s)
+
+        return [_source_out(s) for s in new_sources]
 
 
 @router.post("/{notebook_id}/chat")
@@ -337,7 +445,7 @@ async def chat(
 
         # Source document parts (all sources included in every request)
         source_parts = [
-            types.Part.from_uri(file_uri=s["gcs_uri"], mime_type="application/pdf")
+            types.Part.from_uri(file_uri=s["gcs_uri"], mime_type=_source_mime(s["name"]))
             for s in sources_snapshot
         ]
 

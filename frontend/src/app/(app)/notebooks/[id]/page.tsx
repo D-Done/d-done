@@ -11,8 +11,9 @@ import {
 import {
   chatNotebook, clearNotebookChat, deleteNotebookSource,
   getNotebook, renameNotebook, uploadNotebookSources, generateNotebookAudio, autoNameNotebook,
+  addNotebookSourcesFromProject, listProjects,
 } from "@/lib/api";
-import type { NotebookDetail, NotebookSource } from "@/lib/types";
+import type { NotebookDetail, NotebookSource, ProjectListItem } from "@/lib/types";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -697,6 +698,12 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
   const [titleDraft, setTitleDraft] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  // Source modal state
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showProjectList, setShowProjectList] = useState(false);
+  const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const [importingProject, setImportingProject] = useState(false);
+
   // Flashcard modal state
   const [flashcardData, setFlashcardData] = useState<Flashcard[] | null>(null);
   const [flashcardsGenerating, setFlashcardsGenerating] = useState(false);
@@ -827,11 +834,30 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
     if (!files.length) return;
     e.target.value = "";
     setUploading(true);
+    setShowSourceModal(false);
     try {
       const ns = await uploadNotebookSources(id, files);
       setSources(prev => [...prev, ...ns]);
     } catch (err) { setError(err instanceof Error ? err.message : "Upload failed"); }
     finally { setUploading(false); }
+  };
+
+  const handleOpenSourceModal = async () => {
+    setShowProjectList(false);
+    setShowSourceModal(true);
+    if (!projects.length) {
+      listProjects().then(setProjects).catch(() => {});
+    }
+  };
+
+  const handleImportProject = async (projectId: string) => {
+    setImportingProject(true);
+    setShowSourceModal(false);
+    try {
+      const ns = await addNotebookSourcesFromProject(id, projectId);
+      setSources(prev => [...prev, ...ns]);
+    } catch (err) { setError(err instanceof Error ? err.message : "Import failed"); }
+    finally { setImportingProject(false); }
   };
 
   const handleRenameSubmit = async () => {
@@ -855,6 +881,85 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
       {/* Flashcard modal */}
       {flashcardData && (
         <FlashcardModal cards={flashcardData} onClose={() => setFlashcardData(null)} />
+      )}
+
+      {/* Source selection modal */}
+      {showSourceModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowSourceModal(false)}
+        >
+          <div
+            className="w-[420px] rounded-2xl border border-[#2C2C2E] bg-[#1C1C1E] p-5 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">הוסף מקור</h3>
+              <button onClick={() => setShowSourceModal(false)} className="rounded-md p-1 text-[#8E8E93] hover:bg-[#2C2C2E] hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* External source */}
+              <button
+                onClick={() => { setShowSourceModal(false); fileInputRef.current?.click(); }}
+                className="flex flex-col items-center gap-3 rounded-xl border border-[#3A3A3C] bg-[#2C2C2E] p-4 text-center hover:border-[#1A8C52] hover:bg-[#2C2C2E]/80 transition-colors"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3A3A3C]">
+                  <Plus className="h-5 w-5 text-[#C7C7CC]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-white">מקור חיצוני</p>
+                  <p className="mt-0.5 text-[11px] text-[#8E8E93]">העלה קובץ מהמחשב</p>
+                </div>
+              </button>
+
+              {/* Internal source (project) */}
+              <button
+                onClick={() => setShowProjectList(true)}
+                className={`flex flex-col items-center gap-3 rounded-xl border p-4 text-center transition-colors hover:border-[#1A8C52] hover:bg-[#2C2C2E]/80 ${showProjectList ? "border-[#1A8C52] bg-[#1A8C52]/10" : "border-[#3A3A3C] bg-[#2C2C2E]"}`}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3A3A3C]">
+                  <FileText className="h-5 w-5 text-[#C7C7CC]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-white">מקור פנימי</p>
+                  <p className="mt-0.5 text-[11px] text-[#8E8E93]">חבר פרויקט קיים</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Project list — shown after clicking מקור פנימי */}
+            {showProjectList && (
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#636366]">בחר פרויקט</p>
+                {projects.length > 0 ? (
+                  <div className="max-h-[200px] overflow-y-auto space-y-1.5">
+                    {projects.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleImportProject(p.id)}
+                        disabled={importingProject}
+                        className="flex w-full items-center gap-3 rounded-xl bg-[#2C2C2E] px-3 py-2.5 text-left hover:bg-[#3A3A3C] transition-colors disabled:opacity-50"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#1A8C52]/20">
+                          <FileText className="h-3.5 w-3.5 text-[#1A8C52]" />
+                        </div>
+                        <span className="flex-1 truncate text-[12.5px] font-medium text-[#F2F2F7]">{p.name}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-[#636366]" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#636366]" />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="flex h-[calc(100vh-4rem)] flex-col bg-[#111113] text-[#F2F2F7]">
@@ -1123,12 +1228,12 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
             </div>
 
             <div className="p-3 border-b border-[#2C2C2E]">
-              <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+              <button onClick={handleOpenSourceModal} disabled={uploading || importingProject}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#3A3A3C] py-2.5 text-[12.5px] font-medium text-[#F2F2F7] hover:border-[#1A8C52] hover:text-[#1A8C52] transition-colors disabled:opacity-50">
-                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                Add source
+                {(uploading || importingProject) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                {importingProject ? "מייבא..." : "Add source"}
               </button>
-              <input ref={fileInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleUpload} />
+              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xlsx,.xls" multiple className="hidden" onChange={handleUpload} />
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">

@@ -1489,6 +1489,14 @@ export async function autoNameNotebook(id: string): Promise<import("./types").No
   return request(`/notebooks/${id}/auto-name`, { method: "POST" });
 }
 
+export async function addNotebookSourcesFromProject(notebookId: string, projectId: string): Promise<import("./types").NotebookSource[]> {
+  return request(`/notebooks/${notebookId}/sources/from-project`, {
+    method: "POST",
+    body: JSON.stringify({ project_id: projectId }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 export async function uploadNotebookSources(id: string, files: File[]): Promise<import("./types").NotebookSource[]> {
   const form = new FormData();
   for (const f of files) form.append("files", f);
