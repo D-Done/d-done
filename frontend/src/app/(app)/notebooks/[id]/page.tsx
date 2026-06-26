@@ -6,7 +6,7 @@ import {
   ArrowLeft, ChevronLeft, FileText, Headphones, Loader2, MoreVertical,
   Plus, Send, Sparkles, X, MonitorPlay, BrainCircuit, Video,
   BookOpen, FileBarChart, HelpCircle, BarChart3, Table2,
-  ChevronRight, Check, RotateCcw, Volume2, Play, Pause, Square,
+  ChevronRight, Check, RotateCcw, Volume2, Play, Pause, Square, MessageCircleQuestion, Eye,
 } from "lucide-react";
 import {
   chatNotebook, clearNotebookChat, deleteNotebookSource,
@@ -20,7 +20,7 @@ import type { NotebookDetail, NotebookSource } from "@/lib/types";
 
 type StudioType =
   | "presentation" | "mindmap" | "video"
-  | "flashcards" | "report" | "quiz" | "infographic" | "datatable";
+  | "flashcards" | "report" | "quiz" | "infographic" | "datatable" | "faq";
 
 interface UserMsg  { kind: "user";   id: string; content: string }
 interface AiMsg    { kind: "ai";     id: string; content: string }
@@ -36,6 +36,7 @@ interface QuizQ       { question: string; options: string[]; correct: number; ex
 interface MapBranch   { name: string; subs: string[] }
 interface IFact       { icon: string; title: string; value: string; desc: string }
 interface DataTable   { title: string; headers: string[]; rows: string[][] }
+interface FAQItem     { q: string; a: string }
 
 // ─────────────────────────────────────────────────────────────
 // Studio config (no audio/flashcards — they have dedicated UI)
@@ -92,6 +93,12 @@ Extract 8 compelling facts or statistics.`,
     prompt: `Extract structured data into a table. Return ONLY a JSON object:
 {"title":"string","headers":["col1","col2"],"rows":[["val1","val2"]]}
 Extract all quantitative data, parties, dates, or structured comparisons.`,
+  },
+  {
+    type: "faq", label: "FAQ", Icon: MessageCircleQuestion, color: "#F97316", format: "json",
+    prompt: `Generate FAQ cards from these documents. Return ONLY a JSON object:
+{"qa":[{"q":"question","a":"answer"}]}
+Create 10-15 key factual questions and concise answers based strictly on the documents.`,
   },
 ];
 
@@ -534,6 +541,86 @@ function DataTableRenderer({ data }: { data: DataTable }) {
   );
 }
 
+function FAQCard({ item, index }: { item: FAQItem; index: number }) {
+  const [userAnswer, setUserAnswer] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+
+  const showAnswer = submitted || revealed;
+
+  return (
+    <div className="rounded-xl border border-[#3A3A3C] bg-[#1C1C1E] p-4 space-y-3">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F97316]/20 text-[10px] font-bold text-[#F97316]">
+          {index + 1}
+        </span>
+        <p className="text-[13.5px] font-medium text-white leading-snug">{item.q}</p>
+      </div>
+
+      {!showAnswer ? (
+        <div className="space-y-2 ps-7">
+          <textarea
+            value={userAnswer}
+            onChange={e => setUserAnswer(e.target.value)}
+            placeholder="כתוב את תשובתך כאן..."
+            rows={2}
+            className="w-full resize-none rounded-lg border border-[#3A3A3C] bg-[#2C2C2E] px-3 py-2 text-sm text-[#C7C7CC] outline-none placeholder:text-[#636366] focus:border-[#F97316]/60"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSubmitted(true)}
+              disabled={!userAnswer.trim()}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#F97316] px-3 py-2 text-sm font-medium text-white hover:bg-[#EA7008] disabled:opacity-30"
+            >
+              <Check className="h-3.5 w-3.5" /> בדוק תשובה
+            </button>
+            <button
+              onClick={() => setRevealed(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-[#3A3A3C] px-3 py-2 text-sm text-[#8E8E93] hover:border-[#636366] hover:text-white"
+            >
+              <Eye className="h-3.5 w-3.5" /> גלה תשובה
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2 ps-7">
+          {submitted && userAnswer && (
+            <div className="rounded-lg bg-[#2C2C2E] px-3 py-2">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#636366]">התשובה שלך</p>
+              <p className="text-sm text-[#C7C7CC]">{userAnswer}</p>
+            </div>
+          )}
+          <div className="rounded-lg border border-[#1A8C52]/40 bg-[#1A8C52]/10 px-3 py-2">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A8C52]">תשובה נכונה</p>
+            <p className="text-sm text-[#C7C7CC]">{item.a}</p>
+          </div>
+          <button
+            onClick={() => { setSubmitted(false); setRevealed(false); setUserAnswer(""); }}
+            className="flex items-center gap-1 text-[11px] text-[#636366] hover:text-[#8E8E93]"
+          >
+            <RotateCcw className="h-3 w-3" /> נסה שוב
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FAQRenderer({ data }: { data: { qa: FAQItem[] } }) {
+  return (
+    <div className="rounded-xl bg-[#1A1A1E] overflow-hidden">
+      <div className="bg-[#2C2C2E] px-4 py-2.5">
+        <span className="text-xs text-[#8E8E93]">FAQ · {data.qa?.length ?? 0} שאלות</span>
+      </div>
+      <div className="p-4 space-y-3">
+        {data.qa?.map((item, i) => (
+          <FAQCard key={i} item={item} index={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MarkdownRenderer({ text, sources }: { text: string; sources: NotebookSource[] }) {
   return (
     <div className="rounded-xl bg-[#1A1A1E] p-5 text-[13.5px] leading-relaxed text-[#C7C7CC] space-y-2">
@@ -585,6 +672,7 @@ function StudioArtifact({ entry, sources }: { entry: StudioMsg; sources: Noteboo
         {entry.studioType === "mindmap"       && <MindMapRenderer      data={entry.data as { center: string; branches: MapBranch[] }} />}
         {entry.studioType === "infographic"   && <InfographicRenderer  data={entry.data as { title: string; facts: IFact[] }} />}
         {entry.studioType === "datatable"     && <DataTableRenderer    data={entry.data as DataTable} />}
+        {entry.studioType === "faq"           && <FAQRenderer          data={entry.data as { qa: FAQItem[] }} />}
         {["video","report"].includes(entry.studioType) && <MarkdownRenderer text={entry.raw} sources={sources} />}
       </div>
     </div>
