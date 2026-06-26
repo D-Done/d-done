@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bot, Plus, Play, Calendar, Pencil, Trash2, Share2, Check } from "lucide-react";
 import { listAgents, getMe, renameAgent, deleteAgent } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
@@ -9,7 +10,6 @@ import { t } from "@/lib/i18n";
 import type { CustomAgent } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RunAgentDialog } from "@/components/run-agent-dialog";
 
 export default function AgentsPage() {
   const { lang } = useLanguage();
@@ -111,7 +111,7 @@ function AgentCard({
   onDelete: (id: string) => void;
   onRename: (id: string, name: string) => void;
 }) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(agent.name ?? "");
   const [copied, setCopied] = useState(false);
@@ -236,7 +236,7 @@ function AgentCard({
               )}
               <button
                 className="flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20"
-                onClick={() => setDialogOpen(true)}
+                onClick={() => router.push(`/agents/${agent.id}/run`)}
               >
                 <Play className="h-3 w-3" />
                 {t("agents_run", lang)}
@@ -246,12 +246,6 @@ function AgentCard({
         </CardContent>
       </Card>
 
-      <RunAgentDialog
-        agentId={agent.id}
-        agentName={agent.name ?? "אגנט"}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-      />
     </>
   );
 }

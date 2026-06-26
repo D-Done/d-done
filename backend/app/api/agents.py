@@ -96,6 +96,12 @@ class RenameAgentRequest(BaseModel):
     name: str
 
 
+class ConfigureAgentRequest(BaseModel):
+    name: str
+    system_prompt: str
+    description: str | None = None
+
+
 class ExportRequest(BaseModel):
     content: str
     format: str  # "docx" | "xlsx"
@@ -416,6 +422,30 @@ async def complete_kb_file_upload(
             knowledge_base_files=list(agent.knowledge_base_files),
             status=agent.status,
         )
+
+
+@router.post("/{agent_id}/configure", response_model=AgentOut)
+async def configure_agent(
+    agent_id: UUID,
+    body: ConfigureAgentRequest,
+    user: CurrentUser = Depends(get_approved_user),
+):
+    """Set name, system_prompt, and optional description directly (no builder chat required)."""
+    name = body.name.strip()
+    system_prompt = body.system_prompt.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty.")
+    if not system_prompt:
+        raise HTTPException(status_code=400, detail="Instructions cannot be empty.")
+    async with AsyncSessionLocal() as db:
+        agent = await _get_own_agent(agent_id, user.id, db)
+        agent.name = name
+        agent.system_prompt = system_prompt
+        agent.description = (body.description or "").strip() or None
+        agent.status = "published"
+        await db.commit()
+        await db.refresh(agent)
+        return _to_agent_out(agent)
 
 
 @router.post("/{agent_id}/publish", response_model=AgentOut)

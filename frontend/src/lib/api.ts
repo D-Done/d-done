@@ -1346,6 +1346,16 @@ export async function getAgent(agentId: string): Promise<CustomAgent> {
   return request<CustomAgent>(`/agents/${agentId}`);
 }
 
+export async function configureAgent(
+  agentId: string,
+  data: { name: string; system_prompt: string; description?: string },
+): Promise<CustomAgent> {
+  return request<CustomAgent>(`/agents/${agentId}/configure`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function publishAgent(agentId: string): Promise<CustomAgent> {
   return request<CustomAgent>(`/agents/${agentId}/publish`, { method: "POST" });
 }

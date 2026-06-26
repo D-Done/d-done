@@ -7,7 +7,7 @@ import Link from "next/link";
 import { startBuilderSession } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
-import { AgentBuilderContainer } from "@/components/agent-builder-container";
+import { CreateAgentForm } from "@/components/create-agent-form";
 
 export default function NewAgentPage() {
   const router = useRouter();
@@ -55,8 +55,8 @@ export default function NewAgentPage() {
         <span>/</span>
         <span className="text-foreground">{t("agents_new_label", lang)}</span>
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <AgentBuilderContainer agentId={agentId} />
+      <div className="flex-1 overflow-y-auto">
+        <CreateAgentForm agentId={agentId} />
       </div>
     </div>
   );
