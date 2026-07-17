@@ -58,7 +58,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const navItems = [
     { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
     ...(isAdmin ? [{ href: "/team-tasks/team", label: "מעקב משימות צוותי", icon: Users }] : []),
-    { href: "/settings", label: "הגדרות", icon: Settings },
+    { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
   ];
 
   return (
@@ -74,7 +74,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
           {navItems.map((item) => {
             const active = item.href === "/team-tasks"
               ? pathname === "/team-tasks"
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href + "/") || pathname === item.href;
             const Icon = item.icon;
             return (
               <Link
