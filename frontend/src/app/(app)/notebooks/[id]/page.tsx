@@ -44,7 +44,7 @@ interface FAQItem     { q: string; a: string }
 // ─────────────────────────────────────────────────────────────
 
 const STUDIO: {
-  type: StudioType; label: string; Icon: React.ComponentType<{ className?: string }>;
+  type: StudioType; label: string; Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string; format: "json" | "md"; prompt: string;
 }[] = [
   {
@@ -946,7 +946,7 @@ export default function NotebookPage({ params }: { params: Promise<{ id: string 
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#1A8C52]/20">
                           <FileText className="h-3.5 w-3.5 text-[#1A8C52]" />
                         </div>
-                        <span className="flex-1 truncate text-[12.5px] font-medium text-[#F2F2F7]">{p.name}</span>
+                        <span className="flex-1 truncate text-[12.5px] font-medium text-[#F2F2F7]">{p.title}</span>
                         <ChevronRight className="h-3.5 w-3.5 text-[#636366]" />
                       </button>
                     ))}
