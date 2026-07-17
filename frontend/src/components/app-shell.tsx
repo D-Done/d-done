@@ -43,6 +43,7 @@ import { PastelAvatar } from "@/components/pastel-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const SIDEBAR_OPEN_KEY = "app-shell-sidebar-open";
+const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -72,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    getMe().then((me) => {
+    getMe().then(async (me) => {
       if (!me) {
         router.push(ROUTE_LOGIN_SESSION_INVALID);
         return;
@@ -81,6 +82,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         router.push(ROUTE_PENDING_APPROVAL);
         return;
       }
+      // Block team-only members (lawyers) from accessing D-Done
+      try {
+        const res = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+        if (res.ok) {
+          const teamMe = await res.json();
+          if (teamMe.role === "lawyer") {
+            router.replace("/team-tasks");
+            return;
+          }
+        }
+      } catch { /* ignore — if team API unreachable, allow D-Done access */ }
       setUser(me);
     });
   }, [router]);
