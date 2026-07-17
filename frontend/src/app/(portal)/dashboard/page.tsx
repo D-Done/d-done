@@ -9,11 +9,23 @@ import * as api from "@/lib/api";
 import { OnboardingDialog } from "@/components/ui/onboarding-dialog";
 import { ApprovalCelebration } from "@/components/approval-celebration";
 
+const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
+async function checkTeamMember(): Promise<boolean> {
+  try {
+    const res = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const [userName, setUserName] = useState<string | null>(null);
   const [me, setMe] = useState<api.MeResponse | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isTeamMember, setIsTeamMember] = useState<boolean | null>(null);
 
   useEffect(() => {
     api.getMe().then((user) => {
@@ -22,6 +34,7 @@ export default function DashboardPage() {
         setMe(user);
       }
     });
+    checkTeamMember().then(setIsTeamMember);
   }, []);
 
   useEffect(() => {
@@ -77,20 +90,22 @@ export default function DashboardPage() {
           <p className="mt-2 text-slate-500 dark:text-slate-400">לאן תרצה להמשיך?</p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 w-full max-w-2xl">
-          <Link
-            href="/transactions"
-            className="group flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-8 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700 transition-all"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
-              <FolderOpen className="h-7 w-7" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">D-Done</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ניהול פרויקטים ובדיקות נאותות</p>
-            </div>
-            <ChevronLeft className="h-5 w-5 text-slate-300 group-hover:text-violet-500 transition-colors mt-auto" />
-          </Link>
+        <div className={`grid gap-6 w-full max-w-2xl ${isTeamMember ? "max-w-sm" : "sm:grid-cols-2"}`}>
+          {!isTeamMember && (
+            <Link
+              href="/transactions"
+              className="group flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-8 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700 transition-all"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+                <FolderOpen className="h-7 w-7" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">D-Done</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ניהול פרויקטים ובדיקות נאותות</p>
+              </div>
+              <ChevronLeft className="h-5 w-5 text-slate-300 group-hover:text-violet-500 transition-colors mt-auto" />
+            </Link>
+          )}
 
           <Link
             href="/team-tasks"
