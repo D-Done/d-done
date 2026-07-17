@@ -21,6 +21,9 @@ router = APIRouter(prefix="/team", tags=["team"])
 # Resolve the current D-Done user → TeamMember
 # ---------------------------------------------------------------------------
 
+NOT_REGISTERED = "NOT_REGISTERED"
+
+
 def _get_team_member(
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -29,15 +32,10 @@ def _get_team_member(
         TeamMember.email == current_user.email.lower()
     ).first()
     if not member:
-        # Auto-register: D-Done admins get team admin role, everyone else gets lawyer
-        member = TeamMember(
-            name=current_user.name or current_user.email.split("@")[0],
-            email=current_user.email.lower(),
-            role="admin" if current_user.is_admin else "lawyer",
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=NOT_REGISTERED,
         )
-        db.add(member)
-        db.commit()
-        db.refresh(member)
     return member
 
 
@@ -66,6 +64,10 @@ class TaskCreate(BaseModel):
     due_date: Optional[datetime] = None
 
 
+class RegisterBody(BaseModel):
+    role: str  # "admin" or "lawyer"
+
+
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -92,6 +94,31 @@ class TaskOut(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@router.post("/register", response_model=MeResponse, status_code=status.HTTP_201_CREATED)
+def register(
+    body: RegisterBody,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Self-register into the team. Any authenticated D-Done user can call this once."""
+    if body.role not in ("admin", "lawyer"):
+        raise HTTPException(status_code=400, detail="תפקיד לא תקין")
+
+    existing = db.query(TeamMember).filter(TeamMember.email == current_user.email.lower()).first()
+    if existing:
+        return MeResponse(id=str(existing.id), name=existing.name, role=existing.role, email=existing.email or "")
+
+    member = TeamMember(
+        name=current_user.name or current_user.email.split("@")[0],
+        email=current_user.email.lower(),
+        role=body.role,
+    )
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+    return MeResponse(id=str(member.id), name=member.name, role=member.role, email=member.email or "")
+
 
 @router.get("/me", response_model=MeResponse)
 def get_me(member: TeamMember = Depends(_get_team_member)):

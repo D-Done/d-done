@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ListTodo, Users, Settings, LogOut, User as UserIcon } from "lucide-react";
+import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale } from "lucide-react";
 import { useDescope } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
 import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
@@ -20,24 +20,61 @@ import {
 const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 type TeamMe = { id: string; name: string; role: string; email: string };
+type LoadState = "loading" | "needs_registration" | "ready";
 
 export default function TeamLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const descope = useDescope();
-  const [user, setUser] = useState<MeResponse | null | "loading">("loading");
+  const [user, setUser] = useState<MeResponse | null>(null);
   const [teamMe, setTeamMe] = useState<TeamMe | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>("loading");
+  const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState("");
 
   useEffect(() => {
-    getMe().then((me) => {
+    async function init() {
+      const me = await getMe();
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
       setUser(me);
-    });
 
-    fetch(`${TEAM_API}/team/me`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => setTeamMe(data));
+      const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+      if (r.ok) {
+        setTeamMe(await r.json());
+        setLoadState("ready");
+      } else if (r.status === 403) {
+        const body = await r.json().catch(() => ({}));
+        if (body.detail === "NOT_REGISTERED") {
+          setLoadState("needs_registration");
+        } else {
+          setLoadState("ready");
+        }
+      } else {
+        setLoadState("ready");
+      }
+    }
+    init();
   }, [router]);
+
+  async function handleRegister(role: "admin" | "lawyer") {
+    if (!user) return;
+    setRegLoading(true);
+    setRegError("");
+    try {
+      const res = await fetch(`${TEAM_API}/team/register`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) throw new Error("שגיאה בהרשמה");
+      setTeamMe(await res.json());
+      setLoadState("ready");
+    } catch (e) {
+      setRegError(e instanceof Error ? e.message : "שגיאה");
+      setRegLoading(false);
+    }
+  }
 
   async function handleSignOut() {
     try { await logoutSession(); } catch { /* ignore */ }
@@ -45,10 +82,59 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     router.push(ROUTE_LOGIN);
   }
 
-  if (user === "loading" || !user) {
+  if (loadState === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (loadState === "needs_registration" && user) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4" dir="rtl">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={180} height={67} className="object-contain mx-auto mb-6" />
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 mb-1">
+              שלום, {user.name ?? user.email}!
+            </h1>
+            <p className="text-slate-500 dark:text-zinc-400 text-sm">בחר/י את התפקיד שלך במערכת</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => handleRegister("admin")}
+              disabled={regLoading}
+              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 text-center hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 group"
+            >
+              <ShieldCheck className="h-8 w-8 text-slate-400 group-hover:text-primary transition-colors" />
+              <div>
+                <p className="font-semibold text-slate-800 dark:text-zinc-100">אדמין</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">ניהול מלא של משימות הצוות</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleRegister("lawyer")}
+              disabled={regLoading}
+              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 text-center hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 group"
+            >
+              <Scale className="h-8 w-8 text-slate-400 group-hover:text-primary transition-colors" />
+              <div>
+                <p className="font-semibold text-slate-800 dark:text-zinc-100">עורך/ת דין</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">צפייה ועדכון המשימות שלי</p>
+              </div>
+            </button>
+          </div>
+
+          {regLoading && (
+            <div className="flex justify-center mt-6">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
+          {regError && <p className="text-center text-sm text-red-500 mt-4">{regError}</p>}
+        </div>
       </div>
     );
   }
@@ -98,10 +184,10 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-between gap-3 bg-transparent text-slate-100 hover:bg-white/5 hover:text-slate-50">
                 <span className="flex items-center gap-3">
-                  <PastelAvatar name={user.name} email={user.email} size="sm" />
+                  <PastelAvatar name={user?.name} email={user?.email ?? ""} size="sm" />
                   <span className="flex flex-col items-start leading-tight">
-                    <span className="text-sm">{user.name ?? user.email}</span>
-                    <span className="text-xs text-slate-300">{user.email}</span>
+                    <span className="text-sm">{user?.name ?? user?.email}</span>
+                    <span className="text-xs text-slate-300">{user?.email}</span>
                   </span>
                 </span>
               </Button>
@@ -109,7 +195,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
             <DropdownMenuContent align="end">
               <DropdownMenuItem className="gap-2">
                 <UserIcon className="h-4 w-4" />
-                <span>{user.email}</span>
+                <span>{user?.email}</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2 text-destructive" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
