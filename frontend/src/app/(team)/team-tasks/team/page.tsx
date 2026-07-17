@@ -3,24 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
-  });
-  if (!res.ok) {
-    const d = await res.json().catch(() => ({}));
-    const err = new Error((d as { detail?: string }).detail ?? "שגיאה");
-    (err as Error & { status: number }).status = res.status;
-    throw err;
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
+import { useTeamApi } from "@/hooks/use-team-api";
 
 type Status = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high";
@@ -88,6 +71,7 @@ function TaskCard({ task, onCycle, onDelete }: { task: Task; onCycle: () => void
 
 export default function TeamOverviewPage() {
   const router = useRouter();
+  const { api, sessionToken } = useTeamApi();
   const [me, setMe] = useState<Me | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -102,11 +86,12 @@ export default function TeamOverviewPage() {
   const [fError, setFError] = useState("");
 
   const load = useCallback(async () => {
+    if (!sessionToken) return;
     try {
       const [meData, tasksData, membersData] = await Promise.all([
-        api<Me>("/team/me"),
-        api<Task[]>("/team/tasks"),
-        api<Member[]>("/team/members"),
+        api<Me>("/me"),
+        api<Task[]>("/tasks"),
+        api<Member[]>("/members"),
       ]);
       if (meData.role !== "admin") { router.replace("/team-tasks"); return; }
       setMe(meData);
@@ -116,18 +101,18 @@ export default function TeamOverviewPage() {
     } catch {
       router.replace("/team-tasks");
     }
-  }, [router]);
+  }, [api, router, sessionToken]);
 
   useEffect(() => { load(); }, [load]);
 
   async function cycleStatus(task: Task) {
     const next = STATUS_NEXT[task.status];
-    await api(`/team/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
+    await api(`/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
     setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: next } : t));
   }
 
   async function deleteTask(id: string) {
-    await api(`/team/tasks/${id}`, { method: "DELETE" });
+    await api(`/tasks/${id}`, { method: "DELETE" });
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
@@ -136,7 +121,7 @@ export default function TeamOverviewPage() {
     if (!fTitle.trim()) return;
     setFSaving(true); setFError("");
     try {
-      const task = await api<Task>("/team/tasks", {
+      const task = await api<Task>("/tasks", {
         method: "POST",
         body: JSON.stringify({
           title: fTitle.trim(),

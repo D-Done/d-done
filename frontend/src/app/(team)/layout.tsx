@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale } from "lucide-react";
-import { useDescope } from "@descope/nextjs-sdk/client";
+import { useDescope, useSession } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
 import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
 type TeamMe = { id: string; name: string; role: string; email: string };
 type LoadState = "loading" | "needs_registration" | "ready";
 
@@ -26,6 +24,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
   const descope = useDescope();
+  const { sessionToken } = useSession();
   const [user, setUser] = useState<MeResponse | null>(null);
   const [teamMe, setTeamMe] = useState<TeamMe | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -33,38 +32,37 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const [regError, setRegError] = useState("");
 
   useEffect(() => {
+    if (!sessionToken) return;
+
     async function init() {
       const me = await getMe();
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
       setUser(me);
 
-      const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+      const r = await fetch("/api/team/me", {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
       if (r.ok) {
         setTeamMe(await r.json());
         setLoadState("ready");
       } else if (r.status === 403) {
         const body = await r.json().catch(() => ({}));
-        if (body.detail === "NOT_REGISTERED") {
-          setLoadState("needs_registration");
-        } else {
-          setLoadState("ready");
-        }
+        setLoadState(body.detail === "NOT_REGISTERED" ? "needs_registration" : "ready");
       } else {
         setLoadState("ready");
       }
     }
     init();
-  }, [router]);
+  }, [router, sessionToken]);
 
   async function handleRegister(role: "admin" | "lawyer") {
-    if (!user) return;
+    if (!sessionToken) return;
     setRegLoading(true);
     setRegError("");
     try {
-      const res = await fetch(`${TEAM_API}/team/register`, {
+      const res = await fetch("/api/team/register", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
         body: JSON.stringify({ role }),
       });
       if (!res.ok) throw new Error("שגיאה בהרשמה");
@@ -140,7 +138,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   }
 
   const isAdmin = teamMe?.role === "admin";
-
   const navItems = [
     { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
     ...(isAdmin ? [{ href: "/team-tasks/team", label: "מעקב משימות צוותי", icon: Users }] : []),
@@ -149,7 +146,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
-      {/* Sidebar */}
       <aside className="fixed top-0 right-0 hidden h-screen w-64 flex-col bg-zinc-950 text-zinc-100 lg:flex" dir="rtl">
         <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
           <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={200} height={74} className="object-contain" />
@@ -162,14 +158,9 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
               : pathname.startsWith(item.href + "/") || pathname === item.href;
             const Icon = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={[
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors",
-                  active
-                    ? "bg-white/10 text-slate-50"
-                    : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100",
+              <Link key={item.href} href={item.href}
+                className={["flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors",
+                  active ? "bg-white/10 text-slate-50" : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100",
                 ].join(" ")}
               >
                 <Icon className="h-4 w-4 shrink-0 opacity-90" />
@@ -206,7 +197,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 lg:pr-64">
         <main className="min-h-screen">
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">

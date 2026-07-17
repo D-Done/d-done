@@ -15,7 +15,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 
-import { useDescope } from "@descope/nextjs-sdk/client";
+import { useDescope, useSession } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
 import { getInviteCookie, clearInviteCookie } from "@/lib/invite-cookie";
 import {
@@ -43,12 +43,12 @@ import { PastelAvatar } from "@/components/pastel-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const SIDEBAR_OPEN_KEY = "app-shell-sidebar-open";
-const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const descope = useDescope();
+  const { sessionToken } = useSession();
   const [globalSearch, setGlobalSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
@@ -84,7 +84,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       // Block team-only members (lawyers) from accessing D-Done
       try {
-        const res = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+        const res = await fetch("/api/team/me", {
+          headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+        });
         if (res.ok) {
           const teamMe = await res.json();
           if (teamMe.role === "lawyer") {

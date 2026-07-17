@@ -2,22 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "@descope/nextjs-sdk/client";
 import { getMe } from "@/lib/api";
-import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
-
-const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+import { ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { sessionToken } = useSession();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     getMe().then(async (me) => {
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
       if (me.approval_status !== "approved") {
-        // Check if this user has team access — if so, skip the D-Done invite gate
+        // If they have team access, send them there instead of pending-approval
         try {
-          const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+          const r = await fetch("/api/team/me", {
+            headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+          });
           if (r.ok) { router.replace("/team-tasks"); return; }
         } catch { /* ignore */ }
         router.push("/pending-approval");
@@ -25,7 +27,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       }
       setReady(true);
     });
-  }, [router]);
+  }, [router, sessionToken]);
 
   if (!ready) {
     return (

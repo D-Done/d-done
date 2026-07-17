@@ -2,24 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, X } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
-  });
-  if (!res.ok) {
-    const d = await res.json().catch(() => ({}));
-    const err = new Error((d as { detail?: string }).detail ?? "שגיאה");
-    (err as Error & { status: number }).status = res.status;
-    throw err;
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
+import { useTeamApi } from "@/hooks/use-team-api";
 
 type Status = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high";
@@ -62,19 +45,15 @@ function TaskCard({ task, onCycle }: { task: Task; onCycle: () => void }) {
           )}
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {task.due_date && (
-              <span className="text-xs text-slate-400">
-                {new Date(task.due_date).toLocaleDateString("he-IL")}
-              </span>
+              <span className="text-xs text-slate-400">{new Date(task.due_date).toLocaleDateString("he-IL")}</span>
             )}
             <span className={`text-xs font-medium ${PRIORITY_COLOR[task.priority]}`}>
               {PRIORITY_LABEL[task.priority]}
             </span>
           </div>
         </div>
-        <button
-          onClick={onCycle}
-          className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium transition-opacity hover:opacity-70 ${STATUS_STYLE[task.status]}`}
-        >
+        <button onClick={onCycle}
+          className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium transition-opacity hover:opacity-70 ${STATUS_STYLE[task.status]}`}>
           {STATUS_LABEL[task.status]}
         </button>
       </div>
@@ -83,10 +62,10 @@ function TaskCard({ task, onCycle }: { task: Task; onCycle: () => void }) {
 }
 
 export default function TeamTasksPage() {
+  const { api, sessionToken } = useTeamApi();
   const [me, setMe] = useState<Me | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showNew, setShowNew] = useState(false);
-  const [noAccess, setNoAccess] = useState(false);
   const [loadError, setLoadError] = useState("");
 
   const [fTitle, setFTitle] = useState("");
@@ -97,26 +76,24 @@ export default function TeamTasksPage() {
   const [fError, setFError] = useState("");
 
   const load = useCallback(async () => {
+    if (!sessionToken) return;
     try {
       const [meData, tasksData] = await Promise.all([
-        api<Me>("/team/me"),
-        api<Task[]>("/team/tasks"),
+        api<Me>("/me"),
+        api<Task[]>("/tasks"),
       ]);
       setMe(meData);
-      // Always show only personal tasks on this page
       setTasks(tasksData.filter((t) => t.assigned_to_id === meData.id));
     } catch (e: unknown) {
-      const status = (e as Error & { status?: number }).status;
-      if (status === 403) setNoAccess(true);
-      else setLoadError(e instanceof Error ? e.message : "שגיאה בטעינת הנתונים");
+      setLoadError(e instanceof Error ? e.message : "שגיאה בטעינת הנתונים");
     }
-  }, []);
+  }, [api, sessionToken]);
 
   useEffect(() => { load(); }, [load]);
 
   async function cycleStatus(task: Task) {
     const next = STATUS_NEXT[task.status];
-    await api(`/team/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
+    await api(`/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
     setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: next } : t));
   }
 
@@ -125,7 +102,7 @@ export default function TeamTasksPage() {
     if (!fTitle.trim() || !me) return;
     setFSaving(true); setFError("");
     try {
-      const task = await api<Task>("/team/tasks", {
+      const task = await api<Task>("/tasks", {
         method: "POST",
         body: JSON.stringify({
           title: fTitle.trim(),
@@ -146,15 +123,6 @@ export default function TeamTasksPage() {
 
   function closeModal() {
     setShowNew(false); setFTitle(""); setFDesc(""); setFPriority("medium"); setFDue(""); setFError("");
-  }
-
-  if (noAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center" dir="rtl">
-        <p className="text-lg font-medium text-slate-600">אין לך גישה למעקב המשימות</p>
-        <p className="text-sm text-slate-400 mt-1">פנה לראש הצוות להוספה למערכת</p>
-      </div>
-    );
   }
 
   if (loadError) {
@@ -185,10 +153,8 @@ export default function TeamTasksPage() {
             <span>הושלמו: <strong className="text-green-600">{doneCount}</strong></span>
           </div>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
+        <button onClick={() => setShowNew(true)}
+          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" />
           משימה חדשה
         </button>
@@ -223,7 +189,7 @@ export default function TeamTasksPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1">תיאור</label>
                 <textarea placeholder="תיאור (אופציונלי)" value={fDesc}
                   onChange={(e) => setFDesc(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none" />
+                  className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
