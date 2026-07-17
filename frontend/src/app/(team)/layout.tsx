@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { ListTodo, Users, Settings, LogOut, User as UserIcon } from "lucide-react";
 import { useDescope } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
@@ -65,9 +66,8 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
       {/* Sidebar */}
       <aside className="fixed top-0 right-0 hidden h-screen w-64 flex-col bg-zinc-950 text-zinc-100 lg:flex" dir="rtl">
-        <div className="flex h-16 shrink-0 items-center gap-3 px-5 border-b border-zinc-800/60">
-          <ListTodo className="h-5 w-5 text-violet-400 shrink-0" />
-          <span className="font-semibold text-lg">מעקב משימות</span>
+        <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
+          <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={120} height={60} className="object-contain" />
         </div>
 
         <nav className="mt-2 flex flex-1 flex-col gap-1 px-3">
