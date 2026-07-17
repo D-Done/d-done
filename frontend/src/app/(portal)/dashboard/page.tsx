@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { FolderOpen, ListTodo, ChevronLeft } from "lucide-react";
 
 import * as api from "@/lib/api";
-import { useLanguage } from "@/lib/language-context";
 import { OnboardingDialog } from "@/components/ui/onboarding-dialog";
 import { ApprovalCelebration } from "@/components/approval-celebration";
 
@@ -15,7 +14,6 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [me, setMe] = useState<api.MeResponse | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const { lang } = useLanguage();
 
   useEffect(() => {
     api.getMe().then((user) => {
@@ -37,7 +35,7 @@ export default function DashboardPage() {
   const showOnboarding = me && !me.has_completed_onboarding && !showCelebration;
 
   return (
-    <>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {showCelebration && (
         <ApprovalCelebration
           userName={userName}
@@ -71,7 +69,7 @@ export default function DashboardPage() {
           }}
         />
       )}
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8" dir="rtl">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4" dir="rtl">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
             שלום, {userName ?? "משתמש"}!
@@ -109,6 +107,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }
