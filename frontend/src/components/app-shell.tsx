@@ -8,7 +8,6 @@ import {
   Activity,
   Bell,
   FolderOpen,
-  ListTodo,
   Search,
   LogOut,
   Settings,
@@ -138,7 +137,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/transactions", label: t("nav_projects", lang), icon: FolderOpen },
-    { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
     { href: "/settings", label: t("nav_settings", lang), icon: Settings },
     ...(authedUser.is_admin ? [
       { href: "/admin/users", label: t("nav_user_mgmt", lang), icon: ShieldCheck },
