@@ -2,7 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, X } from "lucide-react";
-import { useTeamApi } from "@/hooks/use-team-api";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
+async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    const err = new Error((d as { detail?: string }).detail ?? "שגיאה");
+    (err as Error & { status: number }).status = res.status;
+    throw err;
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
 
 type Status = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high";
@@ -62,12 +79,10 @@ function TaskCard({ task, onCycle }: { task: Task; onCycle: () => void }) {
 }
 
 export default function TeamTasksPage() {
-  const { api, sessionToken } = useTeamApi();
   const [me, setMe] = useState<Me | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [loadError, setLoadError] = useState("");
-
   const [fTitle, setFTitle] = useState("");
   const [fDesc, setFDesc] = useState("");
   const [fPriority, setFPriority] = useState<Priority>("medium");
@@ -76,24 +91,23 @@ export default function TeamTasksPage() {
   const [fError, setFError] = useState("");
 
   const load = useCallback(async () => {
-    if (!sessionToken) return;
     try {
       const [meData, tasksData] = await Promise.all([
-        api<Me>("/me"),
-        api<Task[]>("/tasks"),
+        api<Me>("/team/me"),
+        api<Task[]>("/team/tasks"),
       ]);
       setMe(meData);
       setTasks(tasksData.filter((t) => t.assigned_to_id === meData.id));
     } catch (e: unknown) {
-      setLoadError(e instanceof Error ? e.message : "שגיאה בטעינת הנתונים");
+      setLoadError(e instanceof Error ? e.message : "שגיאה");
     }
-  }, [api, sessionToken]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
   async function cycleStatus(task: Task) {
     const next = STATUS_NEXT[task.status];
-    await api(`/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
+    await api(`/team/tasks/${task.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
     setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: next } : t));
   }
 
@@ -102,7 +116,7 @@ export default function TeamTasksPage() {
     if (!fTitle.trim() || !me) return;
     setFSaving(true); setFError("");
     try {
-      const task = await api<Task>("/tasks", {
+      const task = await api<Task>("/team/tasks", {
         method: "POST",
         body: JSON.stringify({
           title: fTitle.trim(),

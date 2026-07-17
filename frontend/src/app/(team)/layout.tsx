@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale } from "lucide-react";
-import { useDescope, useSession } from "@descope/nextjs-sdk/client";
+import { useDescope } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
 import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
 type TeamMe = { id: string; name: string; role: string; email: string };
 type LoadState = "loading" | "needs_registration" | "ready";
 
@@ -24,7 +26,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
   const descope = useDescope();
-  const { sessionToken } = useSession();
   const [user, setUser] = useState<MeResponse | null>(null);
   const [teamMe, setTeamMe] = useState<TeamMe | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -32,16 +33,12 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const [regError, setRegError] = useState("");
 
   useEffect(() => {
-    if (!sessionToken) return;
-
     async function init() {
       const me = await getMe();
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
       setUser(me);
 
-      const r = await fetch("/api/team/me", {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      });
+      const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
       if (r.ok) {
         setTeamMe(await r.json());
         setLoadState("ready");
@@ -53,16 +50,16 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       }
     }
     init();
-  }, [router, sessionToken]);
+  }, [router]);
 
   async function handleRegister(role: "admin" | "lawyer") {
-    if (!sessionToken) return;
     setRegLoading(true);
     setRegError("");
     try {
-      const res = await fetch("/api/team/register", {
+      const res = await fetch(`${TEAM_API}/team/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });
       if (!res.ok) throw new Error("שגיאה בהרשמה");

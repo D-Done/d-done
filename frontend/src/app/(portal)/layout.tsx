@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@descope/nextjs-sdk/client";
 import { getMe } from "@/lib/api";
 import { ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
 
+const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { sessionToken } = useSession();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -17,9 +17,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       if (me.approval_status !== "approved") {
         // If they have team access, send them there instead of pending-approval
         try {
-          const r = await fetch("/api/team/me", {
-            headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
-          });
+          const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
           if (r.ok) { router.replace("/team-tasks"); return; }
         } catch { /* ignore */ }
         router.push("/pending-approval");
@@ -27,7 +25,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       }
       setReady(true);
     });
-  }, [router, sessionToken]);
+  }, [router]);
 
   if (!ready) {
     return (
