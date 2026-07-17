@@ -31,7 +31,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     getMe().then((me) => {
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
-      if (me.approval_status !== "approved") { router.push("/pending-approval"); return; }
       setUser(me);
     });
 

@@ -29,10 +29,15 @@ def _get_team_member(
         TeamMember.email == current_user.email.lower()
     ).first()
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="אין לך גישה למעקב המשימות. פנה לראש הצוות.",
+        # Auto-register: D-Done admins get team admin role, everyone else gets lawyer
+        member = TeamMember(
+            name=current_user.name or current_user.email.split("@")[0],
+            email=current_user.email.lower(),
+            role="admin" if current_user.is_admin else "lawyer",
         )
+        db.add(member)
+        db.commit()
+        db.refresh(member)
     return member
 
 
