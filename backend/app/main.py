@@ -29,6 +29,7 @@ from app.api.comments import router as comments_router
 from app.api.checklist import router as checklist_router
 from app.api.agents import router as agents_router
 from app.api.notebooks import router as notebooks_router
+from app.api.team import router as team_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -125,6 +126,7 @@ app.include_router(comments_router)
 app.include_router(checklist_router)
 app.include_router(agents_router, prefix="/api/v1")
 app.include_router(notebooks_router, prefix="/api/v1")
+app.include_router(team_router, prefix="/api/v1")
 
 
 # ---- Health ----

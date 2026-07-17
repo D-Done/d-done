@@ -717,6 +717,79 @@ class NotebookMessage(Base):
         return f"<NotebookMessage id={self.id} role={self.role}>"
 
 
+class TeamMember(Base):
+    """A team member in the internal task tracker (separate from Descope auth)."""
+
+    __tablename__ = "team_members"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    name = Column(String(200), nullable=False, unique=True)
+    email = Column(String(500), nullable=True, unique=True)
+    password_hash = Column(String(200), nullable=True)  # NULL = must set password on first login
+    role = Column(String(20), nullable=False)  # 'admin' | 'lawyer'
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    tasks_assigned = relationship(
+        "TeamTask", back_populates="assigned_to",
+        foreign_keys="TeamTask.assigned_to_id", cascade="all, delete-orphan"
+    )
+    tasks_created = relationship(
+        "TeamTask", back_populates="created_by", foreign_keys="TeamTask.created_by_id"
+    )
+    sessions = relationship("TeamSession", back_populates="member", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<TeamMember id={self.id} name={self.name!r} role={self.role}>"
+
+
+class TeamSession(Base):
+    """Server-side session for team task tracker (HttpOnly-style, token in localStorage)."""
+
+    __tablename__ = "team_sessions"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    member_id = Column(
+        Uuid, ForeignKey("team_members.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+
+    member = relationship("TeamMember", back_populates="sessions")
+
+    def __repr__(self) -> str:
+        return f"<TeamSession id={self.id} member_id={self.member_id}>"
+
+
+class TeamTask(Base):
+    """A task in the internal team task tracker."""
+
+    __tablename__ = "team_tasks"
+
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(20), nullable=False, default="todo")  # todo | in_progress | done
+    priority = Column(String(20), nullable=False, default="medium")  # low | medium | high
+    assigned_to_id = Column(
+        Uuid, ForeignKey("team_members.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_by_id = Column(
+        Uuid, ForeignKey("team_members.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
+    )
+
+    assigned_to = relationship("TeamMember", back_populates="tasks_assigned", foreign_keys=[assigned_to_id])
+    created_by = relationship("TeamMember", back_populates="tasks_created", foreign_keys=[created_by_id])
+
+    def __repr__(self) -> str:
+        return f"<TeamTask id={self.id} title={self.title!r} status={self.status}>"
+
+
 class ChecklistShare(Base):
     """Token-based share link giving an external party view + upload access."""
 

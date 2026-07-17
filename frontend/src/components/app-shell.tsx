@@ -12,6 +12,7 @@ import {
   Cpu,
   FolderOpen,
   LayoutDashboard,
+  ListTodo,
   Search,
   LogOut,
   Settings,
@@ -145,6 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/ai", label: t("nav_ai", lang), icon: Bot },
     { href: "/agents", label: t("nav_agents", lang), icon: Cpu },
     { href: "/notebooks", label: t("nav_notebooks", lang), icon: BookOpen },
+    { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
     { href: "/settings", label: t("nav_settings", lang), icon: Settings },
     ...(authedUser.is_admin ? [
       { href: "/admin/users", label: t("nav_user_mgmt", lang), icon: ShieldCheck },
