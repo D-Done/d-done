@@ -58,6 +58,7 @@ export default function TeamTasksPage() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showNew, setShowNew] = useState(false);
   const [noAccess, setNoAccess] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const [fTitle, setFTitle] = useState("");
   const [fDesc, setFDesc] = useState("");
@@ -79,7 +80,9 @@ export default function TeamTasksPage() {
       setMembers(membersData);
       setFAssignee(meData.id);
     } catch (e: unknown) {
-      if (e instanceof Error && e.message.includes("403")) setNoAccess(true);
+      const status = (e as Error & { status?: number }).status;
+      if (status === 403) setNoAccess(true);
+      else setLoadError(e instanceof Error ? e.message : "שגיאה בטעינת הנתונים");
     }
   }, []);
 
@@ -138,6 +141,15 @@ export default function TeamTasksPage() {
       <div className="flex flex-col items-center justify-center py-24 text-center" dir="rtl">
         <p className="text-lg font-medium text-slate-600">אין לך גישה למעקב המשימות</p>
         <p className="text-sm text-slate-400 mt-1">פנה לראש הצוות להוספה למערכת</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center" dir="rtl">
+        <p className="text-lg font-medium text-slate-600">שגיאה בטעינת מעקב המשימות</p>
+        <p className="text-sm text-slate-400 mt-1">{loadError}</p>
       </div>
     );
   }
