@@ -7,9 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   Bell,
-  Bot,
-  BookOpen,
-  Cpu,
   FolderOpen,
   LayoutDashboard,
   ListTodo,
@@ -143,9 +140,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/dashboard", label: t("nav_dashboard", lang), icon: LayoutDashboard },
     { href: "/transactions", label: t("nav_projects", lang), icon: FolderOpen },
-    { href: "/ai", label: t("nav_ai", lang), icon: Bot },
-    { href: "/agents", label: t("nav_agents", lang), icon: Cpu },
-    { href: "/notebooks", label: t("nav_notebooks", lang), icon: BookOpen },
     { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
     { href: "/settings", label: t("nav_settings", lang), icon: Settings },
     ...(authedUser.is_admin ? [
