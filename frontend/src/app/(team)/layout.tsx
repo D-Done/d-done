@@ -66,7 +66,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       {/* Sidebar */}
       <aside className="fixed top-0 right-0 hidden h-screen w-64 flex-col bg-zinc-950 text-zinc-100 lg:flex" dir="rtl">
         <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
-          <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={120} height={60} className="object-contain" />
+          <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={200} height={74} className="object-contain" />
         </div>
 
         <nav className="mt-2 flex flex-1 flex-col gap-1 px-3">
