@@ -1,47 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus, FolderOpen, Loader2, FileCheck, FileText } from "lucide-react";
+import { FolderOpen, ListTodo, ChevronLeft } from "lucide-react";
 
 import * as api from "@/lib/api";
-import type { DashboardStats } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
-import { t } from "@/lib/i18n";
 import { OnboardingDialog } from "@/components/ui/onboarding-dialog";
 import { ApprovalCelebration } from "@/components/approval-celebration";
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [me, setMe] = useState<api.MeResponse | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const { lang } = useLanguage();
-
-  const fetchStats = useCallback(async () => {
-    try {
-      const data = await api.getDashboardStats();
-      setStats(data);
-    } catch {
-      setStats({
-        total_projects: 0,
-        completed_projects: 0,
-        dd_checks_in_progress: 0,
-        dd_checks_completed: 0,
-        documents_scanned: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   useEffect(() => {
     api.getMe().then((user) => {
@@ -97,73 +71,43 @@ export default function DashboardPage() {
           }}
         />
       )}
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {t("dashboard_greeting", lang)}, {userName ?? (lang === "en" ? "User" : "משתמש")}!
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {t("dashboard_subtitle", lang)}
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <Button asChild className="rounded-2xl">
-              <Link href="/transactions/new">
-                <Plus className="ml-2 h-4 w-4" />
-                {t("new_project", lang)}
-              </Link>
-            </Button>
-          </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8" dir="rtl">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+            שלום, {userName ?? "משתמש"}!
+          </h1>
+          <p className="mt-2 text-slate-500 dark:text-slate-400">לאן תרצה להמשיך?</p>
         </div>
 
-        {/* KPI row — real metrics, no clutter */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">{t("total_projects", lang)}</span>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
-                <FolderOpen className="h-4 w-4" />
-              </span>
+        <div className="grid gap-6 sm:grid-cols-2 w-full max-w-2xl">
+          <Link
+            href="/transactions"
+            className="group flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-8 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700 transition-all"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+              <FolderOpen className="h-7 w-7" />
             </div>
-            <div className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
-              {loading ? "—" : (stats?.total_projects ?? 0)}
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">D-Done</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ניהול פרויקטים ובדיקות נאותות</p>
             </div>
-          </div>
+            <ChevronLeft className="h-5 w-5 text-slate-300 group-hover:text-violet-500 transition-colors mt-auto" />
+          </Link>
 
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_running", lang)}</span>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </span>
+          <Link
+            href="/team-tasks"
+            className="group flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-8 shadow-sm hover:shadow-md hover:border-violet-300 dark:hover:border-violet-700 transition-all"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+              <ListTodo className="h-7 w-7" />
             </div>
-            <div className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
-              {loading ? "—" : (stats?.dd_checks_in_progress ?? 0)}
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">מעקב משימות</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">ניהול משימות פנימי לצוות</p>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900/80 p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500 dark:text-slate-400">{t("dd_done", lang)}</span>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400">
-                <FileCheck className="h-4 w-4" />
-              </span>
-            </div>
-            <div className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
-              {loading ? "—" : (stats?.dd_checks_completed ?? 0)}
-            </div>
-          </div>
+            <ChevronLeft className="h-5 w-5 text-slate-300 group-hover:text-violet-500 transition-colors mt-auto" />
+          </Link>
         </div>
-
-        {/* Optional: documents scanned — subtle, single line */}
-        {!loading && stats && stats.documents_scanned > 0 && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            <FileText className="mr-1.5 inline h-4 w-4 text-slate-400 dark:text-slate-500" />
-            {stats.documents_scanned} {t("docs_scanned", lang)}
-          </p>
-        )}
       </div>
     </>
   );
