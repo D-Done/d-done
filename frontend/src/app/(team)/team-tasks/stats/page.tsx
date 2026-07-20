@@ -359,9 +359,9 @@ export default function StatsPage() {
                 dataKey="value" labelLine={false} label={PieLabel}>
                 {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
               </Pie>
-              <Tooltip formatter={(v) => [`${v} משימות`, ""]} />
+              <Tooltip formatter={(v) => [`${String(v)} משימות`, ""]} />
               <Legend iconType="circle" iconSize={8}
-                formatter={(value) => <span style={{ fontSize: 12, color: "#33004e" }}>{value}</span>} />
+                formatter={(value: string) => <span style={{ fontSize: 12, color: "#33004e" }}>{value}</span>} />
             </PieChart>
           </ResponsiveContainer>
         )}
