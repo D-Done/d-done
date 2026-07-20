@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale } from "lucide-react";
-import { useDescope } from "@descope/nextjs-sdk/client";
+import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale, BarChart2, FolderOpen, FileText } from "lucide-react";
+import { useDescope, useSession } from "@descope/nextjs-sdk/client";
 import { getMe, logoutSession, type MeResponse } from "@/lib/api";
 import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
   const descope = useDescope();
+  const { sessionToken } = useSession();
   const [user, setUser] = useState<MeResponse | null>(null);
   const [teamMe, setTeamMe] = useState<TeamMe | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -38,9 +39,14 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
       setUser(me);
 
-      const r = await fetch(`${TEAM_API}/team/me`, { credentials: "include" });
+      const authHeaders: Record<string, string> = sessionToken
+        ? { Authorization: `Bearer ${sessionToken}` }
+        : me?.email ? { "x-dev-email": me.email } : {};
+      const r = await fetch(`${TEAM_API}/team/me`, { headers: authHeaders });
       if (r.ok) {
-        setTeamMe(await r.json());
+        const tm = await r.json();
+        setTeamMe(tm);
+        localStorage.setItem("team_user", JSON.stringify({ id: tm.id, name: tm.name, role: tm.role, email: tm.email }));
         setLoadState("ready");
       } else if (r.status === 403) {
         const body = await r.json().catch(() => ({}));
@@ -56,14 +62,18 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     setRegLoading(true);
     setRegError("");
     try {
+      const authHeaders: Record<string, string> = sessionToken
+        ? { Authorization: `Bearer ${sessionToken}` }
+        : user?.email ? { "x-dev-email": user.email } : {};
       const res = await fetch(`${TEAM_API}/team/register`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ role }),
       });
       if (!res.ok) throw new Error("שגיאה בהרשמה");
-      setTeamMe(await res.json());
+      const tm = await res.json();
+      setTeamMe(tm);
+      localStorage.setItem("team_user", JSON.stringify({ id: tm.id, name: tm.name, role: tm.role, email: tm.email }));
       setLoadState("ready");
     } catch (e) {
       setRegError(e instanceof Error ? e.message : "שגיאה");
@@ -136,8 +146,11 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
 
   const isAdmin = teamMe?.role === "admin";
   const navItems = [
-    { href: "/team-tasks", label: "מעקב משימות", icon: ListTodo },
-    ...(isAdmin ? [{ href: "/team-tasks/team", label: "מעקב משימות צוותי", icon: Users }] : []),
+    { href: "/team-tasks", label: "המשימות שלי", icon: ListTodo },
+    ...(isAdmin ? [{ href: "/team-tasks/team", label: "משימות הצוות", icon: Users }] : []),
+    { href: "/team-tasks/stats", label: "סטטיסטיקות", icon: BarChart2 },
+    { href: "/team-tasks/projects", label: "פרויקטים", icon: FolderOpen },
+    { href: "/team-tasks/summary", label: "סיכום יומי", icon: FileText },
     { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
   ];
 
