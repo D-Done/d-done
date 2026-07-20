@@ -7,7 +7,7 @@ import TaskDetailModal, { type Task as DetailTask } from "@/components/TaskDetai
 import { STATUS_LABEL, STATUS_STYLE } from "@/components/StatusPicker";
 import type { Status } from "@/components/StatusPicker";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 type Priority = "low" | "medium" | "high" | "none";
 type User = { id: string; name: string; email: string; role: string };

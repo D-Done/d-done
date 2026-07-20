@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, type PieLabe
 import { CheckCircle2, Clock, AlertCircle, Users, CalendarDays, X, FolderOpen } from "lucide-react";
 import TaskDetailModal, { type Task as DetailTask } from "@/components/TaskDetailModal";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 type Status = "todo" | "in_progress" | "done";
 type Priority = "low" | "medium" | "high" | "none";

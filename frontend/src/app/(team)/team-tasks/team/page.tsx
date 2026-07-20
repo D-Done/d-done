@@ -8,7 +8,7 @@ import { useUndo, UndoToast } from "@/components/UndoToast";
 import { Celebration } from "@/components/Celebration";
 import { StatusPicker, STATUS_LABEL, STATUS_STYLE } from "@/components/StatusPicker";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 import type { Status } from "@/components/StatusPicker";
 type Priority = "low" | "medium" | "high" | "none";

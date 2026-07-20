@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Check, FileText, CalendarDays, Download, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 type Status = "todo" | "in_progress" | "done";
 type Task = {
