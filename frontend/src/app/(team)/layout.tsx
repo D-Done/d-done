@@ -4,90 +4,27 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ListTodo, Users, Settings, LogOut, User as UserIcon, ShieldCheck, Scale, BarChart2, FolderOpen, FileText } from "lucide-react";
-import { useDescope, useSession } from "@descope/nextjs-sdk/client";
-import { getMe, logoutSession, type MeResponse } from "@/lib/api";
-import { ROUTE_LOGIN, ROUTE_LOGIN_SESSION_INVALID } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
-import { PastelAvatar } from "@/components/pastel-avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ListTodo, Users, Settings, LogOut, BarChart2, FolderOpen, FileText } from "lucide-react";
 
-const TEAM_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-type TeamMe = { id: string; name: string; role: string; email: string };
-type LoadState = "loading" | "needs_registration" | "ready";
+type TeamUser = { id: string; name: string; email: string; role: string };
 
 export default function TeamLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const descope = useDescope();
-  const { sessionToken } = useSession();
-  const [user, setUser] = useState<MeResponse | null>(null);
-  const [teamMe, setTeamMe] = useState<TeamMe | null>(null);
-  const [loadState, setLoadState] = useState<LoadState>("loading");
-  const [regLoading, setRegLoading] = useState(false);
-  const [regError, setRegError] = useState("");
+  const [user, setUser] = useState<TeamUser | null>(null);
 
   useEffect(() => {
-    async function init() {
-      const me = await getMe();
-      if (!me) { router.push(ROUTE_LOGIN_SESSION_INVALID); return; }
-      setUser(me);
-
-      const authHeaders: Record<string, string> = sessionToken
-        ? { Authorization: `Bearer ${sessionToken}` }
-        : me?.email ? { "x-dev-email": me.email } : {};
-      const r = await fetch(`${TEAM_API}/team/me`, { headers: authHeaders });
-      if (r.ok) {
-        const tm = await r.json();
-        setTeamMe(tm);
-        localStorage.setItem("team_user", JSON.stringify({ id: tm.id, name: tm.name, role: tm.role, email: tm.email }));
-        setLoadState("ready");
-      } else if (r.status === 403) {
-        const body = await r.json().catch(() => ({}));
-        setLoadState(body.detail === "NOT_REGISTERED" ? "needs_registration" : "ready");
-      } else {
-        setLoadState("ready");
-      }
-    }
-    init();
+    const saved = localStorage.getItem("team_user");
+    if (!saved) { router.replace("/team-login"); return; }
+    setUser(JSON.parse(saved));
   }, [router]);
 
-  async function handleRegister(role: "admin" | "lawyer") {
-    setRegLoading(true);
-    setRegError("");
-    try {
-      const authHeaders: Record<string, string> = sessionToken
-        ? { Authorization: `Bearer ${sessionToken}` }
-        : user?.email ? { "x-dev-email": user.email } : {};
-      const res = await fetch(`${TEAM_API}/team/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ role }),
-      });
-      if (!res.ok) throw new Error("שגיאה בהרשמה");
-      const tm = await res.json();
-      setTeamMe(tm);
-      localStorage.setItem("team_user", JSON.stringify({ id: tm.id, name: tm.name, role: tm.role, email: tm.email }));
-      setLoadState("ready");
-    } catch (e) {
-      setRegError(e instanceof Error ? e.message : "שגיאה");
-      setRegLoading(false);
-    }
+  function handleSignOut() {
+    localStorage.removeItem("team_user");
+    router.push("/team-login");
   }
 
-  async function handleSignOut() {
-    try { await logoutSession(); } catch { /* ignore */ }
-    try { await descope.logout(); } catch { /* ignore */ }
-    router.push(ROUTE_LOGIN);
-  }
-
-  if (loadState === "loading") {
+  if (!user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -95,56 +32,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-  if (loadState === "needs_registration" && user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4" dir="rtl">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={180} height={67} className="object-contain mx-auto mb-6" />
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 mb-1">
-              שלום, {user.name ?? user.email}!
-            </h1>
-            <p className="text-slate-500 dark:text-zinc-400 text-sm">בחר/י את התפקיד שלך במערכת</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleRegister("admin")}
-              disabled={regLoading}
-              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 text-center hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 group"
-            >
-              <ShieldCheck className="h-8 w-8 text-slate-400 group-hover:text-primary transition-colors" />
-              <div>
-                <p className="font-semibold text-slate-800 dark:text-zinc-100">אדמין</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">ניהול מלא של משימות הצוות</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleRegister("lawyer")}
-              disabled={regLoading}
-              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 text-center hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 group"
-            >
-              <Scale className="h-8 w-8 text-slate-400 group-hover:text-primary transition-colors" />
-              <div>
-                <p className="font-semibold text-slate-800 dark:text-zinc-100">עורך/ת דין</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">צפייה ועדכון המשימות שלי</p>
-              </div>
-            </button>
-          </div>
-
-          {regLoading && (
-            <div className="flex justify-center mt-6">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          )}
-          {regError && <p className="text-center text-sm text-red-500 mt-4">{regError}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  const isAdmin = teamMe?.role === "admin";
+  const isAdmin = user.role === "admin";
   const navItems = [
     { href: "/team-tasks", label: "המשימות שלי", icon: ListTodo },
     ...(isAdmin ? [{ href: "/team-tasks/team", label: "משימות הצוות", icon: Users }] : []),
@@ -180,30 +68,16 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
           })}
         </nav>
 
-        <div className="border-t border-zinc-800/60 p-4">
-          <DropdownMenu dir="rtl">
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between gap-3 bg-transparent text-slate-100 hover:bg-white/5 hover:text-slate-50">
-                <span className="flex items-center gap-3">
-                  <PastelAvatar name={user?.name} email={user?.email ?? ""} size="sm" />
-                  <span className="flex flex-col items-start leading-tight">
-                    <span className="text-sm">{user?.name ?? user?.email}</span>
-                    <span className="text-xs text-slate-300">{user?.email}</span>
-                  </span>
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="gap-2">
-                <UserIcon className="h-4 w-4" />
-                <span>{user?.email}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 text-destructive" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
-                התנתקות
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="border-t border-zinc-800/60 p-4" dir="rtl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate text-white">{user.name}</p>
+              <p className="text-xs truncate text-zinc-400">{user.email}</p>
+            </div>
+            <button onClick={handleSignOut} className="text-zinc-400 hover:text-white transition-colors shrink-0">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </aside>
 
