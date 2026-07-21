@@ -166,7 +166,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const sidebarContent = (
     <>
       <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
-        <Image src="/arnon-vertical.png" alt="ארנון תדמור-לוי" width={180} height={180} className="object-contain" />
+        <Image src="/arnon-vertical.png" alt="ארנון תדמור-לוי" width={110} height={136} className="object-contain" />
         <p className="mt-2 text-xs text-zinc-400 text-center">Rinat has the best team</p>
       </div>
 
