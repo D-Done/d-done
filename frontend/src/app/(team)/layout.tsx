@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ListTodo, Users, Settings, LogOut, BarChart2, FolderOpen, FileText, Bot, Loader2, ChevronRight, X, Menu } from "lucide-react";
 
 const API = "/api/v1";
+const MIN_CHAT_WIDTH = 260;
+const MAX_CHAT_WIDTH_RATIO = 0.75;
+const DEFAULT_CHAT_WIDTH = 320;
 
 type TeamUser = { id: string; name: string; email: string; role: string };
 type Member = { id: string; name: string; role: string };
@@ -22,8 +25,13 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
 
   useEffect(() => {
     document.title = "Rinat has the best team";
@@ -50,6 +58,42 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (showChat) setTimeout(() => chatInputRef.current?.focus(), 300);
   }, [showChat]);
+
+  // Drag-to-resize handlers
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging.current) return;
+    const delta = e.clientX - dragStartX.current;
+    const maxWidth = window.innerWidth * MAX_CHAT_WIDTH_RATIO;
+    const newWidth = Math.min(Math.max(dragStartWidth.current + delta, MIN_CHAT_WIDTH), maxWidth);
+    setChatWidth(newWidth);
+  }, []);
+
+  const onMouseUp = useCallback(() => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    setIsResizing(false);
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [onMouseMove, onMouseUp]);
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = chatWidth;
+    setIsResizing(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }
 
   function handleSignOut() {
     localStorage.removeItem("team_user");
@@ -206,7 +250,19 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       </aside>
 
       {/* AI Chat Panel */}
-      <div className={`fixed top-0 left-0 h-screen flex flex-col bg-zinc-900 border-r border-zinc-800 z-40 transition-transform duration-300 w-full sm:w-80 ${showChat ? "translate-x-0" : "-translate-x-full"}`}>
+      <div
+        className={`fixed top-0 left-0 h-screen flex flex-col bg-zinc-900 border-r border-zinc-800 z-40 w-full sm:w-auto ${!isResizing ? "transition-transform duration-300" : ""} ${showChat ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ width: `${chatWidth}px` }}
+      >
+        {/* Drag handle — right edge, desktop only */}
+        <div
+          onMouseDown={startResize}
+          className="absolute top-0 right-0 w-1.5 h-full z-50 cursor-col-resize hidden lg:flex items-center justify-center group"
+          title="גרור לשינוי רוחב"
+        >
+          <div className="w-0.5 h-12 rounded-full bg-zinc-700 group-hover:bg-zinc-400 group-active:bg-yellow-400 transition-colors" />
+        </div>
+
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0 mt-14 lg:mt-0">
           <div className="flex items-center gap-2">
             <Bot className="h-4 w-4 text-yellow-400" />
@@ -276,7 +332,10 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Main content */}
-      <div className={`flex-1 min-w-0 overflow-x-hidden lg:pr-64 transition-all duration-300 ${showChat ? "lg:pl-80" : ""}`}>
+      <div
+        className={`flex-1 min-w-0 overflow-x-hidden lg:pr-64 ${!isResizing ? "transition-all duration-300" : ""}`}
+        style={{ paddingLeft: showChat ? `${chatWidth}px` : undefined }}
+      >
         <main className="min-h-screen pt-14 lg:pt-0">
           <div className="w-full mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
             {children}
