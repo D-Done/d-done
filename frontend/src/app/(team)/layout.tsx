@@ -166,7 +166,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const sidebarContent = (
     <>
       <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
-        <Image src="/arnon-logo-light.png" alt="ארנון תדמור-לוי" width={180} height={180} className="object-contain" />
+        <Image src="/arnon-vertical.png" alt="ארנון תדמור-לוי" width={180} height={180} className="object-contain" />
         <p className="mt-2 text-xs text-zinc-400 text-center">Rinat has the best team</p>
       </div>
 
@@ -228,7 +228,7 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
           className={`p-2 rounded-lg transition-colors ${showChat ? "text-white" : "text-zinc-400"}`}>
           <Bot className="h-5 w-5" />
         </button>
-        <Image src="/arnon-logo-light.png" alt="ארנון תדמור-לוי" width={90} height={36} className="object-contain" />
+        <Image src="/arnon-vertical.png" alt="ארנון תדמור-לוי" width={90} height={36} className="object-contain" />
         <button onClick={() => { setShowMenu((v) => !v); setShowChat(false); }}
           className={`p-2 rounded-lg transition-colors ${showMenu ? "text-white" : "text-zinc-400"}`}>
           <Menu className="h-5 w-5" />
