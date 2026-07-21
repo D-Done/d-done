@@ -32,7 +32,7 @@ export default function SettingsPage() {
     const saved = localStorage.getItem("team_user");
     if (!saved) { router.replace("/"); return; }
     const u = JSON.parse(saved) as User;
-    if (u.role !== "admin") { router.replace("/tasks"); return; }
+    if (u.role !== "admin") { router.replace("/team-tasks"); return; }
     setUser(u);
   }, [router]);
 

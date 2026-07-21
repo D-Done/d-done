@@ -121,7 +121,7 @@ export default function TeamOverviewPage() {
     const saved = localStorage.getItem("team_user");
     if (!saved) { router.replace("/"); return; }
     const u: User = JSON.parse(saved);
-    if (u.role !== "admin") { router.replace("/tasks"); return; }
+    if (u.role !== "admin") { router.replace("/team-tasks"); return; }
     setUser(u);
     load(u);
   }, [load, router]);
