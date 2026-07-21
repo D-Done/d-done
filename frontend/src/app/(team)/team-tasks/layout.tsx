@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Rinat has the best team",
   icons: {
-    icon: "/arnon-logo.png",
-    apple: "/arnon-logo.png",
-    shortcut: "/arnon-logo.png",
+    icon: "/arnon-logo-light.svg",
+    apple: "/arnon-logo-light.svg",
+    shortcut: "/arnon-logo-light.svg",
   },
 };
 
