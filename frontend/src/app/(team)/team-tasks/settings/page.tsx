@@ -30,7 +30,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("team_user");
-    if (!saved) { router.replace("/"); return; }
+    if (!saved) { router.replace("/team-login"); return; }
     const u = JSON.parse(saved) as User;
     if (u.role !== "admin") { router.replace("/team-tasks"); return; }
     setUser(u);

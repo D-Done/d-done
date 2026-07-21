@@ -61,7 +61,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("team_user");
-    if (!saved) { router.replace("/"); return; }
+    if (!saved) { router.replace("/team-login"); return; }
     const u: User = JSON.parse(saved);
     setUser(u);
     loadAll(u);

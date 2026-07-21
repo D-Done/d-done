@@ -119,7 +119,7 @@ export default function TeamOverviewPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("team_user");
-    if (!saved) { router.replace("/"); return; }
+    if (!saved) { router.replace("/team-login"); return; }
     const u: User = JSON.parse(saved);
     if (u.role !== "admin") { router.replace("/team-tasks"); return; }
     setUser(u);

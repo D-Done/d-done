@@ -35,11 +35,13 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const isAdmin = user.role === "admin";
   const navItems = [
     { href: "/team-tasks", label: "המשימות שלי", icon: ListTodo },
-    ...(isAdmin ? [{ href: "/team-tasks/team", label: "משימות הצוות", icon: Users }] : []),
-    { href: "/team-tasks/stats", label: "סטטיסטיקות", icon: BarChart2 },
     { href: "/team-tasks/projects", label: "פרויקטים", icon: FolderOpen },
     { href: "/team-tasks/summary", label: "סיכום יומי", icon: FileText },
-    { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
+    ...(isAdmin ? [
+      { href: "/team-tasks/team", label: "משימות הצוות", icon: Users },
+      { href: "/team-tasks/stats", label: "סטטיסטיקות", icon: BarChart2 },
+      { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
+    ] : []),
   ];
 
   return (
