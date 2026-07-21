@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, UserCog, Mail, Plus, X, Users } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+const API = "/api/v1";
 
 type User = { id: string; name: string; email: string; role: string };
 type Member = { id: string; name: string; email: string; role: string; created_at: string };

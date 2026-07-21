@@ -8,7 +8,7 @@ import { Celebration } from "@/components/Celebration";
 import { StatusPicker, STATUS_LABEL, STATUS_STYLE } from "@/components/StatusPicker";
 import type { Status } from "@/components/StatusPicker";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+const API = "/api/v1";
 
 type Priority = "low" | "medium" | "high" | "none";
 type Filter = "all" | "today" | "week" | "month" | "done";
