@@ -34,10 +34,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   const dragStartWidth = useRef(0);
 
   useEffect(() => {
-    document.title = "Rinat has the best team";
-  }, []);
-
-  useEffect(() => {
     const saved = localStorage.getItem("team_user");
     if (!saved) { router.replace("/team-login"); return; }
     setUser(JSON.parse(saved));
