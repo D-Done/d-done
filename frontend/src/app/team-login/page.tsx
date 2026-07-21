@@ -64,7 +64,7 @@ export default function TeamLoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4" style={{ background: "#f8f5fc" }} dir="rtl">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-10">
-          <Image src="/arnon-logo.png" alt="ארנון תדמור-לוי" width={180} height={67} className="object-contain" />
+          <Image src="/arnon-logo-light.png" alt="ארנון תדמור-לוי" width={180} height={180} className="object-contain" />
         </div>
 
         {step === "email" && (
