@@ -1,17 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ListTodo, Users, Settings, LogOut, BarChart2, FolderOpen, FileText } from "lucide-react";
+import { ListTodo, Users, Settings, LogOut, BarChart2, FolderOpen, FileText, Bot, Send, Loader2, ChevronRight, X } from "lucide-react";
+
+const API = "/api/v1";
 
 type TeamUser = { id: string; name: string; email: string; role: string };
+type Member = { id: string; name: string; role: string };
+type ChatMsg = { role: "user" | "model"; text: string };
 
 export default function TeamLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<TeamUser | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("team_user");
@@ -19,9 +30,52 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     setUser(JSON.parse(saved));
   }, [router]);
 
+  useEffect(() => {
+    if (!user || user.role !== "admin") return;
+    fetch(`${API}/team/members`, { headers: { "x-dev-email": user.email } })
+      .then((r) => r.ok ? r.json() : [])
+      .then(setMembers)
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    if (showChat) setTimeout(() => chatInputRef.current?.focus(), 300);
+  }, [showChat]);
+
   function handleSignOut() {
     localStorage.removeItem("team_user");
     router.push("/team-login");
+  }
+
+  async function sendMessage(text: string) {
+    if (!user || !text.trim() || sending) return;
+    const userMsg: ChatMsg = { role: "user", text: text.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setSending(true);
+    const endpoint = user.role === "admin" ? "admin-chat" : "my-chat";
+    try {
+      const res = await fetch(`${API}/team/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-dev-email": user.email },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.detail || "שגיאה");
+      }
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: "model", text: data.reply }]);
+    } catch (e: unknown) {
+      setMessages((prev) => [...prev, { role: "model", text: `שגיאה: ${e instanceof Error ? e.message : "נסה שוב"}` }]);
+    } finally {
+      setSending(false);
+    }
   }
 
   if (!user) {
@@ -33,6 +87,24 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   }
 
   const isAdmin = user.role === "admin";
+  const lawyers = members.filter((m) => m.role !== "admin");
+
+  const QUICK_QUESTIONS = isAdmin
+    ? [
+        ...lawyers.map((m) => `כמה משימות יש ל${m.name}?`),
+        "מי הכי עמוס כרגע?",
+        "מה המשימות שהושלמו?",
+        "אילו משימות באיחור?",
+        "מה המשימות שנותרו לביצוע?",
+      ]
+    : [
+        "מה המשימות שנותרו לי לביצוע?",
+        "מה הספקתי לסיים?",
+        "אילו משימות יש לי להיום?",
+        "אילו משימות שלי באיחור?",
+        "מה יש לי השבוע?",
+      ];
+
   const navItems = [
     { href: "/team-tasks", label: "המשימות שלי", icon: ListTodo },
     { href: "/team-tasks/projects", label: "פרויקטים", icon: FolderOpen },
@@ -45,8 +117,10 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
-      <aside className="fixed top-0 right-0 hidden h-screen w-64 flex-col bg-zinc-950 text-zinc-100 lg:flex" dir="rtl">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex" dir="rtl">
+
+      {/* Sidebar */}
+      <aside className="fixed top-0 right-0 hidden h-screen w-64 flex-col bg-zinc-950 text-zinc-100 lg:flex z-30">
         <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
           <Image src="/arnon-logo-light.png" alt="ארנון תדמור-לוי" width={200} height={200} className="object-contain" />
         </div>
@@ -68,9 +142,19 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
               </Link>
             );
           })}
+
+          <button
+            onClick={() => setShowChat((v) => !v)}
+            className={["flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors w-full text-right",
+              showChat ? "bg-white/10 text-slate-50" : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100",
+            ].join(" ")}
+          >
+            <Bot className="h-4 w-4 shrink-0 opacity-90" />
+            עוזר AI
+          </button>
         </nav>
 
-        <div className="border-t border-zinc-800/60 p-4" dir="rtl">
+        <div className="border-t border-zinc-800/60 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium truncate text-white">{user.name}</p>
@@ -83,7 +167,80 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      <div className="flex-1 lg:pr-64">
+      {/* AI Chat Panel */}
+      {showChat && (
+        <div className="fixed top-0 left-0 h-screen w-80 flex flex-col bg-zinc-900 border-r border-zinc-800 z-40">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-yellow-400" />
+              <span className="text-sm font-semibold text-white">עוזר AI</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <button onClick={() => setMessages([])} title="נקה שיחה"
+                  className="text-zinc-400 hover:text-white transition-colors text-xs px-2 py-0.5 rounded border border-zinc-700 hover:border-zinc-500">
+                  נקה
+                </button>
+              )}
+              <button onClick={() => setShowChat(false)} className="text-zinc-400 hover:text-white transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 space-y-3">
+            {messages.length === 0 && (
+              <div className="space-y-3">
+                <p className="text-xs text-center text-zinc-500 pt-2">שאלות מהירות</p>
+                <div className="flex flex-col gap-2">
+                  {QUICK_QUESTIONS.map((q, i) => (
+                    <button key={i} onClick={() => sendMessage(q)}
+                      className="text-xs px-3 py-2 rounded-lg text-right leading-relaxed bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors">
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}>
+                <div className={["max-w-[90%] rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap",
+                  msg.role === "user" ? "bg-zinc-700 text-white" : "bg-zinc-800 text-zinc-200",
+                ].join(" ")}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+
+            {sending && (
+              <div className="flex justify-end">
+                <div className="rounded-xl px-3 py-2 bg-zinc-800">
+                  <Loader2 className="h-3 w-3 animate-spin text-yellow-400" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+            className="p-3 border-t border-zinc-800 shrink-0">
+            <div className="flex gap-2">
+              <input ref={chatInputRef} value={input} onChange={(e) => setInput(e.target.value)}
+                placeholder="שאל/י שאלה..." disabled={sending}
+                className="flex-1 rounded-lg px-3 py-2 text-xs bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 disabled:opacity-50"
+                dir="rtl" />
+              <button type="submit" disabled={sending || !input.trim()}
+                className="h-8 w-8 rounded-lg bg-yellow-400 flex items-center justify-center disabled:opacity-40 transition-colors shrink-0">
+                <ChevronRight className="h-3 w-3 text-zinc-900" />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Main content — shift left when chat is open */}
+      <div className={`flex-1 lg:pr-64 transition-all duration-300 ${showChat ? "lg:pl-80" : ""}`}>
         <main className="min-h-screen">
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
             {children}
