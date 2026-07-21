@@ -238,7 +238,7 @@ export default function TeamOverviewPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">כל הצוות</h1>
           <div className="flex items-center gap-3 mt-1">
@@ -251,13 +251,13 @@ export default function TeamOverviewPage() {
           </div>
         </div>
         <button onClick={() => { setFAssignee(""); setFTitle(""); setFDesc(""); setFPriority("none"); setFDue(""); setFFile(null); setFError(""); setFProjectId(""); setFIsGroup(false); setFGroupId(""); setShowNew(true); loadProjects(); }}
-          className="flex items-center gap-2 h-9 px-4 rounded-xl text-white text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 h-9 px-3 md:px-4 rounded-xl text-white text-sm font-semibold transition-colors shrink-0"
           style={{ background: "#33004e" }}>
-          <Plus className="w-4 h-4" />משימה חדשה
+          <Plus className="w-4 h-4" /><span className="hidden sm:inline">משימה חדשה</span><span className="sm:hidden">חדשה</span>
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none">
         {FILTERS.map((f) => (
           <button key={f.key} onClick={() => setFilter(f.key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${

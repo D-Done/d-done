@@ -135,7 +135,7 @@ export default function MyTasksPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">המשימות שלי</h1>
           <div className="flex items-center gap-3 mt-1">

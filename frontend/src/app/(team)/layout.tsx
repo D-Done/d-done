@@ -272,9 +272,9 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Main content */}
-      <div className={`flex-1 lg:pr-64 transition-all duration-300 ${showChat ? "lg:pl-80" : ""}`}>
+      <div className={`flex-1 min-w-0 overflow-x-hidden lg:pr-64 transition-all duration-300 ${showChat ? "lg:pl-80" : ""}`}>
         <main className="min-h-screen pt-14 lg:pt-0">
-          <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
+          <div className="w-full mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
             {children}
           </div>
         </main>
