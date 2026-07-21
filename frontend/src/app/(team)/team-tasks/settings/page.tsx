@@ -12,7 +12,7 @@ type Invitation = { id: string; email: string; role: string; created_at: string 
 type GroupMember = { user_id: string; user_name: string };
 type Group = { id: string; name: string; members: GroupMember[] };
 
-const ROLE_HE: Record<string, string> = { admin: "אדמין", lawyer: "עו״ד" };
+const ROLE_HE: Record<string, string> = { admin: "אדמין", lawyer: "עו״ד", intern: "מתמחה" };
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function SettingsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"lawyer" | "admin">("lawyer");
+  const [inviteRole, setInviteRole] = useState<"lawyer" | "admin" | "intern">("lawyer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -149,10 +149,11 @@ export default function SettingsPage() {
               style={{ borderColor: "#d8c0ec" }}
             />
             <div className="flex gap-3">
-              <select value={inviteRole} onChange={e => setInviteRole(e.target.value as "lawyer" | "admin")}
+              <select value={inviteRole} onChange={e => setInviteRole(e.target.value as "lawyer" | "admin" | "intern")}
                 className="flex-1 sm:flex-none rounded-lg border px-3 py-2 text-sm focus:outline-none"
                 style={{ borderColor: "#d8c0ec", color: "#33004e" }}>
                 <option value="lawyer">עו״ד</option>
+                <option value="intern">מתמחה</option>
                 <option value="admin">אדמין</option>
               </select>
               <button type="submit" disabled={loading}
@@ -202,6 +203,7 @@ export default function SettingsPage() {
                   className="rounded-lg border px-2 py-1 text-xs focus:outline-none disabled:opacity-50"
                   style={{ borderColor: "#d8c0ec", color: "#33004e" }}>
                   <option value="lawyer">עו״ד</option>
+                  <option value="intern">מתמחה</option>
                   <option value="admin">אדמין</option>
                 </select>
                 <button onClick={() => deleteMember(m.id, m.name)} disabled={m.id === user.id}
