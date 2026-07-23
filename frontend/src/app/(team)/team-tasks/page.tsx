@@ -82,7 +82,7 @@ export default function MyTasksPage() {
     load(u);
     fetch(`${API}/team/projects`, { headers: apiHeaders(u.email) })
       .then(r => r.ok ? r.json() : []).then(setProjects).catch(() => {});
-    fetch(`${API}/team/permissions/incoming`, { headers: apiHeaders(u.email) })
+    fetch(`${API}/team/access-permissions/incoming`, { headers: apiHeaders(u.email) })
       .then(r => r.ok ? r.json() : []).then(setIncomingPerms).catch(() => {});
   }, [load]);
 
@@ -123,7 +123,7 @@ export default function MyTasksPage() {
 
   async function respondToPerm(permId: string, status: "approved" | "denied") {
     if (!user) return;
-    await fetch(`${API}/team/permissions/${permId}`, {
+    await fetch(`${API}/team/access-permissions/${permId}`, {
       method: "PATCH", headers: apiHeaders(user.email), body: JSON.stringify({ status }),
     });
     setIncomingPerms(prev => prev.filter(p => p.id !== permId));
