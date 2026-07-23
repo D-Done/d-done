@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, CalendarDays, AlertCircle, Paperclip, Loader2, Search } from "lucide-react";
+import { Plus, X, CalendarDays, AlertCircle, Paperclip, Loader2, Search, Shield, CheckCircle, XCircle } from "lucide-react";
 import TaskDetailModal, { type Task as DetailTask } from "@/components/TaskDetailModal";
 import { useUndo, UndoToast } from "@/components/UndoToast";
 import { Celebration } from "@/components/Celebration";
@@ -16,6 +16,7 @@ type Filter = "all" | "today" | "week" | "month" | "done";
 type Task = { id: string; title: string; description: string | null; status: Status; priority: Priority; assigned_to_id: string; assigned_to_name: string; due_date: string | null; project_id: string | null; project_name: string | null; created_by_name: string | null; created_at: string };
 type Project = { id: string; name: string };
 type User = { id: string; name: string; email: string; role: string };
+type IncomingPerm = { id: string; group_id: string; group_name: string; requester_id: string; requester_name: string; access_level: string };
 const PRIORITY_LABEL: Record<Priority, string> = { none: "", low: "נמוכה", medium: "בינונית", high: "גבוהה" };
 const PRIORITY_BORDER: Record<Priority, string> = {
   none: "border-r-slate-200", low: "border-r-slate-200", medium: "border-r-amber-400", high: "border-r-red-500",
@@ -61,6 +62,7 @@ export default function MyTasksPage() {
   const [search, setSearch] = useState("");
   const [celebrationTask, setCelebrationTask] = useState<Task | null>(null);
   const [pickerTaskId, setPickerTaskId] = useState<string | null>(null);
+  const [incomingPerms, setIncomingPerms] = useState<IncomingPerm[]>([]);
   const fFileRef = useRef<HTMLInputElement>(null);
   const { pending: undoPending, schedule: scheduleUndo, undo } = useUndo();
 
@@ -80,6 +82,8 @@ export default function MyTasksPage() {
     load(u);
     fetch(`${API}/team/projects`, { headers: apiHeaders(u.email) })
       .then(r => r.ok ? r.json() : []).then(setProjects).catch(() => {});
+    fetch(`${API}/team/permissions/incoming`, { headers: apiHeaders(u.email) })
+      .then(r => r.ok ? r.json() : []).then(setIncomingPerms).catch(() => {});
   }, [load]);
 
   function changeStatus(task: Task, newStatus: Status) {
@@ -117,6 +121,14 @@ export default function MyTasksPage() {
 
   function closeModal() { setShowNew(false); setFTitle(""); setFDesc(""); setFPriority("none"); setFDue(""); setFFile(null); setFProjectId(""); setFError(""); }
 
+  async function respondToPerm(permId: string, status: "approved" | "denied") {
+    if (!user) return;
+    await fetch(`${API}/team/permissions/${permId}`, {
+      method: "PATCH", headers: apiHeaders(user.email), body: JSON.stringify({ status }),
+    });
+    setIncomingPerms(prev => prev.filter(p => p.id !== permId));
+  }
+
   const activeTasks = tasks.filter((t) => t.status !== "done");
   const doneTasks = tasks.filter((t) => t.status === "done");
   const q = search.trim().toLowerCase();
@@ -133,8 +145,47 @@ export default function MyTasksPage() {
     { key: "done", label: "הושלמו", count: doneTasks.length },
   ];
 
+  const ACCESS_LABEL: Record<string, string> = { full: "גישה מלאה לנתונים", status: "צפייה בסטטוס משימות" };
+
   return (
     <div>
+      {incomingPerms.length > 0 && (
+        <div className="mb-6 rounded-2xl border p-4 space-y-3" dir="rtl"
+          style={{ background: "#fdfaf7", borderColor: "#dcba44" }}>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4" style={{ color: "#dcba44" }} />
+            <span className="text-sm font-semibold" style={{ color: "#33004e" }}>
+              בקשות גישה ממתינות ({incomingPerms.length})
+            </span>
+          </div>
+          {incomingPerms.map(p => (
+            <div key={p.id} className="flex items-center justify-between gap-3 bg-white rounded-xl px-4 py-3 border"
+              style={{ borderColor: "#e8d8f4" }}>
+              <div className="min-w-0">
+                <p className="text-sm font-medium" style={{ color: "#33004e" }}>
+                  {p.requester_name}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  מבקש {ACCESS_LABEL[p.access_level] ?? p.access_level} · קבוצה: {p.group_name}
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => respondToPerm(p.id, "approved")}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-80"
+                  style={{ background: "#22c55e" }}>
+                  <CheckCircle className="w-3.5 h-3.5" />אשר
+                </button>
+                <button onClick={() => respondToPerm(p.id, "denied")}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-80"
+                  style={{ background: "#ef4444" }}>
+                  <XCircle className="w-3.5 h-3.5" />דחה
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">המשימות שלי</h1>
