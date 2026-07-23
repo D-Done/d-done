@@ -285,10 +285,15 @@ export default function SettingsPage() {
               {grantedPerms.map(p => (
                 <div key={p.id} className="flex items-center justify-between rounded-xl px-3 py-2.5"
                   style={{ background: "#f8f5fc" }}>
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
                     <span className="text-sm font-medium" style={{ color: "#33004e" }}>{p.requester_name}</span>
                     <span className="text-xs text-slate-400">{PERM_LEVEL_LABEL[p.access_level]}</span>
                     <StatusBadge status={p.status} />
+                    {p.responded_at && (
+                      <span className="text-xs text-slate-400">
+                        {new Date(p.responded_at).toLocaleString("he-IL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
                   </div>
                   <button onClick={() => revokeGranted(p.id)}
                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg border transition-colors hover:bg-red-50 hover:border-red-300 hover:text-red-600 shrink-0"
