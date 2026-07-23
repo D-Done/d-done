@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Rinat has the best team",
+  title: "ארנון תדמור-לוי",
   icons: {
     icon: "/arnon-vertical.png",
     apple: "/arnon-vertical.png",

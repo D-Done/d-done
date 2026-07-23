@@ -167,7 +167,6 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     <>
       <div className="flex flex-col items-center justify-center py-5 border-b border-zinc-800/60 px-5">
         <Image src="/arnon-logo-light.png" alt="ארנון תדמור-לוי" width={160} height={99} className="object-contain" />
-        <p className="mt-2 text-xs text-zinc-400 text-center">Rinat has the best team</p>
       </div>
 
       <nav className="mt-2 flex flex-1 flex-col gap-1 px-3 overflow-y-auto">
