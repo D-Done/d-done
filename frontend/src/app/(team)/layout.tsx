@@ -159,8 +159,8 @@ export default function TeamLayout({ children }: { children: React.ReactNode }) 
     ...(isAdmin ? [
       { href: "/team-tasks/team", label: "משימות הצוות", icon: Users },
       { href: "/team-tasks/stats", label: "סטטיסטיקות", icon: BarChart2 },
-      { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
     ] : []),
+    { href: "/team-tasks/settings", label: "הגדרות", icon: Settings },
   ];
 
   const sidebarContent = (

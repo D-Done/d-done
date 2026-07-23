@@ -12,6 +12,7 @@ type Invitation = { id: string; email: string; role: string; created_at: string 
 type GroupMember = { user_id: string; user_name: string };
 type Permission = { id: string; target_id: string; access_level: string; status: string };
 type Group = { id: string; name: string; created_by_id: string; members: GroupMember[]; my_permissions: Record<string, Permission> };
+type GrantedPerm = { id: string; group_name: string; requester_name: string; access_level: string; status: string; responded_at: string | null };
 
 const ROLE_HE: Record<string, string> = { admin: "אדמין", lawyer: "עו״ד", intern: "מתמחה" };
 const PERM_STATUS_LABEL: Record<string, string> = { pending: "ממתין לאישור", approved: "מאושר", denied: "נדחה", granted: "ניתן אוטומטית" };
@@ -78,6 +79,7 @@ export default function SettingsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [addingGroup, setAddingGroup] = useState(false);
+  const [grantedPerms, setGrantedPerms] = useState<GrantedPerm[]>([]);
   // Access level modal state
   const [pendingAdd, setPendingAdd] = useState<{ groupId: string; userId: string; userName: string } | null>(null);
 
@@ -85,7 +87,6 @@ export default function SettingsPage() {
     const saved = localStorage.getItem("team_user");
     if (!saved) { router.replace("/team-login"); return; }
     const u = JSON.parse(saved) as User;
-    if (u.role !== "admin") { router.replace("/team-tasks"); return; }
     setUser(u);
   }, [router]);
 
@@ -96,14 +97,16 @@ export default function SettingsPage() {
 
   const fetchData = useCallback(async () => {
     if (!user) return;
-    const [mRes, iRes, gRes] = await Promise.all([
-      fetch(`${API}/team/members`, { headers: headers() }),
-      fetch(`${API}/team/admin/invitations`, { headers: headers() }),
-      fetch(`${API}/team/groups`, { headers: headers() }),
+    const [mRes, iRes, gRes, gpRes] = await Promise.all([
+      user.role === "admin" ? fetch(`${API}/team/members`, { headers: headers() }) : Promise.resolve(null),
+      user.role === "admin" ? fetch(`${API}/team/admin/invitations`, { headers: headers() }) : Promise.resolve(null),
+      user.role === "admin" ? fetch(`${API}/team/groups`, { headers: headers() }) : Promise.resolve(null),
+      fetch(`${API}/team/permissions/granted`, { headers: headers() }),
     ]);
-    if (mRes.ok) setMembers(await mRes.json());
-    if (iRes.ok) setInvitations(await iRes.json());
-    if (gRes.ok) setGroups(await gRes.json());
+    if (mRes?.ok) setMembers(await mRes.json());
+    if (iRes?.ok) setInvitations(await iRes.json());
+    if (gRes?.ok) setGroups(await gRes.json());
+    if (gpRes.ok) setGrantedPerms(await gpRes.json());
   }, [user, headers]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -203,6 +206,14 @@ export default function SettingsPage() {
     }
   }
 
+  async function revokePermission(permId: string) {
+    if (!confirm("לבטל את ההרשאה?")) return;
+    const res = await fetch(`${API}/team/permissions/${permId}`, {
+      method: "PATCH", headers: headers(), body: JSON.stringify({ status: "denied" }),
+    });
+    if (res.ok) setGrantedPerms(prev => prev.filter(p => p.id !== permId));
+  }
+
   async function removeMemberFromGroup(groupId: string, userId: string) {
     await fetch(`${API}/team/groups/${groupId}/members/${userId}`, { method: "DELETE", headers: headers() });
     setGroups(prev => prev.map(g => {
@@ -227,8 +238,46 @@ export default function SettingsPage() {
 
       <div>
         <h1 className="text-2xl font-bold" style={{ color: "#33004e" }}>הגדרות</h1>
-        <p className="text-sm mt-1" style={{ color: "#9a6ad7" }}>ניהול משתמשים, קבוצות והזמנות</p>
+        <p className="text-sm mt-1" style={{ color: "#9a6ad7" }}>
+          {user.role === "admin" ? "ניהול משתמשים, קבוצות והזמנות" : "ניהול הרשאות גישה לנתונים שלך"}
+        </p>
       </div>
+
+      {/* Granted permissions — visible to all users */}
+      <section className="bg-white rounded-2xl border" style={{ borderColor: "#e8d8f4" }}>
+        <div className="px-6 py-4 border-b" style={{ borderColor: "#e8d8f4" }}>
+          <h2 className="font-semibold flex items-center gap-2" style={{ color: "#33004e" }}>
+            <Shield className="w-4 h-4" style={{ color: "#dcba44" }} />
+            הרשאות גישה שהענקתי ({grantedPerms.length})
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: "#9a6ad7" }}>משתמשים שאישרת שיוכלו לצפות בנתונים שלך</p>
+        </div>
+        {grantedPerms.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-8">לא הענקת גישה לאף אחד</p>
+        ) : (
+          <div className="divide-y" style={{ borderColor: "#f3eeff" }}>
+            {grantedPerms.map(p => (
+              <div key={p.id} className="flex items-center justify-between px-6 py-3 gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium" style={{ color: "#33004e" }}>{p.requester_name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#9a6ad7" }}>
+                    {PERM_LEVEL_LABEL[p.access_level] ?? p.access_level} · קבוצה: {p.group_name}
+                    {p.status === "granted" && <span className="text-slate-400"> · ניתן אוטומטית</span>}
+                  </p>
+                </div>
+                <button onClick={() => revokePermission(p.id)}
+                  className="shrink-0 flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                  style={{ borderColor: "#e8d8f4", color: "#9a6ad7" }}>
+                  <XCircle className="w-3.5 h-3.5" />בטל
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Admin-only sections */}
+      {user.role === "admin" && <>
 
       {/* Invite form */}
       <section className="bg-white rounded-2xl border p-6 space-y-4" style={{ borderColor: "#e8d8f4" }}>
@@ -408,6 +457,8 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      </> /* end admin-only */}
     </div>
   );
 }
