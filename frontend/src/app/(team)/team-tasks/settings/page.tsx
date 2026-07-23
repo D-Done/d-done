@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, UserCog, Mail, Plus, X, Users } from "lucide-react";
+import { Trash2, UserCog, Mail, Plus, X, Users, Shield, CheckCircle, XCircle, Clock } from "lucide-react";
 
 const API = "/api/v1";
 
@@ -10,9 +10,60 @@ type User = { id: string; name: string; email: string; role: string };
 type Member = { id: string; name: string; email: string; role: string; created_at: string };
 type Invitation = { id: string; email: string; role: string; created_at: string };
 type GroupMember = { user_id: string; user_name: string };
-type Group = { id: string; name: string; members: GroupMember[] };
+type Permission = { id: string; target_id: string; access_level: string; status: string };
+type Group = { id: string; name: string; created_by_id: string; members: GroupMember[]; my_permissions: Record<string, Permission> };
 
 const ROLE_HE: Record<string, string> = { admin: "אדמין", lawyer: "עו״ד", intern: "מתמחה" };
+const PERM_STATUS_LABEL: Record<string, string> = { pending: "ממתין לאישור", approved: "מאושר", denied: "נדחה", granted: "ניתן אוטומטית" };
+const PERM_LEVEL_LABEL: Record<string, string> = { full: "גישה מלאה", status: "סטטוס בלבד" };
+
+// Modal for choosing access level when adding a member to a group
+function AccessLevelModal({ memberName, isAdmin, onConfirm, onCancel }: {
+  memberName: string; isAdmin: boolean;
+  onConfirm: (level: "full" | "status" | "none") => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" dir="rtl">
+      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 space-y-4" style={{ borderTop: "4px solid #dcba44" }}>
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5" style={{ color: "#33004e" }} />
+          <h3 className="font-semibold text-base" style={{ color: "#33004e" }}>הרשאת גישה עבור {memberName}</h3>
+        </div>
+        <p className="text-sm text-slate-500">האם ברצונך לבקש גישה לנתוני {memberName}?</p>
+        <div className="space-y-2">
+          {isAdmin && (
+            <button onClick={() => onConfirm("full")}
+              className="w-full text-right px-4 py-3 rounded-xl border-2 text-sm hover:border-purple-400 transition-colors"
+              style={{ borderColor: "#e8d8f4" }}>
+              <p className="font-medium" style={{ color: "#33004e" }}>גישה מלאה</p>
+              <p className="text-xs text-slate-400 mt-0.5">כל המשימות והנתונים — {memberName} יצטרך לאשר</p>
+            </button>
+          )}
+          <button onClick={() => onConfirm("status")}
+            className="w-full text-right px-4 py-3 rounded-xl border-2 text-sm hover:border-purple-400 transition-colors"
+            style={{ borderColor: "#e8d8f4" }}>
+            <p className="font-medium" style={{ color: "#33004e" }}>
+              {isAdmin ? "סטטוס בלבד" : "סטטוס משימות משותפות"}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isAdmin
+                ? "רק סטטוס של משימות שהעברת — ללא צורך באישור"
+                : `רק סטטוס של משימות שהורדתם אחד לשני — ${memberName} יצטרך לאשר`}
+            </p>
+          </button>
+          <button onClick={() => onConfirm("none")}
+            className="w-full text-right px-4 py-3 rounded-xl border-2 text-sm hover:border-slate-300 transition-colors"
+            style={{ borderColor: "#f3f4f6" }}>
+            <p className="font-medium text-slate-500">ללא גישה לנתונים</p>
+            <p className="text-xs text-slate-400 mt-0.5">הוסף לקבוצה בלי לבקש גישה</p>
+          </button>
+        </div>
+        <button onClick={onCancel} className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors pt-1">ביטול</button>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -27,6 +78,8 @@ export default function SettingsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [addingGroup, setAddingGroup] = useState(false);
+  // Access level modal state
+  const [pendingAdd, setPendingAdd] = useState<{ groupId: string; userId: string; userName: string } | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("team_user");
@@ -99,7 +152,7 @@ export default function SettingsPage() {
       const res = await fetch(`${API}/team/groups`, {
         method: "POST", headers: headers(), body: JSON.stringify({ name: newGroupName.trim() }),
       });
-      if (res.ok) { const g = await res.json(); setGroups(prev => [g, ...prev]); setNewGroupName(""); }
+      if (res.ok) { const g = await res.json(); setGroups(prev => [{ ...g, my_permissions: {} }, ...prev]); setNewGroupName(""); }
     } finally { setAddingGroup(false); }
   }
 
@@ -108,26 +161,70 @@ export default function SettingsPage() {
     setGroups(prev => prev.filter(g => g.id !== groupId));
   }
 
-  async function addMemberToGroup(groupId: string, userId: string) {
-    if (!userId) return;
+  // Step 1: show access modal when adding a member
+  function initiateAddMember(groupId: string, userId: string) {
+    const m = members.find(m => m.id === userId);
+    if (!m) return;
+    setPendingAdd({ groupId, userId, userName: m.name });
+  }
+
+  // Step 2: after user chooses access level, add member + optionally request permission
+  async function confirmAddMember(level: "full" | "status" | "none") {
+    if (!pendingAdd || !user) return;
+    const { groupId, userId, userName } = pendingAdd;
+    setPendingAdd(null);
+
+    // Add to group
     const res = await fetch(`${API}/team/groups/${groupId}/members`, {
       method: "POST", headers: headers(), body: JSON.stringify({ user_id: userId }),
     });
-    if (res.ok) {
-      const m = await res.json();
-      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, members: [...g.members, { user_id: m.user_id, user_name: m.user_name }] } : g));
+    if (!res.ok) return;
+
+    setGroups(prev => prev.map(g =>
+      g.id === groupId
+        ? { ...g, members: [...g.members, { user_id: userId, user_name: userName }] }
+        : g
+    ));
+
+    // Request permission if applicable
+    if (level !== "none") {
+      const pRes = await fetch(`${API}/team/groups/${groupId}/permissions`, {
+        method: "POST", headers: headers(),
+        body: JSON.stringify({ target_id: userId, access_level: level }),
+      });
+      if (pRes.ok) {
+        const perm = await pRes.json();
+        setGroups(prev => prev.map(g =>
+          g.id === groupId
+            ? { ...g, my_permissions: { ...g.my_permissions, [userId]: perm } }
+            : g
+        ));
+      }
     }
   }
 
   async function removeMemberFromGroup(groupId: string, userId: string) {
     await fetch(`${API}/team/groups/${groupId}/members/${userId}`, { method: "DELETE", headers: headers() });
-    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, members: g.members.filter(m => m.user_id !== userId) } : g));
+    setGroups(prev => prev.map(g => {
+      if (g.id !== groupId) return g;
+      const { [userId]: _, ...rest } = g.my_permissions;
+      return { ...g, members: g.members.filter(m => m.user_id !== userId), my_permissions: rest };
+    }));
   }
 
   if (!user) return null;
 
   return (
     <div dir="rtl" className="space-y-8">
+      {pendingAdd && (
+        <AccessLevelModal
+          memberName={pendingAdd.userName}
+          isAdmin={user.role === "admin"}
+          onConfirm={confirmAddMember}
+          onCancel={() => setPendingAdd(null)}
+        />
+      )}
+
       <div>
         <h1 className="text-2xl font-bold" style={{ color: "#33004e" }}>הגדרות</h1>
         <p className="text-sm mt-1" style={{ color: "#9a6ad7" }}>ניהול משתמשים, קבוצות והזמנות</p>
@@ -257,17 +354,40 @@ export default function SettingsPage() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {g.members.map(m => (
-                      <span key={m.user_id} className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
-                        style={{ background: "#f3eeff", color: "#7c3aed" }}>
-                        {m.user_name}
-                        <button onClick={() => removeMemberFromGroup(g.id, m.user_id)}
-                          className="hover:text-red-500 transition-colors">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
+                  <div className="flex flex-col gap-2 mb-3">
+                    {g.members.map(m => {
+                      const perm = g.my_permissions?.[m.user_id];
+                      return (
+                        <div key={m.user_id} className="flex items-center justify-between rounded-lg px-3 py-2"
+                          style={{ background: "#f8f5fc" }}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium" style={{ color: "#33004e" }}>{m.user_name}</span>
+                            {perm ? (
+                              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                                style={{
+                                  background: perm.status === "approved" || perm.status === "granted" ? "#dcfce7"
+                                    : perm.status === "denied" ? "#fee2e2" : "#fef9c3",
+                                  color: perm.status === "approved" || perm.status === "granted" ? "#166534"
+                                    : perm.status === "denied" ? "#991b1b" : "#854d0e",
+                                }}>
+                                {perm.status === "approved" || perm.status === "granted"
+                                  ? <CheckCircle className="w-3 h-3" />
+                                  : perm.status === "denied"
+                                    ? <XCircle className="w-3 h-3" />
+                                    : <Clock className="w-3 h-3" />}
+                                {PERM_LEVEL_LABEL[perm.access_level]} — {PERM_STATUS_LABEL[perm.status]}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-400">ללא הרשאה</span>
+                            )}
+                          </div>
+                          <button onClick={() => removeMemberFromGroup(g.id, m.user_id)}
+                            className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
                     {g.members.length === 0 && (
                       <span className="text-xs text-slate-400">אין חברים עדיין</span>
                     )}
@@ -275,7 +395,7 @@ export default function SettingsPage() {
                   {nonMembers.length > 0 && (
                     <select
                       defaultValue=""
-                      onChange={e => { if (e.target.value) { addMemberToGroup(g.id, e.target.value); e.target.value = ""; } }}
+                      onChange={e => { if (e.target.value) { initiateAddMember(g.id, e.target.value); e.target.value = ""; } }}
                       className="rounded-lg border px-2.5 py-1.5 text-xs focus:outline-none"
                       style={{ borderColor: "#d8c0ec", color: "#9a6ad7" }}>
                       <option value="">+ הוסף חבר לקבוצה</option>
